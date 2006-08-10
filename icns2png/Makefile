@@ -1,4 +1,4 @@
-# Makefile for Icns2PNG, MacOS X / Linux 
+# Makefile for Icns2PNG, MacOS X / Linux
 #
 # Copyright (C) 2002 Mathew Eis <mathew@bearca.com>
 #
@@ -51,7 +51,7 @@ test: icns2png
 
 install: icns2png
 	install -m 755 icon2png $(prefix)/bin
-	
+
 release: icns2png test
 	@mkdir -p icon2png-$(version); \
 	cp icns2png icon2png-$(version); \
@@ -60,7 +60,7 @@ release: icns2png test
 	tar -cf icon2png-$(version).tar icon2png-$(version); \
 	rm -rf icon2png-$(version); \
 	echo 'Icns2PNG $(version) release package created.'; \
-	rm -f #.o;	
+	rm -f #.o;
 
 icns2png: $(OBJS)
 	$(CC) -o icns2png $(CFLAGS) $(OBJS) $(LDFLAGS)
