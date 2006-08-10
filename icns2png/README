@@ -1,0 +1,109 @@
+Welcome to Icon2PNG Linux Edition 0.5
+
+* Copyright (C) 2002 Mathew Eis <mathew@bearca.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Library General Public
+* License as published by the Free Software Foundation; either
+* version 2 of the License, or (at your option) any later version.
+*
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Library General Public License for more details.
+*
+* You should have received a copy of the GNU Library General Public
+* License along with this library; if not, write to the
+* Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+* Boston, MA 02111-1307, USA.
+*
+
+===============================================================================
+Building Icon2PNG - Linux Edition
+
+You will need a copy of libpng, and zlib. After building libpng, and zlib,
+update the Makefile ZLIBINC, and LPNGINC to show the install paths for
+zlib and libpng.
+
+You should then only have to run
+make
+make test
+make install
+
+===============================================================================
+Using Icon2PNG - Linux Edition
+
+Basic Usage:
+./icns2png OmniWeb.icns
+Icon2PNG Linux Edition - (C) 2002 Mathew Eis
+Converting OmniWeb.icns to OmniWeb.png...
+
+This will result in a file OmniWeb.png with a 128x128 icon from OmniWeb.icns.
+
+===============================================================================
+Understanding the Mac OS X Icons
+
+Mac OS X Icon files come in two formats - resource forks, and .icns files.
+
+icns2png can convert both formats. It can also decode the resource forks
+contained within MacBinary files.
+
+The .icns files are much easier to deal with, since they are in a format that
+can be easily accesed from Linux/UNIX/Windows.
+
+You can however access the icons from the resource files. OS X Icons like
+those from http://www.xicons.com/ are compressed in .sit files. These
+files can be uncompressed using Aladdin Stuffit Expander for Linux, which
+can be obtained from http://www.aladdinsys.com/.
+
+When unstuffing, be sure to use a command similar to the following:
+
+unstuff --text=auto --macbinary=auto --eol=unix icons.hqx.sit
+
+This will help ensure that the resource forks are uncompressed into
+MacBinary files, so that Icon2PNG can read them.
+
+If there are resource forks in the files, when stuffit decompresses them,
+it will create two files from the one mac file. For example, if the mac
+file was named "Gnu", the resulting decomressed files will be
+"Gnu", and "Gnu_1". The "Snowflake_1" file is the resource
+fork. This is the file you will want to extract the icon from. The file
+"Gnu" does not contain any icon data. If, however, there is no
+"Gnu_1", then the file may be in the .icns format, and you will
+extract the icon from "Gnu" - resulting in a file "Gnu.png"
+
+It is really fairly simple, once you get the hang of it - you will also
+notice that if the icon was in the resource fork, then the other main
+file will be etremely small, sometimes even 0k.
+
+The underlying data in both of the files is similar - they both hold the
+following icon data (Although most icons to not have a complete set):
+16x12 pixels - 1 bit mask - 1, 4, or 8 bit icon
+16x16 pixels - 1 or 8 bit mask - 1, 4, 8 or 24 bit icon
+32x32 pixels - 1 or 8 bit mask - 1, 4, 8, or 24 bit icon
+64x64 pixels - 1 or 8 bit mask - 1, 4, 8, or 24 bit icon
+128x128 pixels - 8 bit mask - 24 bit icon
+
+icns2png currently only extracts the 128x128 8 bit mask and 24 bit icon image
+
+===============================================================================
+Requirements
+
+Icon2PNG should be able to run on just about any *nux distribution 
+
+The source is cross-platform - I have successfully built and run it on
+PowerPC Linux, x86 Linux, and Mac OS X (UNIX)
+
+===============================================================================
+About Icon2PNG - Linux Edition
+
+I wrote Icon2PNG as a Macintosh utility for converting some of my Mac icons to
+PNG images so I could edit them with a more powerfull utility, and also to use
+them in Linux and put them on websites. I had previously been using Photoshop
+to save the PNG images, and another icon editor to extract the 32bit icons
+and alpha channel from the new icns format.
+
+After I released Icon2PNG for the Mac, I began to receive several e-mails
+requesting a version for Linux. You asked, I delivered. :)
+
+You should be able to get the latest version at http://www.bearca.com/software/
