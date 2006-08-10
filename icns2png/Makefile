@@ -34,7 +34,7 @@ CC=c++
 
 CFLAGS=-O -I$(LPNGINC) -I$(ZLIBINC)
 CPPFLAGS=$(CFLAGS)
-LDFLAGS=-L. -L$(LPNGINC) -L$(ZLIBLIB) -lpng12 -lz -lm
+LDFLAGS=-L. -L$(LPNGINC) -L$(ZLIBLIB) -lpng -lz -lm
 LDFLAGS_A=-L$(LPNGINC) -L$(ZLIBLIB) $(LPNGLIB)/libpng.a -lz -lm
 
 OBJS = icns2png.o iconvert.o pngwriter.o byteswap.o
@@ -63,7 +63,7 @@ release: icns2png test
 	rm -f #.o;	
 
 icns2png: $(OBJS)
-	$(CC) -o icns2png $(CFLAGS) $(OBJS) $(LDFLAGS_A)
+	$(CC) -o icns2png $(CFLAGS) $(OBJS) $(LDFLAGS)
 
 clean:
 	rm -f #.o icns2png
