@@ -66,4 +66,4 @@ icns2png: $(OBJS)
 	$(CC) -o icns2png $(CFLAGS) $(OBJS) $(LDFLAGS)
 
 clean:
-	rm -f #.o icns2png
+	rm -f *.o icns2png
