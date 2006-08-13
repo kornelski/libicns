@@ -60,7 +60,7 @@ release: icns2png test
 	tar -cf icon2png-$(version).tar icon2png-$(version); \
 	rm -rf icon2png-$(version); \
 	echo 'Icns2PNG $(version) release package created.'; \
-	rm -f #.o;
+	rm -f *.o;
 
 icns2png: $(OBJS)
 	$(CC) -o icns2png $(CFLAGS) $(OBJS) $(LDFLAGS)
