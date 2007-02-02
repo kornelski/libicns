@@ -24,18 +24,11 @@ version=0.5
 # where make install puts icns2png
 prefix=/usr/local
 
-# Where the libpng and zlib library and include files are located
-LPNGINC=libpng-1.2.5
-ZLIBINC=zlib-1.1.4
-LPNGLIB=libpng-1.2.5
-ZLIBLIB=zlib-1.1.4
-
 CC=c++
 
-CFLAGS+=-Wall -O -I$(LPNGINC) -I$(ZLIBINC)
+CFLAGS+=-Wall -O
 CPPFLAGS+=$(CFLAGS)
-LDFLAGS+=-L. -L$(LPNGINC) -L$(ZLIBLIB) -lpng -lz -lm
-LDFLAGS_A+=-L$(LPNGINC) -L$(ZLIBLIB) $(LPNGLIB)/libpng.a -lz -lm
+LDFLAGS+=-lpng -lz -lm
 
 OBJS = icns2png.o iconvert.o pngwriter.o byteswap.o
 
