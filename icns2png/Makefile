@@ -32,10 +32,10 @@ ZLIBLIB=zlib-1.1.4
 
 CC=c++
 
-CFLAGS=-Wall -O -I$(LPNGINC) -I$(ZLIBINC)
-CPPFLAGS=$(CFLAGS)
-LDFLAGS=-L. -L$(LPNGINC) -L$(ZLIBLIB) -lpng -lz -lm
-LDFLAGS_A=-L$(LPNGINC) -L$(ZLIBLIB) $(LPNGLIB)/libpng.a -lz -lm
+CFLAGS+=-Wall -O -I$(LPNGINC) -I$(ZLIBINC)
+CPPFLAGS+=$(CFLAGS)
+LDFLAGS+=-L. -L$(LPNGINC) -L$(ZLIBLIB) -lpng -lz -lm
+LDFLAGS_A+=-L$(LPNGINC) -L$(ZLIBLIB) $(LPNGLIB)/libpng.a -lz -lm
 
 OBJS = icns2png.o iconvert.o pngwriter.o byteswap.o
 
