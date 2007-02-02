@@ -23,6 +23,8 @@ Boston, MA 02111-1307, USA.
 #ifndef __BYTEUTILS__
 #define __BYTEUTILS__
 
+#include "common.h"
+
 #define BytesSwapped ( ((long)'ETYB') == *((long*)("BYTE")) )
 
 #define ByteSwap(x,s,b) ( (b == false) ? x : (( s == 1 ? ByteSwap08(x) : ( s == 2 ? ByteSwap16(x) : ( s == 4 ? ByteSwap32(x) : (0x00000000) ) ) )))

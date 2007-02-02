@@ -26,6 +26,9 @@ Boston, MA 02111-1307, USA.
 
 #include <stdint.h>
 
+typedef int bool;
+#define true 1
+#define false 0
 
 typedef char * Ptr;
 typedef Ptr * Handle;
