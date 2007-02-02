@@ -29,8 +29,7 @@ Boston, MA 02111-1307, USA.
 #ifndef _ICONVERT_H_
 #define _ICONVERT_H_ 1
 
-#include "mactypes.h"
-#include "icondefs.h"
+#include "common.h"
 
 #define kByteSize 8
 
@@ -45,6 +44,6 @@ typedef struct IconImage
 
 bool ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily);
 bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr outIcon, bool *byteswap);
-bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImagePtr outIcon, bool byteSwap);
+bool ParseIconData(ResType iconType,Ptr rawDataPtr,size_t rawDataLength,IconImagePtr outIcon, bool byteSwap);
 
 #endif

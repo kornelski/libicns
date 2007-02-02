@@ -22,10 +22,10 @@ Boston, MA 02111-1307, USA.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
-#include "mactypes.h"
-#include "icondefs.h"
+#include "common.h"
 #include "iconvert.h"
 #include "byteswap.h"
 
@@ -358,11 +358,11 @@ bool ReadFile(char *fileName,long *dataSize,void **dataPtr)
 
 bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr outIcon, bool *byteswap)
 {
-	UInt32 hOffset = 0;
+	uint32_t hOffset = 0;
 	bool error = true;
 	bool foundData = false;
 	OSType testType;
-	Size iconSize = 0;
+	size_t iconSize = 0;
 	long dataCount = 0;
 	int *dataPtr = NULL;
 
@@ -392,7 +392,7 @@ bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr
 		}
 		else
 		{
-			hOffset += sizeof(OSType) + sizeof(Size);
+			hOffset += sizeof(OSType) + sizeof(size_t);
 
 			if(*byteswap == true)
 			{
@@ -402,7 +402,7 @@ bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr
 
 					if (testType == iconType)
 					{
-						iconSize = ByteSwap(((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize,sizeof(int),true) - sizeof(OSType) - sizeof(Size);
+						iconSize = ByteSwap(((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize,sizeof(int),true) - sizeof(OSType) - sizeof(size_t);
 						dataPtr = (int *)((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementData;
 						error = ParseIconData(iconType,(char *)dataPtr,iconSize,outIcon,*byteswap);
 						foundData = true;
@@ -419,7 +419,7 @@ bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr
 
 					if (testType == iconType)
 					{
-						iconSize = ((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize - sizeof(OSType) - sizeof(Size);
+						iconSize = ((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize - sizeof(OSType) - sizeof(size_t);
 						error = ParseIconData(iconType,(char *)((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementData,iconSize,outIcon,*byteswap);
 						foundData = true;
 						break;
@@ -442,7 +442,7 @@ bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr
 //***************************** ParseIconData **************************//
 // Actual conversion of the icon data into uncompressed raw pixels
 
-bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImagePtr outIcon, bool byteSwap)
+bool ParseIconData(ResType iconType,Ptr rawDataPtr,size_t rawDataLength,IconImagePtr outIcon, bool byteSwap)
 {
 	bool error = false;
 	unsigned int iconWidth = 0;

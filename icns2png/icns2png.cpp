@@ -24,8 +24,7 @@ Boston, MA 02111-1307, USA.
 #include <stdlib.h>
 #include <string.h>
 
-#include "mactypes.h"
-#include "icondefs.h"
+#include "common.h"
 #include "iconvert.h"
 #include "pngwriter.h"
 

@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.
 #ifndef _PNGWRITER_H_
 #define _PNGWRITER_H_ 1
 
-#include "icondefs.h"
+#include "common.h"
 #include "iconvert.h"
 
 bool WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage);

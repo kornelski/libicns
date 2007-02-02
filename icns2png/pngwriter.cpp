@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.
 #include <stdio.h>
 #include <png.h>
 
+#include "common.h"
 #include "pngwriter.h"
-#include "icondefs.h"
 #include "iconvert.h"
 
 typedef struct pixel32_struct
