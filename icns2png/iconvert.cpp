@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.
 
 bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily);
 bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData);
-bool ReadFile(char *fileName,long *dataSize,void **dataPtr);
+bool ReadFile(char *fileName,size_t *dataSize,void **dataPtr);
 
 /***************************** ReadXIconFile **************************/
 
@@ -39,7 +39,7 @@ bool ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily)
 {
 	bool error = false;
 	char *dataPtr = NULL;
-	long dataSize = 0;
+	size_t dataSize = 0;
 
 	// Read the file into memory
 	error = ReadFile(fileName,&dataSize,(void **)&dataPtr);
@@ -179,7 +179,7 @@ bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 					}
 					else
 					{
-						fprintf(stderr,"Error allocating %d bytes of memory!\n",resDataLength);
+						fprintf(stderr,"Error allocating %ld bytes of memory!\n",resDataLength);
 						*iconFamily = NULL;
 						error = true;
 					}
@@ -226,7 +226,6 @@ bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OS
 	long resourceDataLength = 0;
 	long fileDataStart = 0;
 	long resourceDataStart = 0;
-	char *fileDataPtr = NULL;
 	char *resourceDataPtr = NULL;
 
 	*parsedResSize = 0;
@@ -303,7 +302,7 @@ bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OS
 //***************************** ReadFile **************************//
 // Generic file reading routine
 
-bool ReadFile(char *fileName,long *dataSize,void **dataPtr)
+bool ReadFile(char *fileName,size_t *dataSize,void **dataPtr)
 {
 	bool error = false;
 	FILE *dataFile = 0;

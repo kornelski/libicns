@@ -32,7 +32,6 @@ bool ConvertIcnsFile(char *filename);
 
 int main(int argc,char *argv[])
 {
-	int error;
 	int count;
 
 	printf("Icon2PNG Linux Edition - (C) 2002 Mathew Eis\n");
@@ -61,7 +60,6 @@ bool ConvertIcnsFile(char *filename)
 	int filenamelength = 0;
 	int infilenamelength = 0;
 	int outfilenamelength = 0;
-	int count = 0;
 	IconFamilyPtr iconFamily = NULL;
 	IconImage iconImage; iconImage.iconData = NULL;
 	IconImage maskImage; maskImage.iconData = NULL;

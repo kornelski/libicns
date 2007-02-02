@@ -41,9 +41,7 @@ bool WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage)
 	int width = iconImage->width;
 	int height = iconImage->height;
 	int image_channels = 4;
-	int mask_channels = 1;
 	int image_bit_depth = iconImage->depth/image_channels;
-	int alpha_bit_depth = maskImage->depth/mask_channels;
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_bytep *row_pointers;
