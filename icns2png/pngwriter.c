@@ -123,6 +123,7 @@ bool WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage)
 
 	for (j = 0; j < height; j++)
 		free(row_pointers[j]);
+	free(row_pointers);
 
 	return error;
 }

@@ -135,6 +135,8 @@ bool ConvertIcnsFile(char *filename)
 		fprintf(stderr,"Icon image is NULL!\n");
 	}
 
+	free(maskImage.iconData);
+	free(iconImage.iconData);
 	free(iconFamily);
 	free(infilename);
 	free(outfilename);
