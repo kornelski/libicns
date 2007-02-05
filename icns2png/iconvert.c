@@ -362,7 +362,6 @@ bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr
 	bool foundData = false;
 	OSType testType;
 	size_t iconSize = 0;
-	long dataCount = 0;
 	int *dataPtr = NULL;
 
 	if(outIcon == NULL)
