@@ -92,7 +92,7 @@ bool ConvertIcnsFile(char *filename)
 
 	// Yes, the length should be infilenamelength+1 - we are copying the
 	// string from the imput filename.
-	strncpy(outfilename,filename,infilenamelength+1);
+	strncpy(outfilename,filename,outfilenamelength+1);
 
 	// Add the .png extension to the filename
 	outfilename[outfilenamelength-4] = '.';
