@@ -214,7 +214,7 @@ bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData)
 {
 	// This code is based off information from the MacBinaryIII specification at
-	// http://www.lazerware.com/formats/macbinary/macbinary_iii.html
+	// http://web.archive.org/web/*/www.lazerware.com/formats/macbinary/macbinary_iii.html
 
 	bool error = false;
 	bool isValid = false;

@@ -53,7 +53,7 @@ can be easily accesed from Linux/UNIX/Windows.
 You can however access the icons from the resource files. OS X Icons like
 those from http://interfacelift.com/icons-mac/ are compressed in .sit files.
 These files can be uncompressed using Aladdin Stuffit Expander for Linux,
-which can be obtained from http://www.aladdinsys.com/.
+which can be obtained from http://www.stuffit.com/unix/index.html
 
 When unstuffing, be sure to use a command similar to the following:
 
@@ -105,4 +105,4 @@ and alpha channel from the new icns format.
 After I released Icon2PNG for the Mac, I began to receive several e-mails
 requesting a version for Linux. You asked, I delivered. :)
 
-You should be able to get the latest version at http://www.bearca.com/software/
+You should be able to get the latest version at http://sf.net/projects/icns
