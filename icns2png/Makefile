@@ -24,7 +24,7 @@ version=0.5
 # where make install puts icns2png
 prefix=/usr/local
 
-CFLAGS+=-Wall -O
+CFLAGS+=-Wall -g
 LDFLAGS+=-lpng -lz -lm
 
 OBJS = icns2png.o iconvert.o pngwriter.o byteswap.o
