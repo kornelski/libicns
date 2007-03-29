@@ -258,6 +258,8 @@ bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OS
 		// a match on a non MacBinary file are pretty low...
 	}
 
+	if( !isValid ) return true;
+
 	// Start MacBinary Parsing routines
 
 	// If mac file type is requested, pass it up
