@@ -283,6 +283,14 @@ bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OS
 	fileDataStart = 128;
 	resourceDataStart = fileDataLength + fileDataPadding + 128;
 
+	// Check that we are not reading invalid memory
+	if( 0 > resourceDataStart ) return true;
+	if( 0 > resourceDataLength ) return true;
+	if( dataSize < resourceDataStart ) return true;
+	if( dataSize < resourceDataLength ) return true;
+	if( 0 > resourceDataStart+resourceDataLength ) return true;
+	if( dataSize < resourceDataStart+resourceDataLength ) return true;
+	
 	resourceDataPtr = (char *)malloc(resourceDataLength);
 
 	if(resourceDataPtr != NULL)
