@@ -27,7 +27,7 @@ prefix=/usr/local
 CFLAGS+=-Wall -g
 LDFLAGS+=-lpng12 -lz -lm
 
-CC=c++
+CC=gcc
 
 OBJS = icns2png.o iconvert.o pngwriter.o byteswap.o
 
@@ -59,7 +59,7 @@ icns2png: $(OBJS)
 	$(CC) -o icns2png $(CFLAGS) $(OBJS) $(LDFLAGS)
 
 icontainer2icns:
-	$(CC) -o icontainer2icns icontainer2icns.cpp 
+	$(CC) -o icontainer2icns icontainer2icns.c 
 
 clean:
 	rm -f *.o icns2png icontainer2icns

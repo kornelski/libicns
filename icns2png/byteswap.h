@@ -1,28 +1,46 @@
 /*
-* File:       byteutils.h
-* Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
-*
-* This library is free software; you can redistribute it and/or
-* modify it under the terms of the GNU Library General Public
-* License as published by the Free Software Foundation; either
-* version 2 of the License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-* Library General Public License for more details.
-*
-* You should have received a copy of the GNU Library General Public
-* License along with this library; if not, write to the
-* Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-* Boston, MA 02111-1307, USA.
-*
+File:       byteutils.h
+Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
 */
 
 #ifndef __BYTEUTILS__
 #define __BYTEUTILS__
 
-#define		BytesSwapped	( ((long)'ETYB') == *((long*)("BYTE")) )
+#ifndef __cplusplus
+
+#ifndef bool
+typedef char bool;
+#endif
+
+#ifndef true
+#define true    ((bool) 1)
+#endif
+
+#ifndef false
+#define false   ((bool) 0)
+#endif
+
+#endif
+
+// As a side note, we should eventually use endian.h in place of all this
+//
+// #define	BytesSwapped	( ((long)'ETYB') == *((long*)("BYTE")) )
+#define		BytesSwapped	( ((long)0x45545942) == *((long*)("BYTE")) )
 
 #define		ByteSwap(x,s,b)	( (b == false) ? x : (( s == 1 ? ByteSwap08(x) : ( s == 2 ? ByteSwap16(x) : ( s == 4 ? ByteSwap32(x) : (0x00000000) ) ) )))
 

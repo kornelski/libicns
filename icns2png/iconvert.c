@@ -1,23 +1,22 @@
 /*
-* File:       iconvert.cpp
-* Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
-*               2007 Thomas Lübking <thomas.luebking@web.de>
-*
-* This library is free software; you can redistribute it and/or
-* modify it under the terms of the GNU Library General Public
-* License as published by the Free Software Foundation; either
-* version 2 of the License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-* Library General Public License for more details.
-*
-* You should have received a copy of the GNU Library General Public
-* License along with this library; if not, write to the
-* Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-* Boston, MA 02111-1307, USA.
-*
+File:       iconvert.cpp
+Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+              2007 Thomas Lübking <thomas.luebking@web.de>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
 */
 
 #include <stdio.h>
@@ -25,8 +24,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "mactypes.h"
-#include "macicondefs.h"
+#include "apple_mactypes.h"
+#include "apple_icons.h"
 #include "iconvert.h"
 #include "byteswap.h"
 
@@ -161,7 +160,7 @@ bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 			resNumItems = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(short),byteSwapped);
 			resOffset = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(short),byteSwapped);
 			
-			if(resType == 'icns')
+			if(resType == 0x69636E73) /* 'icns' */
 			{
 				short	resID = 0;
 				char	resAttributes = 0;
@@ -266,7 +265,8 @@ bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OS
 		return true;
 	}
 	
-	if(*((OSTypePtr)(dataPtr+65)) == ByteSwap('mBIN',4,byteSwapped))
+	                                         /* 'mBIN' */
+	if(*((OSTypePtr)(dataPtr+65)) == ByteSwap(0x6D42494E,4,byteSwapped))
 	{
 		// Valid MacBinary III file
 		isValid = true;

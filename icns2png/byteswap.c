@@ -1,5 +1,5 @@
 /*
-File:       pngwriter.h
+File:       byteutils.cpp
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
 
 This library is free software; you can redistribute it and/or
@@ -18,15 +18,28 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 */
 
-#include <png.h>
+#include <stdio.h>
 
-#ifndef _PNGWRITER_H_
-#define	_PNGWRITER_H_	1
+#include "byteswap.h"
 
-#include "apple_mactypes.h"
-#include "apple_icons.h"
-#include "iconvert.h"
-
-bool	WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage);
-
-#endif
+void ByteSwapAddr(void *data, int size, bool swap)
+{
+	if(swap == true)
+	{
+		switch(size)
+		{
+			case 1:
+				break;
+			case 2:
+				*((short *)data) = ByteSwap16( *((short *)data ) );
+				break;
+			case 4:
+				*((long *)data) = ByteSwap32( *((long *)data ) );
+				break;
+			case 8:
+				break;
+			default:
+				break;
+		}
+	}
+}
