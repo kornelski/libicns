@@ -1,21 +1,28 @@
-	Welcome to Icon2PNG Linux Edition 0.5
+* Welcome to Icon2PNG Linux Edition 0.7
+* 
+* Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Library General Public
+* License as published by the Free Software Foundation; either
+* version 2 of the License, or (at your option) any later version.
+*
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Library General Public License for more details.
+*
+* You should have received a copy of the GNU Library General Public
+* License along with this library; if not, write to the
+* Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+* Boston, MA 02111-1307, USA.
+*
 
-Copyright (C) 2002 Mathew Eis <mathew@bearca.com>
+NOTICE: icontainer2icns is NOT related to www.iconfactory.com - though it
+decodes this library type. They are NOT involved, please don't bother them
+with bug reports.
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Library General Public
-License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Library General Public License for more details.
-
-You should have received a copy of the GNU Library General Public
-License along with this library; if not, write to the
-Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.
+For bug/wishes regarding icontainer2icns mailto: baghira-style@gmx.net
 
 ===============================================================================
 Building Icon2PNG - Linux Edition
@@ -38,6 +45,16 @@ Icon2PNG Linux Edition - (C) 2002 Mathew Eis
 Converting OmniWeb.icns to OmniWeb.png...
 
 This will result in a file OmniWeb.png with a 128x128 icon from OmniWeb.icns.
+
+===============================================================================
+Using iContainer2icns
+
+./icontainer2icns foo.icontainer
+
+This will end up with a couple of icns files identified by the iContainer ID
+and the iContainer name in a (new) folder carrying the icontainer name
+(without any suffix)
+
 
 ===============================================================================
 Understanding the Mac OS X Icons

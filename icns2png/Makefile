@@ -1,6 +1,6 @@
 # Makefile for Icns2PNG, MacOS X / Linux
 #
-# Copyright (C) 2002 Mathew Eis <mathew@bearca.com>
+# Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -19,20 +19,22 @@
 #
 
 # version number
-version=0.5
+version=0.7
 
 # where make install puts icns2png
 prefix=/usr/local
 
 CFLAGS+=-Wall -g
-LDFLAGS+=-lpng -lz -lm
+LDFLAGS+=-lpng12 -lz -lm
+
+CC=c++
 
 OBJS = icns2png.o iconvert.o pngwriter.o byteswap.o
 
-all: icns2png
+all: icns2png icontainer2icns
 
 test: icns2png
-	@cd test; rm -f Gnu_I.png Gnu_II.png Gnu_III.png; \
+	+@cd test; rm -f Gnu_I.png Gnu_II.png Gnu_III.png; \
 	if ../icns2png Gnu_I.icns Gnu_II.rsrc Gnu_III.bin; then \
 		echo 'Icns2PNG test successful!'; \
 	else \
@@ -40,20 +42,25 @@ test: icns2png
 	fi; cd ..;
 
 install: icns2png
-	install -m 755 icon2png $(prefix)/bin
-
+	install -m 755 icns2png $(prefix)/bin
+	install -m 755 icontainer2icns $(prefix)/bin
+	
 release: icns2png test
-	@mkdir -p icon2png-$(version); \
-	cp icns2png icon2png-$(version); \
-	cp README icon2png-$(version); \
-	rm -f icon2png-$(version).tar; \
-	tar -cf icon2png-$(version).tar icon2png-$(version); \
-	rm -rf icon2png-$(version); \
-	echo 'Icns2PNG $(version) release package created.'; \
-	rm -f *.o;
+	@mkdir -p icns2png-$(version); \
+	cp icns2png icns2png-$(version); \
+	cp README icns2png-$(version); \
+	rm -f icns2png-$(version).tar; \
+	tar -jcf icns2png-$(version).tar.bz2 icns2png-$(version); \
+	rm -rf icns2png-$(version); \
+	echo 'Icns2PNG $(version) binary release package created.'; \
+	rm -f #.o;
 
 icns2png: $(OBJS)
 	$(CC) -o icns2png $(CFLAGS) $(OBJS) $(LDFLAGS)
 
+icontainer2icns:
+	$(CC) -o icontainer2icns icontainer2icns.cpp 
+
 clean:
-	rm -f *.o icns2png
+	rm -f *.o icns2png icontainer2icns
+

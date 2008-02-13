@@ -1,30 +1,30 @@
 /*
-
-File: icns2png.cpp
-Copyright (C) 2002 Mathew Eis <mathew@bearca.com>
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Library General Public
-License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Library General Public License for more details.
-
-You should have received a copy of the GNU Library General Public
-License along with this library; if not, write to the
-Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.
-
+* File:       icns2png.cpp
+* Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Library General Public
+* License as published by the Free Software Foundation; either
+* version 2 of the License, or (at your option) any later version.
+*
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Library General Public License for more details.
+*
+* You should have received a copy of the GNU Library General Public
+* License along with this library; if not, write to the
+* Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+* Boston, MA 02111-1307, USA.
+*
 */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+#include "mactypes.h"
+#include "macicondefs.h"
 #include "iconvert.h"
 #include "pngwriter.h"
 
@@ -34,7 +34,7 @@ int main(int argc,char *argv[])
 {
 	int count;
 
-	printf("Icon2PNG Linux Edition - (C) 2002 Mathew Eis\n");
+	printf("Icon2PNG icns conversion\n");
 
 	if(argc < 2)
 	{
@@ -48,23 +48,23 @@ int main(int argc,char *argv[])
 				printf("Conversion of %s failed!\n",argv[count]);
 		}
 	}
-
+	
 	return 0;
 }
 
 bool ConvertIcnsFile(char *filename)
 {
-	bool error = false;
-	char *infilename;
-	char *outfilename;
-	int filenamelength = 0;
-	int infilenamelength = 0;
-	int outfilenamelength = 0;
-	IconFamilyPtr iconFamily = NULL;
-	IconImage iconImage; iconImage.iconData = NULL;
-	IconImage maskImage; maskImage.iconData = NULL;
-	bool byteSwap = false;
-	FILE *outfile = NULL;
+	bool				error = false;
+	char				*infilename;
+	char				*outfilename;
+	int					filenamelength = 0;
+	int					infilenamelength = 0;
+	int					outfilenamelength = 0;
+	IconFamilyPtr		iconFamily = NULL;
+	IconImage			iconImage; iconImage.iconData = NULL;
+	IconImage			maskImage; maskImage.iconData = NULL;
+	bool				byteSwap = false;
+	FILE				*outfile = NULL;
 
 	filenamelength = strlen(filename);
 
@@ -92,7 +92,7 @@ bool ConvertIcnsFile(char *filename)
 
 	// Yes, the length should be infilenamelength+1 - we are copying the
 	// string from the imput filename.
-	strncpy(outfilename,filename,outfilenamelength+1);
+	strncpy(outfilename,filename,infilenamelength+1);
 
 	// Add the .png extension to the filename
 	outfilename[outfilenamelength-4] = '.';
@@ -102,20 +102,20 @@ bool ConvertIcnsFile(char *filename)
 	outfilename[outfilenamelength-0] = 0;
 
 	printf("Converting %s to %s...\n",infilename,outfilename);
-
+	
 	// The next three functions are the big workhorses
 
 	// ReadXIcon converts the file into an IconFamily
 	error = ReadXIconFile(infilename,&iconFamily);
-
+	
 	// This one converts the IconFamily into raw image data
 	if(!error)
 		error = GetIconDataFromIconFamily(iconFamily,kThumbnail32BitData,&iconImage,&byteSwap);
-
+	
 	// This one converts the IconFamily into raw mask data
 	if(!error)
 		error = GetIconDataFromIconFamily(iconFamily,kThumbnail8BitMask,&maskImage,&byteSwap);
-
+	
 	if(iconImage.iconData != NULL)
 	{
 		outfile = fopen(outfilename,"w");
@@ -140,6 +140,6 @@ bool ConvertIcnsFile(char *filename)
 	free(iconFamily);
 	free(infilename);
 	free(outfilename);
-
+	
 	return error;
 }

@@ -1,5 +1,5 @@
 /*
-* File:       iconvert.cpp
+* File:       byteutils.cpp
 * Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
 *
 * This library is free software; you can redistribute it and/or
@@ -20,30 +20,27 @@
 */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include <png.h>
+#include "byteswap.h"
 
-#ifndef _ICONVERT_H_
-#define	_ICONVERT_H_	1
-
-#include "mactypes.h"
-#include "macicondefs.h"
-
-#define	kByteSize	8
-
-typedef struct IconImage
+void ByteSwapAddr(void *data, int size, bool swap)
 {
-	int				width;
-	int				height;
-	short			depth;
-	long			dataSize;		// Technically, this should always be width*height*pixelDepth/8
-	unsigned char	*iconData;
-} IconImage, *IconImagePtr;
-
-bool ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily);
-bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr outIcon, bool *byteswap);
-bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImagePtr outIcon, bool byteSwap);
-
-#endif
+	if(swap == true)
+	{
+		switch(size)
+		{
+			case 1:
+				break;
+			case 2:
+				*((short *)data) = ByteSwap16( *((short *)data ) );
+				break;
+			case 4:
+				*((long *)data) = ByteSwap32( *((long *)data ) );
+				break;
+			case 8:
+				break;
+			default:
+				break;
+		}
+	}
+}
