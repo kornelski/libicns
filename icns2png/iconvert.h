@@ -30,6 +30,25 @@ Boston, MA 02111-1307, USA.
 #include "apple_mactypes.h"
 #include "apple_icons.h"
 
+<<<<<<< .mine
+#ifndef __cplusplus
+
+#ifndef bool
+typedef char bool;
+#define	bool	bool
+#endif
+
+#ifndef true
+#define true    ((bool) 1)
+#endif
+
+#ifndef false
+#define false   ((bool) 0)
+#endif
+
+#endif
+
+=======
 #ifndef __cplusplus
 
 #ifndef bool
@@ -46,6 +65,7 @@ typedef char bool;
 
 #endif
 
+>>>>>>> .r27
 #define	kByteSize	8
 
 typedef struct IconImage

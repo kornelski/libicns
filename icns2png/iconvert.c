@@ -204,7 +204,7 @@ bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 					}
 					else
 					{
-						fprintf(stderr,"Error allocating %d bytes of memory!\n",resDataLength);
+						fprintf(stderr,"Error allocating %ld bytes of memory!\n",resDataLength);
 						*iconFamily = NULL;
 						error = true;
 					}

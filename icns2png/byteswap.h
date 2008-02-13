@@ -23,6 +23,28 @@ Boston, MA 02111-1307, USA.
 
 #ifndef __cplusplus
 
+<<<<<<< .mine
+#ifndef bool
+typedef char	bool;
+#define	bool	bool
+#endif
+
+#ifndef true
+#define true    ((bool) 1)
+#endif
+
+#ifndef false
+#define false   ((bool) 0)
+#endif
+
+#endif
+
+// As a side note, we should eventually use endian.h in place of all this
+//
+// #define	BytesSwapped	( ((long)'ETYB') == *((long*)("BYTE")) )
+#define		BytesSwapped	( ((long)0x45545942) == *((long*)("BYTE")) )
+
+=======
 #ifndef bool
 typedef char bool;
 #endif
@@ -42,6 +64,7 @@ typedef char bool;
 // #define	BytesSwapped	( ((long)'ETYB') == *((long*)("BYTE")) )
 #define		BytesSwapped	( ((long)0x45545942) == *((long*)("BYTE")) )
 
+>>>>>>> .r27
 #define		ByteSwap(x,s,b)	( (b == false) ? x : (( s == 1 ? ByteSwap08(x) : ( s == 2 ? ByteSwap16(x) : ( s == 4 ? ByteSwap32(x) : (0x00000000) ) ) )))
 
 #define		ByteSwap08(x)	( x )
