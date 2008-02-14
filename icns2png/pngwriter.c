@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.
 #include <stdio.h>
 #include <png.h>
 
-#include "image.h"
+#include "icns.h"
 #include "pngwriter.h"
 
 typedef struct pixel32_struct
@@ -33,7 +33,7 @@ typedef struct pixel32_struct
 	unsigned char	 blue;
 } pixel32;
 
-int	WritePNGImage(FILE *outputfile,ImageData *image,ImageData *mask)
+int	WritePNGImage(FILE *outputfile,ICNS_ImageData *image,ICNS_ImageData *mask)
 {
 	int 			width = image->width;
 	int 			height = image->height;

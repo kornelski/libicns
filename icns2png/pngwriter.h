@@ -20,11 +20,11 @@ Boston, MA 02111-1307, USA.
 */
 
 #include <png.h>
-#include "image.h"
+#include "icns.h"
 
 #ifndef _PNGWRITER_H_
 #define	_PNGWRITER_H_	1
 
-int	WritePNGImage(FILE *outputfile,ImageData *image,ImageData *mask);
+int	WritePNGImage(FILE *outputfile,ICNS_ImageData *image,ICNS_ImageData *mask);
 
 #endif

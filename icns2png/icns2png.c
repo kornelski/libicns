@@ -23,8 +23,6 @@ Boston, MA 02111-1307, USA.
 #include <stdlib.h>
 #include <string.h>
 
-#include "apple_mactypes.h"
-#include "apple_icons.h"
 #include "icns.h"
 #include "pngwriter.h"
 #include "jp2dec.h"
@@ -32,8 +30,8 @@ Boston, MA 02111-1307, USA.
 void parse_format(char *format);
 void parse_options(int argc, char** argv);
 int ConvertIcnsFile(char *filename);
-int convertIcon128ToPNG(IconData icon, IconData maskIcon, int byteSwap, char *filename);
-int convertIcon512ToPNG(IconData icon, char *filename);
+int convertIcon128ToPNG(ICNS_IconData icon, ICNS_IconData maskIcon, int byteSwap, char *filename);
+int convertIcon512ToPNG(ICNS_IconData icon, char *filename);
 int ReadFile(char *fileName,long *dataSize,void **dataPtr);
 
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -133,7 +131,7 @@ int ConvertIcnsFile(char *filename)
 	long		fileDataSize = 0;
 	int		byteSwap = 0;
 	IconFamilyPtr	iconFamily = NULL;
-	IconData	icon; icon.data = NULL;
+	ICNS_IconData	icon; icon.data = NULL;
 
 	filenamelength = strlen(filename);
 
@@ -202,7 +200,7 @@ int ConvertIcnsFile(char *filename)
 			{
 			case kThumbnail32BitData:
 			    {
-				IconData maskIcon; maskIcon.data = NULL;
+				ICNS_IconData maskIcon; maskIcon.data = NULL;
 				error = GetIconDataFromIconFamily(iconFamily,kThumbnail8BitMask,&maskIcon,&byteSwap);
 				if(error) {
 					fprintf(stderr,"Unable to load icon mask from icon family!\n");
@@ -243,10 +241,10 @@ int ConvertIcnsFile(char *filename)
 	return error;
 }
 
-int convertIcon128ToPNG(IconData icon, IconData maskIcon, int byteSwap, char *filename)
+int convertIcon128ToPNG(ICNS_IconData icon, ICNS_IconData maskIcon, int byteSwap, char *filename)
 {
-	ImageData iconImage;
-	ImageData maskImage;
+	ICNS_ImageData iconImage;
+	ICNS_ImageData maskImage;
 	int err = 0;
 	FILE *outfile = NULL;
 
@@ -281,7 +279,7 @@ out:
 	return err;
 }
 
-int convertIcon512ToPNG(IconData icon, char *filename)
+int convertIcon512ToPNG(ICNS_IconData icon, char *filename)
 {
 	opj_image_t* image = NULL;
 	int err;

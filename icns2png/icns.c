@@ -25,12 +25,8 @@ Boston, MA 02111-1307, USA.
 #include <stdint.h>
 #include <string.h>
 
-#include "apple_mactypes.h"
-#include "apple_icons.h"
-#include "apple_iconstorage.h"
-#include "endianswap.h"
-#include "image.h"
 #include "icns.h"
+#include "endianswap.h"
 
 uint numOffsets = 3;
 uint offsets[3] = {342, 670, 2606};
@@ -339,7 +335,7 @@ int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OST
 //***************************** GetIconDataFromIconFamily **************************//
 // Parses requested data from an icon family - puts it into a "raw" image format
 
-int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, IconData *outIcon, int *byteswap)
+int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, ICNS_IconData *outIcon, int *byteswap)
 {
 	UInt32		hOffset = 0;
 	int		error = 0;
@@ -420,7 +416,7 @@ int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, IconData *o
 //***************************** ParseIconData **************************//
 // Actual conversion of the icon data into uncompressed raw pixels
 
-int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPtr outIcon, int byteSwap)
+int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ICNS_ImageDataPtr outIcon, int byteSwap)
 {
 	int		error = 0;
 	unsigned int	iconWidth = 0;
@@ -525,7 +521,7 @@ int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPt
 	printf("Color bit depth: %d\n",iconDepth);
 	*/
 	
-	blockSize = iconWidth *(iconDepth / kByteSize);
+	blockSize = iconWidth *(iconDepth / kICNS_ByteSize);
 	iconDataSize = iconHeight * blockSize;
 	outIcon->width = iconWidth;
 	outIcon->height = iconHeight;
@@ -616,7 +612,7 @@ int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPt
 	
 	if(byteSwap)
 	{
-		int	packBytes = (iconDepth / kByteSize);
+		int	packBytes = (iconDepth / kICNS_ByteSize);
 		char	*swapPtr = (char*)outIcon->iconData;
 		
 		if(packBytes == 2)

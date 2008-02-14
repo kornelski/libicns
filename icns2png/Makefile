@@ -29,15 +29,19 @@ LIBSO = $(LIBNAME).so
 LIBSOMAJ = $(LIBSO).$(LIBVERMAJ)
 LIBSOVER = $(LIBSO).$(VERSION)
 
+LIBHDR = icns.h
+
 # Utilities
 CC=gcc
 AR_RC=ar rc
 RANLIB=ranlib
+MAKE=make
 
 # Where make install puts icns2png
 PREFIX=/usr/local
 LIBPATH=$(PREFIX)/lib
 BINPATH=$(PREFIX)/bin
+INCPATH=$(PREFIX)/include
 
 # Compiler flags
 CFLAGS+=-Wall -g
@@ -57,13 +61,27 @@ LIBUTILS = icns2png icontainer2icns
 # icns2png object files
 UTILOBJS = icns2png.o jp2dec.o pngwriter.o
 
-# Directory comtaining test files
-TESTDIR = test
+# Subdirectories to make
+SUBDIRS = $(TESTDIR)
 
 # Macros for makefile
-.SUFFIXES:	.c .o .pic.o
+.SUFFIXES:	.c .o .pic.o .icns .rsrc .bin .png
+
 .c.pic.o:
 	$(CC) -c $(CFLAGS) -fPIC -o $@ $*.c
+
+# test files
+TESTFILES = test1.png test2.png test3.png
+TESTUTIL = ./icns2png
+
+# Macros for testing
+.SECONDEXPANSION:
+.icns.png:
+	$(TESTUTIL) $*.icns	
+.rsrc.png:
+	$(TESTUTIL) $*.rsrc
+.bin.png:
+	$(TESTUTIL) $*.bin
 
 all: $(LIBSTATIC) $(LIBSO) $(LIBUTILS)
 
@@ -86,29 +104,34 @@ icns2png: $(UTILOBJS) $(LIBSO)
 icontainer2icns:
 	$(CC) -o icontainer2icns icontainer2icns.c
 
-test: $(LIBUTILS)
-	+@rm -f $(TESTDIR)/Gnu_I.png 
-	+@rm -f $(TESTDIR)/Gnu_II.png 
-	+@rm -f $(TESTDIR)/Gnu_III.png 
-	+./icns2png $(TESTDIR)/Gnu_I.icns
-	+./icns2png $(TESTDIR)/Gnu_II.rsrc
-	+./icns2png $(TESTDIR)/Gnu_III.bin
+test: $(LIBUTILS) $$(TESTFILES)
 
-install: $(LIBSO) $(LIBUTILS)
+install-headers: $(LIBHDR)
+	cp $(LIBHDR) $(INCPATH)/
+	chmod 644 $(INCPATH)/$(LIBHDR)
+
+install-static: install-headers $(LIBSTATIC) 
 	-@if [ ! -d $(LIBPATH) ]; then mkdir -p $(LIBPATH); fi
 	cp $(LIBSTATIC) $(LIBPATH)/
-	chmod 644 $(LIBPATH)/$(LIBSTATIC)	
+	chmod 644 $(LIBPATH)/$(LIBSTATIC)
+
+install-shared: install-headers $(LIBSO)
+	-@if [ ! -d $(LIBPATH) ]; then mkdir -p $(LIBPATH); fi	
 	cp $(LIBSOVER) $(LIBPATH)/
 	chmod 755 $(LIBPATH)/$(LIBSOVER)
 	(cd $(LIBPATH); \
 	ln -sf $(LIBSOVER) $(LIBSOMAJ); \
 	ln -sf $(LIBSOMAJ) $(LIBSO))
+
+install-utils:
 	-@if [ ! -d $(BINPATH) ]; then mkdir -p $(BINPATH); fi
 	install -m 755 icns2png $(BINPATH)
 	install -m 755 icontainer2icns $(BINPATH)
+
+install: install-static install-shared install-utils
 	
 clean:
 	rm -f $(LIBSTATIC) $(LIBSO) $(LIBSOMAJ) $(LIBSOVER) \
-		*.o $(LIBUTILS) $(TESTDIR)/*.png
+		*.o $(LIBUTILS) $(TESTFILES)
 
 
