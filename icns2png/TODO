@@ -7,3 +7,4 @@ TODO
    |icns
    \- libicns
    \- icon2png
+5) Update icns2png to support extraction of any icon type (support is in libicns)
