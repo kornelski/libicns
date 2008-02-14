@@ -5,7 +5,7 @@
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
-# version 2 of the License, or (at your option) any later version.
+# VERSION 2 of the License, or (at your option) any later VERSION.
 #
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,49 +18,97 @@
 # Boston, MA 02111-1307, USA.
 #
 
-# version number
-version=0.8
+# Version information
+LIBNAME = libicns
+LIBVERMAJ = 0
+LIBVERMIN = 0.8
 
-# where make install puts icns2png
-prefix=/usr/local
+VERSION = $(LIBVERMAJ).$(LIBVERMIN)
+LIBSTATIC = $(LIBNAME).a
+LIBSO = $(LIBNAME).so
+LIBSOMAJ = $(LIBSO).$(LIBVERMAJ)
+LIBSOVER = $(LIBSO).$(VERSION)
 
-CFLAGS+=-Wall -g
-LDFLAGS+=-lpng12 -lz -lm -lopenjpeg
-
-OBJS = icns2png.o pngwriter.o jp2dec.o icns.o
-
+# Utilities
 CC=gcc
+AR_RC=ar rc
+RANLIB=ranlib
 
-all: icns2png icontainer2icns
+# Where make install puts icns2png
+PREFIX=/usr/local
+LIBPATH=$(PREFIX)/lib
+BINPATH=$(PREFIX)/bin
 
-test: icns2png
-	+@cd test; rm -f Gnu_I.png Gnu_II.png Gnu_III.png; \
-	if ../icns2png Gnu_I.icns Gnu_II.rsrc Gnu_III.bin; then \
-		echo 'Icns2PNG test successful!'; \
-	else \
-		echo 'Icns2PNG test failed internal error'; \
-	fi; cd ..;
+# Compiler flags
+CFLAGS+=-Wall -g
 
-install: icns2png
-	install -m 755 icns2png $(prefix)/bin
-	install -m 755 icontainer2icns $(prefix)/bin
-	
-release: icns2png test
-	@mkdir -p icns2png-$(version); \
-	cp icns2png icns2png-$(version); \
-	cp README icns2png-$(version); \
-	rm -f icns2png-$(version).tar; \
-	tar -jcf icns2png-$(version).tar.bz2 icns2png-$(version); \
-	rm -rf icns2png-$(version); \
-	echo 'Icns2PNG $(version) binary release package created.'; \
-	rm -f #.o;
+# Linker flags
+LDFLAGS+=-L. -lz -lm -lpng12 -lopenjpeg
+LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
+LDFLAGS_SO+=$(LDFLAGS) -Wl,-rpath,. -licns
 
-icns2png: $(OBJS)
-	$(CC) -o icns2png $(CFLAGS) $(OBJS) $(LDFLAGS)
+# Library object files
+LIBOBJS = icns.o
+LIBOBJSDLL = $(LIBOBJS:.o=.pic.o)
+
+# Utility programs included in library
+LIBUTILS = icns2png icontainer2icns
+
+# icns2png object files
+UTILOBJS = icns2png.o jp2dec.o pngwriter.o
+
+# Directory comtaining test files
+TESTDIR = test
+
+# Macros for makefile
+.SUFFIXES:	.c .o .pic.o
+.c.pic.o:
+	$(CC) -c $(CFLAGS) -fPIC -o $@ $*.c
+
+all: $(LIBSTATIC) $(LIBSO) $(LIBUTILS)
+
+$(LIBSTATIC): $(LIBOBJS)
+	$(AR_RC) $@ $(LIBOBJS)
+	$(RANLIB) $@
+
+$(LIBSO): $(LIBSOMAJ)
+	ln -sf $(LIBSOMAJ) $(LIBSO)
+
+$(LIBSOMAJ): $(LIBSOVER)
+	ln -sf $(LIBSOVER) $(LIBSOMAJ)
+
+$(LIBSOVER): $(LIBOBJSDLL)
+	$(CC) -shared -W1,-coname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
+
+icns2png: $(UTILOBJS) $(LIBSO)
+	$(CC) -o icns2png $(CFLAGS) $(UTILOBJS) $(LDFLAGS_SO)
 
 icontainer2icns:
-	$(CC) -o icontainer2icns icontainer2icns.c 
+	$(CC) -o icontainer2icns icontainer2icns.c
 
+test: $(LIBUTILS)
+	+@rm -f $(TESTDIR)/Gnu_I.png 
+	+@rm -f $(TESTDIR)/Gnu_II.png 
+	+@rm -f $(TESTDIR)/Gnu_III.png 
+	+./icns2png $(TESTDIR)/Gnu_I.icns
+	+./icns2png $(TESTDIR)/Gnu_II.rsrc
+	+./icns2png $(TESTDIR)/Gnu_III.bin
+
+install: $(LIBSO) $(LIBUTILS)
+	-@if [ ! -d $(LIBPATH) ]; then mkdir -p $(LIBPATH); fi
+	cp $(LIBSTATIC) $(LIBPATH)/
+	chmod 644 $(LIBPATH)/$(LIBSTATIC)	
+	cp $(LIBSOVER) $(LIBPATH)/
+	chmod 755 $(LIBPATH)/$(LIBSOVER)
+	(cd $(LIBPATH); \
+	ln -sf $(LIBSOVER) $(LIBSOMAJ); \
+	ln -sf $(LIBSOMAJ) $(LIBSO))
+	-@if [ ! -d $(BINPATH) ]; then mkdir -p $(BINPATH); fi
+	install -m 755 icns2png $(BINPATH)
+	install -m 755 icontainer2icns $(BINPATH)
+	
 clean:
-	rm -f *.o icns2png icontainer2icns test/*.png
+	rm -f $(LIBSTATIC) $(LIBSO) $(LIBSOMAJ) $(LIBSOVER) \
+		*.o $(LIBUTILS) $(TESTDIR)/*.png
+
 

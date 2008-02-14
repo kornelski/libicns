@@ -1,10 +1,7 @@
 TODO
 
-1) Rename functions to make more sense in the context of icns
-2) Modify Makefile to build static and dymanic libraries from icns.c
-3) Modify Makefile to link icns2png against the library instead of directly
-4) Split libicns and icon2png into seperate trees
-   |icns
-   \- libicns
-   \- icon2png
-5) Update icns2png to support extraction of any icon type (support is in libicns)
+1) Rename icns functions to make more sense in the context of icns
+2) Finish seperation of icns2png from libicns (move jp2 support to libicns)
+3) Document libicns API
+4) Update icns2png to support extraction of any icon size with -16 -32 -64, etc.
+5) Add write support to libicns

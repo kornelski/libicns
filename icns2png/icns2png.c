@@ -171,7 +171,7 @@ int ConvertIcnsFile(char *filename)
 	outfilename[outfilenamelength-1] = 'g';
 	outfilename[outfilenamelength-0] = 0;
 
-	printf("Converting %s to %s...\n",infilename,outfilename);
+	printf("Converting %s...\n",infilename);
 	
 	error = ReadFile(infilename,&fileDataSize,(void **)&fileDataPtr);
 	
@@ -208,6 +208,7 @@ int ConvertIcnsFile(char *filename)
 					fprintf(stderr,"Unable to load icon mask from icon family!\n");
 				} else {
 					convertIcon128ToPNG(icon, maskIcon, byteSwap, outfilename);
+					printf("Saved to %s\n",outfilename);
 				}
 				if(maskIcon.data != NULL) {
 					free(maskIcon.data);
@@ -218,6 +219,7 @@ int ConvertIcnsFile(char *filename)
 			case kIconServices512PixelDataARGB:
 			case kIconServices256PixelDataARGB:
 				convertIcon512ToPNG(icon, outfilename);
+				printf("Saved to %s\n",outfilename);
 				break;
 			default:
 				break;
