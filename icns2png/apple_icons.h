@@ -1,7 +1,7 @@
 /*
 File:       apple_icons.h
 
-This file is based on information found in the file MacTypes.h
+This file is based on information found in the file Icons.h
 originating in the 2002, Quicktime 6.0.2 developer's kit
 as developed by Apple Computer, Inc.
 
@@ -16,10 +16,11 @@ Copyright: (c) 1985-2001 by Apple Computer, Inc., all rights reserved.
 
 */
 
+#include "apple_mactypes.h"
+#include "apple_iconstorage.h"
+
 #ifndef __APPLE_ICONS__
 #define __APPLE_ICONS__
-
-#include "apple_mactypes.h"
 
 /* The following icon types can only be used as an icon element */
 /* inside a 'icns' icon family */

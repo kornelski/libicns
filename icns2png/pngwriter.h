@@ -1,6 +1,7 @@
 /*
 File:       pngwriter.h
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -19,14 +20,11 @@ Boston, MA 02111-1307, USA.
 */
 
 #include <png.h>
+#include "image.h"
 
 #ifndef _PNGWRITER_H_
 #define	_PNGWRITER_H_	1
 
-#include "apple_mactypes.h"
-#include "apple_icons.h"
-#include "iconvert.h"
-
-bool	WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage);
+int	WritePNGImage(FILE *outputfile,ImageData *image,ImageData *mask);
 
 #endif

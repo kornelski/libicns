@@ -2,6 +2,7 @@
 File:       iconvert.cpp
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
               2007 Thomas Lübking <thomas.luebking@web.de>
+              2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -26,24 +27,28 @@ Boston, MA 02111-1307, USA.
 
 #include "apple_mactypes.h"
 #include "apple_icons.h"
+#include "apple_iconstorage.h"
+#include "endianswap.h"
+#include "image.h"
+#include "pngwriter.h"
+#include "jp2dec.h"
 #include "iconvert.h"
-#include "byteswap.h"
 
-bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily);
-bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData);
-bool ReadFile(char *fileName,long *dataSize,void **dataPtr);
+int ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily);
+int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData);
+int ReadFile(char *fileName,long *dataSize,void **dataPtr);
 
 uint numOffsets = 3;
 uint offsets[3] = {342, 670, 2606};
 
-#define IS_ICNS (*((OSTypePtr)(iconDataPtr)) == kIconFamilyType || *((OSTypePtr)(iconDataPtr)) == ByteSwap(kIconFamilyType,sizeof(OSType),true))
-#define IS_NOT_ICNS (*((OSTypePtr)(iconDataPtr)) != kIconFamilyType && *((OSTypePtr)(iconDataPtr)) != ByteSwap(kIconFamilyType,sizeof(OSType),true))
+#define IS_ICNS (*((OSTypePtr)(iconDataPtr)) == kIconFamilyType || *((OSTypePtr)(iconDataPtr)) == EndianSwap(kIconFamilyType,sizeof(OSType),true))
+#define IS_NOT_ICNS (*((OSTypePtr)(iconDataPtr)) != kIconFamilyType && *((OSTypePtr)(iconDataPtr)) != EndianSwap(kIconFamilyType,sizeof(OSType),true))
 
 /***************************** ReadXIconFile **************************/
 
-bool ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily)
+int ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily)
 {
-	bool	error = false;
+	int	error = 0;
 	char	*dataPtr = NULL;
 	char	*iconDataPtr = NULL;
 	long	dataSize = 0;
@@ -65,9 +70,10 @@ bool ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily)
 	else
 	{
 		// search for icns entry, NG icns haf various offsets!
+		// Note by Mathew 02/13/2008
 		// IMHO, this is hackish and should be fixed
-		// Are there specs for the NG format??
-		while (dataOffset < dataSize && IS_NOT_ICNS)
+		// Are there not specs for the NG format??
+		while ((dataOffset < dataSize-sizeof(OSType)) && IS_NOT_ICNS)
 		{
 			++dataOffset; ++iconDataPtr;
 		}
@@ -80,7 +86,8 @@ bool ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily)
 	
 	if( IS_NOT_ICNS )
 	{
-		if((error = ParseXIconResource(dataSize,iconDataPtr,iconFamily)) == true)
+		// Might be embedded in an rsrc file
+		if((error = ParseXIconResource(dataSize,iconDataPtr,iconFamily)))
 		{
 			fprintf(stderr,"Error parsing X Icon resource!\n");
 			*iconFamily = NULL;
@@ -98,13 +105,13 @@ bool ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily)
 
 /***************************** ParseXIconResource **************************/
 
-bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
+int ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 {
-	bool	error = false;
-	bool	found = false;
-	int		count = 0;
+	int	error = 0;
+	int	found = 0;
+	int	count = 0;
 	
-	bool	byteSwapped = BytesSwapped;
+	int	byteSwapped = ES_IS_LITTLE_ENDIAN;
 
 	long	parsedSize = 0;
 	char	*parsedData = NULL;
@@ -118,47 +125,55 @@ bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 	short	resMapTypeOffset = 0;
 	short	resMapNameOffset = 0;
 	short	resMapNumTypes = 0;
+	
+	if(dataSize < 16)
+	{
+		// rsrc header is 128 bytes - We cannot have a file of a smaller size.
+		fprintf(stderr,"Unable to decode rsrc data! - Data size too small.\n");
+		return true;
+	}
 
 	// Load Resource Header to if we are dealing with a raw resource fork.
-	resHeadDataOffset = ByteSwap(*((long*)(dataPtr+0)),sizeof(long),byteSwapped);
-	resHeadMapOffset = ByteSwap(*((long*)(dataPtr+4)),sizeof(long),byteSwapped);
-	resHeadDataLength = ByteSwap(*((long*)(dataPtr+8)),sizeof(long),byteSwapped);
-	resHeadMapLength = ByteSwap(*((long*)(dataPtr+12)),sizeof(long),byteSwapped);
+	resHeadDataOffset = EndianSwap(*((int*)(dataPtr+0)),sizeof(int),byteSwapped);
+	resHeadMapOffset = EndianSwap(*((int*)(dataPtr+4)),sizeof(int),byteSwapped);
+	resHeadDataLength = EndianSwap(*((int*)(dataPtr+8)),sizeof(int),byteSwapped);
+	resHeadMapLength = EndianSwap(*((int*)(dataPtr+12)),sizeof(int),byteSwapped);
 	
 	// Check to see if file is not a raw resource file
 	if( (resHeadMapOffset+resHeadMapLength != dataSize) || (resHeadDataOffset+resHeadDataLength != resHeadMapOffset) )
 	{
 		// If not, try reading data as MacBinary file
-		if((error = ParseMacBinaryResourceFork(dataSize,dataPtr,NULL,NULL,&parsedSize,&parsedData)) != true)
+		error = ParseMacBinaryResourceFork(dataSize,dataPtr,NULL,NULL,&parsedSize,&parsedData);
+		if(!error)
 		{
 			// Reload Actual Resource Header.
-			resHeadDataOffset = ByteSwap(*((long*)(parsedData+0)),sizeof(long),byteSwapped);
-			resHeadMapOffset = ByteSwap(*((long*)(parsedData+4)),sizeof(long),byteSwapped);
-			resHeadDataLength = ByteSwap(*((long*)(parsedData+8)),sizeof(long),byteSwapped);
-			resHeadMapLength = ByteSwap(*((long*)(parsedData+12)),sizeof(long),byteSwapped);
+			resHeadDataOffset = EndianSwap(*((int*)(parsedData+0)),sizeof(int),byteSwapped);
+			resHeadMapOffset = EndianSwap(*((int*)(parsedData+4)),sizeof(int),byteSwapped);
+			resHeadDataLength = EndianSwap(*((int*)(parsedData+8)),sizeof(int),byteSwapped);
+			resHeadMapLength = EndianSwap(*((int*)(parsedData+12)),sizeof(int),byteSwapped);
 			
 			dataSize = parsedSize;
 			dataPtr = parsedData;
 		}
 	}
 	
-	if(error != true)
+	if(!error)
 	{
 		// Load Resource Map
-		resMapAttributes = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+0+22)), sizeof(short),byteSwapped);
-		resMapTypeOffset = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+2+22)), sizeof(short),byteSwapped);
-		resMapNameOffset = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+4+22)), sizeof(short),byteSwapped);
-		resMapNumTypes = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+6+22)), sizeof(short),byteSwapped)+1;
+		resMapAttributes = EndianSwap(*((short*)(dataPtr+resHeadMapOffset+0+22)), sizeof(short),byteSwapped);
+		resMapTypeOffset = EndianSwap(*((short*)(dataPtr+resHeadMapOffset+2+22)), sizeof(short),byteSwapped);
+		resMapNameOffset = EndianSwap(*((short*)(dataPtr+resHeadMapOffset+4+22)), sizeof(short),byteSwapped);
+		resMapNumTypes = EndianSwap(*((short*)(dataPtr+resHeadMapOffset+6+22)), sizeof(short),byteSwapped)+1;
 		
-		for(count = 0; count < resMapNumTypes && found == false; count++)
+		for(count = 0; count < resMapNumTypes && found == 0; count++)
 		{
 			OSType	resType;
 			short	resNumItems = 0;
 			short	resOffset = 0;
 			
-			resType = ByteSwap(*((OSTypePtr)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8))),sizeof(OSType),byteSwapped);
-			resNumItems = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(short),byteSwapped);
-			resOffset = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(short),byteSwapped);
+			resType = EndianSwap(*((OSTypePtr)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8))),sizeof(OSType),byteSwapped);
+			resNumItems = EndianSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(short),byteSwapped);
+			resOffset = EndianSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(short),byteSwapped);
 			
 			if(resType == 0x69636E73) /* 'icns' */
 			{
@@ -171,16 +186,16 @@ bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 				char	resName[256] = {0};
 				char	*resData = NULL;
 				
-				resID = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset)),sizeof(short),byteSwapped);
-				resNameOffset = ByteSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2)),sizeof(short),byteSwapped);
+				resID = EndianSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset)),sizeof(short),byteSwapped);
+				resNameOffset = EndianSwap(*((short*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2)),sizeof(short),byteSwapped);
 				resAttributes = *((char*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4));
 
 				// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
 				// Load as long, and then cut off extra inital byte.
-				resDataOffset = ByteSwap(*((long*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(long),byteSwapped);
+				resDataOffset = EndianSwap(*((int*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(int),byteSwapped);
 				resDataOffset &= 0x00FFFFFF;
 
-				resDataLength = ByteSwap(*((long*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(long),byteSwapped);
+				resDataLength = EndianSwap(*((int*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(int),byteSwapped);
 
 				if(resNameOffset != -1)
 				{
@@ -224,10 +239,10 @@ bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 		parsedData = NULL;
 	}
 	
-	if(found == false)
+	if(!found)
 	{
 		fprintf(stderr,"Unable to find icon data in file!\n");
-		error = true;
+		error = 1;
 	}
 
 	return error;
@@ -236,14 +251,14 @@ bool ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 //***************************** ParseMacBinaryResourceFork **************************//
 // Parses a MacBinary file - returns type, creator, and resource fork size/data
 
-bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData)
+int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData)
 {
 	// This code is based off information from the MacBinaryIII specification at
 	// http://web.archive.org/web/*/www.lazerware.com/formats/macbinary/macbinary_iii.html
 	
-	bool		error = false;
-	bool		isValid = false;
-	bool		byteSwapped = BytesSwapped;
+	int		error = 0;
+	int		isValid = 0;
+	int		byteSwapped = ES_IS_LITTLE_ENDIAN;
 	short		secondHeaderLength = 0;
 	long		fileDataPadding = 0;
 	long		resourceDataPadding = 0;
@@ -266,7 +281,7 @@ bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OS
 	}
 	
 	                                         /* 'mBIN' */
-	if(*((OSTypePtr)(dataPtr+65)) == ByteSwap(0x6D42494E,4,byteSwapped))
+	if(*((OSTypePtr)(dataPtr+65)) == EndianSwap(0x6D42494E,4,byteSwapped))
 	{
 		// Valid MacBinary III file
 		isValid = true;
@@ -290,16 +305,16 @@ bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OS
 	
 	// If mac file type is requested, pass it up
 	if(dataType != NULL)
-		*dataType = ByteSwap( *((OSTypePtr)(dataPtr+65)), sizeof(OSType), byteSwapped );
+		*dataType = EndianSwap( *((OSTypePtr)(dataPtr+65)), sizeof(OSType), byteSwapped );
 
 	// If mac file creator is requested, pass it up
 	if(dataCreator != NULL)
-		*dataCreator = ByteSwap( *((OSTypePtr)(dataPtr+69)), sizeof(OSType), byteSwapped );
+		*dataCreator = EndianSwap( *((OSTypePtr)(dataPtr+69)), sizeof(OSType), byteSwapped );
 	
 	// Load up the data lengths
-	secondHeaderLength = ByteSwap( *((short *)(dataPtr+120)), sizeof(short), byteSwapped );
-	fileDataLength = ByteSwap( *((long *)(dataPtr+83)), sizeof(long), byteSwapped );
-	resourceDataLength = ByteSwap( *((long *)(dataPtr+87)), sizeof(long), byteSwapped );
+	secondHeaderLength = EndianSwap( *((short *)(dataPtr+120)), sizeof(short), byteSwapped );
+	fileDataLength = EndianSwap( *((long *)(dataPtr+83)), sizeof(long), byteSwapped );
+	resourceDataLength = EndianSwap( *((long *)(dataPtr+87)), sizeof(long), byteSwapped );
 
 	// Calculate extra padding length for forks
 	fileDataPadding = (((fileDataLength + 127) >> 7) << 7) - fileDataLength;
@@ -338,9 +353,9 @@ bool ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OS
 //***************************** ReadFile **************************//
 // Generic file reading routine
 
-bool ReadFile(char *fileName,long *dataSize,void **dataPtr)
+int ReadFile(char *fileName,long *dataSize,void **dataPtr)
 {
-	bool	error = false;
+	int	error = 0;
 	FILE	*dataFile = 0;
 
 	*dataSize = 0;
@@ -355,7 +370,7 @@ bool ReadFile(char *fileName,long *dataSize,void **dataPtr)
 			
 			*dataPtr = (void *)malloc(*dataSize);
 
-			if ( (error == false) && (*dataPtr != NULL) )
+			if ( (error == 0) && (*dataPtr != NULL) )
 			{
 				if(fread( *dataPtr, sizeof(char), *dataSize, dataFile) != *dataSize)
 				{
@@ -391,83 +406,79 @@ bool ReadFile(char *fileName,long *dataSize,void **dataPtr)
 //***************************** GetIconDataFromIconFamily **************************//
 // Parses requested data from an icon family - puts it into a "raw" image format
 
-bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr outIcon, bool *byteswap)
+int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, IconData *outIcon, int *byteswap)
 {
-	UInt32	hOffset = 0;
-	bool	error = true;
-	bool	foundData = false;
-	OSType	testType;
-	Size	iconSize = 0;
-	int		*dataPtr = NULL;
+	UInt32		hOffset = 0;
+	int		error = 0;
+	int		foundData = 0;
+	OSType		readDataType;
+	Size		readDataSize = 0;
+	IconFamilyElementPtr iconPtr = NULL;
 	
 	if(outIcon == NULL)
 	{
 		fprintf(stderr,"Output pointer icon is NULL!\n");
+		return true;
+	}
+	
+	if(inPtr->resourceType == EndianSwap(kIconFamilyType, sizeof(kIconFamilyType), true))
+		*byteswap = true;
+	
+	/*
+	printf("Bytes are swapped in file: %s\n",(*byteswap ? "yes" : "no"));
+	printf("Resource size: %d, %d\n",(unsigned int)EndianSwap(inPtr->resourceSize,sizeof(int),*byteswap),sizeof(IconFamilyResource));
+	printf("Resource types: 0x%8X , 0x%8X\n",(unsigned int)EndianSwap(inPtr->resourceType,sizeof(int),*byteswap),kIconFamilyType);
+	printf("Looking for icon of type: 0x%8X\n",(unsigned int)iconType);
+	*/
+	
+	if (( EndianSwap(inPtr->resourceType,sizeof(int),*byteswap) != kIconFamilyType) || (EndianSwap(inPtr->resourceSize,sizeof(int),*byteswap) < sizeof(IconFamilyResource)))
+	{
+		fprintf(stderr,"Error loading icns resource!\n");
 		error = true;
 	}
 	else
 	{
-		if(*((OSTypePtr)(inPtr)) == ByteSwap(kIconFamilyType,sizeof(kIconFamilyType),true))
-		{
-			*byteswap = true;
-			*((OSTypePtr)(inPtr)) = kIconFamilyType;
-			inPtr->resourceSize = ByteSwap(inPtr->resourceSize,sizeof(int),true);
-		}
+		hOffset += sizeof(OSType) + sizeof(Size);
 		
-		/*
-		printf("Resource size: %d, %d\n",inPtr->resourceSize,sizeof(IconFamilyResource));
-		printf("Resource Types: 0x%8X, 0x%8X\n",*((OSTypePtr)(inPtr)),kIconFamilyType);
-		printf("Looking for icon of type: 0x%8X\n",iconType);
-		*/
-		
-		if (( *((OSTypePtr)(inPtr)) != kIconFamilyType) || (inPtr->resourceSize < sizeof(IconFamilyResource)))
+		while ( (foundData == 0) && (hOffset < EndianSwap(inPtr->resourceSize,sizeof(int),*byteswap) ) )
 		{
-			fprintf(stderr,"Error loading icns resource!\n");
-		}
-		else
-		{
-			hOffset += sizeof(OSType) + sizeof(Size);
+			readDataType = EndianSwap((OSType)((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementType,sizeof(OSType),*byteswap);
+			readDataSize = EndianSwap((Size)((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize,sizeof(Size),*byteswap);
 			
-			if(*byteswap == true)
+			/*
+			printf("Found data...\n");
+			printf("  type: 0x%8X\n",(unsigned int)readDataType);
+			printf("  size: %d\n",(unsigned int)readDataSize);
+			*/
+			
+			if (readDataType == iconType)
 			{
-				while (hOffset < ByteSwap(inPtr->resourceSize,sizeof(int),true) )
-				{
-					testType = ByteSwap((OSType)((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementType,sizeof(OSType),true);
-					
-					if (testType == iconType)
-					{
-						iconSize = ByteSwap(((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize,sizeof(int),true) - sizeof(OSType) - sizeof(Size);
-						dataPtr = (int *)((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementData;
-						error = ParseIconData(iconType,(char *)dataPtr,iconSize,outIcon,*byteswap);
-						foundData = true;
-						break;
-					}
-					hOffset += ByteSwap(((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize,sizeof(int),true);
-				}
+				iconPtr = (IconFamilyElementPtr)(((char*)inPtr)+hOffset);
+				foundData = true;
 			}
 			else
 			{
-				while (hOffset < inPtr->resourceSize)
-				{
-					testType = (OSType)((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementType;
-					
-					if (testType == iconType)
-					{
-						iconSize = ((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize - sizeof(OSType) - sizeof(Size);
-						error = ParseIconData(iconType,(char *)((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementData,iconSize,outIcon,*byteswap);
-						foundData = true;
-						break;
-					}
-					hOffset += ((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize;
-				}
+				hOffset += EndianSwap(((IconFamilyElementPtr)(((char*)inPtr)+hOffset))->elementSize,sizeof(int),*byteswap);
 			}
 		}
-		
-		if(foundData == false)
-		{
-			fprintf(stderr,"Unable to find requested icon data!\n");
+	}
+	
+	if(foundData)
+	{
+		outIcon->type = readDataType;
+		outIcon->size = readDataSize - sizeof(OSType) - sizeof(Size);
+		outIcon->data = malloc(outIcon->size);
+		if(!outIcon->data) {
+			fprintf(stderr,"Out of Memory\n");
 			error = true;
+		} else {
+			memcpy(outIcon->data, iconPtr->elementData, outIcon->size);
 		}
+	}
+	else
+	{
+		fprintf(stderr,"Unable to find requested icon data!\n");
+		error = true;
 	}
 	
 	return error;
@@ -476,9 +487,9 @@ bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr
 //***************************** ParseIconData **************************//
 // Actual conversion of the icon data into uncompressed raw pixels
 
-bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImagePtr outIcon, bool byteSwap)
+int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPtr outIcon, int byteSwap)
 {
-	bool			error = false;
+	int		error = 0;
 	unsigned int	iconWidth = 0;
 	unsigned int	iconHeight = 0;
 	unsigned int	iconDepth = 0;
@@ -490,7 +501,7 @@ bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImageP
 	if(outIcon == NULL)
 	{
 		fprintf(stderr,"Icon structure is NULL!\n");
-		return false;
+		return 0;
 	}
 	
 	switch(iconType)
@@ -571,7 +582,7 @@ bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImageP
 				iconDepth = 8;
 			break;
 		default:
-			return false;
+			return 0;
 			break;
 	}
 
@@ -581,16 +592,19 @@ bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImageP
 	printf("Color bit depth: %d\n",iconDepth);
 	*/
 	
-	iconDataSize = (iconWidth*iconHeight*(iconDepth/kByteSize));
+	blockSize = iconWidth *(iconDepth / kByteSize);
+	iconDataSize = iconHeight * blockSize;
 	outIcon->width = iconWidth;
 	outIcon->height = iconHeight;
 	outIcon->depth = iconDepth;
 	outIcon->dataSize = iconDataSize;
 	outIcon->iconData = (unsigned char *)malloc(iconDataSize);
+	if(!outIcon->iconData) {
+		printf("Failed alloc iconData\n");
+		return 0;
+	}
 	memset(outIcon->iconData,0,iconDataSize);
-
-	blockSize = iconWidth *(iconDepth / kByteSize);
-
+	
 	// Data is RLE Encoded
 	if((iconDepth == 32) && (rawDataLength < (iconHeight * blockSize)))
 	{
@@ -602,88 +616,153 @@ bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImageP
 		long			y = 0;
 		long			i = 0;
 		long			destIconLength = 0;
-		unsigned int	*destIconDataPtr = NULL;		// Decompressed Raw Icon Data
+		unsigned int	*destIconDataPtr = NULL;	// Decompressed Raw Icon Data
 		unsigned int	*destIconDataBasePtr = NULL;	// Decompressed Raw Icon Data Base Address
 		
-		destIconDataPtr = (unsigned int *)malloc(iconHeight * blockSize);
-		destIconDataBasePtr = destIconDataPtr;
-
-		if(destIconDataPtr != NULL)
+		destIconDataPtr = (unsigned int	*)outIcon->iconData;
+		destIconDataBasePtr = (unsigned int *)outIcon->iconData;
+		
+		destIconLength = (iconWidth * iconHeight);
+		
+		myshift = 24;
+		mymask = 0xFFFFFFFF;
+		r = 0;
+		
+		// What's this??? In the 128x128+ icons,
+		// The red channel will be 2 pixels off if we don't start
+		// 4 bytes ahead. Perhaps it is a part of some flag?
+		if(iconWidth >= 128)
+			r+=4;
+		
+		for(i = 0; i < destIconLength; i++)
+			destIconDataPtr[i] = 0x00000000;
+		
+		// Alpha?, Red,   Green, Blue
+		// 24,     16,    8,     0   
+		while(myshift > 0)
 		{
-			destIconLength = (iconWidth * iconHeight);
+			// Next Color Byte
+			myshift -= 8;
 			
-			myshift = 24;
-			mymask = 0xFFFFFFFF;
-			r = 0;
-
-			// What's this??? In the 128x128 icons,
-			// The red channel will be 2 pixels off if we don't start
-			// 4 bytes ahead. Perhaps it is a part of some flag?
-			if(iconWidth == 128)
-				r+=4;
-
-			for(i = 0; i < destIconLength; i++)
-				destIconDataPtr[i] = 0x00000000;
-
-			// Alpha?, Red,   Green, Blue
-			// 24,     16,    8,     0   
-			while(myshift > 0)
+			// Right shift mask 8 bits to prevent overwriting our other colors
+			mymask >>= 8;
+			
+			y = 0;
+			while(y < destIconLength)
 			{
-				// Next Color Byte
-				myshift -= 8;
-				
-				// Right shift mask 8 bits to prevent overwriting our other colors
-				mymask >>= 8;
-				
-				for(y = 0; y < destIconLength; y = y)
+				if( (rawDataPtr[r] & 0x80) == 0)
 				{
-					if( (rawDataPtr[r] & 0x80) == 0)
-					{
-						// Top bit is clear - run of various values to follow
-						length = (int)(0xFF & rawDataPtr[r++]) + 1; // 1 <= len <= 128
-						
-						for(i = 0; i < (int)length; i++)
-							destIconDataPtr[y++] |= ( ((int)rawDataPtr[r++]) << myshift) & mymask;
-					}
-					else
-					{
-						// Top bit is set - run of one value to follow
-						length = (int)(0xFF & rawDataPtr[r++]) - 125; // 3 <= len <= 130
-						
-						// Set the value to the color shifted to the correct bit offset
-						value = ( ((int)rawDataPtr[r++]) << myshift) & mymask;
+					// Top bit is clear - run of various values to follow
+					length = (int)(0xFF & rawDataPtr[r++]) + 1; // 1 <= len <= 128
+					
+					for(i = 0; i < (int)length; i++)
+						destIconDataPtr[y++] |= ( ((int)rawDataPtr[r++]) << myshift) & mymask;
+				}
+				else
+				{
+					// Top bit is set - run of one value to follow
+					length = (int)(0xFF & rawDataPtr[r++]) - 125; // 3 <= len <= 130
+					
+					// Set the value to the color shifted to the correct bit offset
+					value = ( ((int)rawDataPtr[r++]) << myshift) & mymask;
 
-						for(i = 0; i < (int)length; i++)
-							destIconDataPtr[y++] |= value;
-					}
+					for(i = 0; i < (int)length; i++)
+						destIconDataPtr[y++] |= value;
 				}
 			}
-
-			if(byteSwap == true)
-				for(dataCount = 0; dataCount < iconDataSize; dataCount+=(iconDepth / kByteSize))
-					ByteSwapAddr(((char *)destIconDataPtr)+dataCount,(iconDepth / kByteSize),true);
-					
-			for(dataCount = 0; dataCount < iconHeight; dataCount++)
-				memcpy(&(((char*)(outIcon->iconData))[dataCount*blockSize]),&(((char*)(destIconDataPtr))[dataCount*blockSize]),blockSize);
-			
-			free(destIconDataBasePtr);
-			destIconDataBasePtr = NULL;
-			destIconDataPtr = NULL;
 		}
-		else
-		{
-			error = true;
-		}
-	}
-	else // No RLE Compression
-	{
-		if(byteSwap == true)
-			for(dataCount = 0; dataCount < rawDataLength; dataCount+=(iconDepth / kByteSize))
-				ByteSwapAddr(rawDataPtr+dataCount,(iconDepth / kByteSize),true);
 		
+		destIconDataBasePtr = NULL;
+		destIconDataPtr = NULL;
+	}
+	else
+	{
 		for(dataCount = 0; dataCount < iconHeight; dataCount++)
 			memcpy(&(((char*)(outIcon->iconData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
 	}
 	
+	if(byteSwap == true)
+	{
+		int	packBytes = (iconDepth / kByteSize);
+		char	*swapPtr = (char*)outIcon->iconData;
+		
+		if(packBytes == 2)
+		{
+			short	*byte2Ptr = NULL;
+			for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
+			{
+				byte2Ptr = (short *)(swapPtr + dataCount);
+				*( byte2Ptr ) = EndianSwap( *( byte2Ptr ) , packBytes, true);
+			}
+		}
+		else if(packBytes == 4)
+		{
+			int	*byte4Ptr = NULL;
+			for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
+			{
+				byte4Ptr = (int *)(swapPtr + dataCount);
+				*( byte4Ptr ) = EndianSwap( *( byte4Ptr ) , packBytes, true);
+			}
+		}
+	}
+	
 	return error;
+}
+
+int convertIcon128ToPNG(IconData icon, IconData maskIcon, int byteSwap, char *filename)
+{
+	ImageData iconImage;
+	ImageData maskImage;
+	int err = true;
+	FILE *outfile = NULL;
+
+	if(!icon.data || !icon.data || !filename)
+		return 0;
+
+	iconImage.iconData = NULL;
+	maskImage.iconData = NULL;
+
+	err = ParseIconData(kThumbnail32BitData, (Ptr)icon.data, icon.size, &iconImage, byteSwap);
+	if(err) goto out;
+
+	err = ParseIconData(kThumbnail8BitMask, (Ptr)maskIcon.data, maskIcon.size, &maskImage, byteSwap);
+	if(err) goto out;
+
+	if(!iconImage.iconData) {
+		err = true;
+		goto out;
+	}
+
+	outfile = fopen(filename,"w");
+	if(!outfile) goto out;
+
+	err = WritePNGImage(outfile,&iconImage,&maskImage);
+out:
+	if(outfile)
+		fclose(outfile);
+	if(iconImage.iconData)
+		free(iconImage.iconData);
+	if(maskImage.iconData)
+		free(maskImage.iconData);
+	return err;
+}
+
+int convertIcon512ToPNG(IconData icon, char *filename)
+{
+	opj_image_t* image = NULL;
+	int err;
+
+	if(!icon.data || !filename)
+		goto error;
+
+	image = jp2dec(icon.data, icon.size);
+	if(!image)
+		goto error;
+
+	err = savePNG(image, filename);
+	opj_image_destroy(image);
+	
+	return err;
+error:
+	return true;
 }

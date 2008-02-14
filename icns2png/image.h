@@ -1,5 +1,5 @@
 /*
-File:       byteutils.cpp
+File:       image.h
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
 
 This library is free software; you can redistribute it and/or
@@ -19,27 +19,21 @@ Boston, MA 02111-1307, USA.
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "byteswap.h"
+#include <png.h>
 
-void ByteSwapAddr(void *data, int size, bool swap)
+#ifndef _IMAGE_H_
+#define	_IMAGE_H_	1
+
+typedef struct ImageData
 {
-	if(swap == true)
-	{
-		switch(size)
-		{
-			case 1:
-				break;
-			case 2:
-				*((short *)data) = ByteSwap16( *((short *)data ) );
-				break;
-			case 4:
-				*((long *)data) = ByteSwap32( *((long *)data ) );
-				break;
-			case 8:
-				break;
-			default:
-				break;
-		}
-	}
-}
+	int		width;
+	int		height;
+	short		depth;
+	long		dataSize; // This should always = width*height*pixelDepth/8
+	unsigned char	*iconData;
+} ImageData, *ImageDataPtr;
+
+#endif

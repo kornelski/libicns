@@ -1,6 +1,7 @@
 /*
 File:       iconvert.cpp
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -23,43 +24,26 @@ Boston, MA 02111-1307, USA.
 #include <string.h>
 
 #include <png.h>
+#include "apple_mactypes.h"
+#include "apple_icons.h"
+#include "apple_iconstorage.h"
+#include "image.h"
 
 #ifndef _ICONVERT_H_
 #define	_ICONVERT_H_	1
 
-#include "apple_mactypes.h"
-#include "apple_icons.h"
-
-#ifndef __cplusplus
-
-#ifndef bool
-typedef char bool;
-#define	bool	bool
-#endif
-
-#ifndef true
-#define true    ((bool) 1)
-#endif
-
-#ifndef false
-#define false   ((bool) 0)
-#endif
-
-#endif
-
 #define	kByteSize	8
 
-typedef struct IconImage
-{
-	int			width;
-	int			height;
-	short			depth;
-	long			dataSize; // This should techincally be width*height*pixelDepth/8
-	unsigned char	*iconData;
-} IconImage, *IconImagePtr;
+typedef struct IconData {
+	OSType type;
+	size_t size;
+	unsigned char *data;
+} IconData;
 
-bool ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily);
-bool GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconImagePtr outIcon, bool *byteswap);
-bool ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,IconImagePtr outIcon, bool byteSwap);
+int ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily);
+int GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconData *outIcon, int *byteswap);
+int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPtr outIcon, int byteSwap);
+int convertIcon128ToPNG(IconData icon, IconData maskIcon, int byteSwap, char *filename);
+int convertIcon512ToPNG(IconData icon, char *filename);
 
 #endif

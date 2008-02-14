@@ -1,6 +1,7 @@
 /*
 File:       pngwriter.cpp
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -21,10 +22,8 @@ Boston, MA 02111-1307, USA.
 #include <stdio.h>
 #include <png.h>
 
-#include "apple_mactypes.h"
-#include "apple_icons.h"
+#include "image.h"
 #include "pngwriter.h"
-#include "iconvert.h"
 
 typedef struct pixel32_struct
 {
@@ -34,24 +33,23 @@ typedef struct pixel32_struct
 	unsigned char	 blue;
 } pixel32;
 
-bool	WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage)
+int	WritePNGImage(FILE *outputfile,ImageData *image,ImageData *mask)
 {
-	bool			error = false;
-    int 			width = iconImage->width;
-    int 			height = iconImage->height;
+	int 			width = image->width;
+	int 			height = image->height;
 	int 			image_channels = 4;
-    int				image_bit_depth = iconImage->depth/image_channels;
-    png_structp 	png_ptr;
-    png_infop 		info_ptr;
+	int			image_bit_depth = image->depth/image_channels;
+	png_structp 		png_ptr;
+	png_infop 		info_ptr;
 	png_bytep 		*row_pointers;
-    int				i, j;
-
+	int			i, j;
+	
 	png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-
+	
 	if (png_ptr == NULL)
 	{
 		fprintf (stderr, "PNG error: cannot allocate libpng main struct\n");
-		return false;
+		return 1;
 	}
 
 	info_ptr = png_create_info_struct (png_ptr);
@@ -60,7 +58,7 @@ bool	WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage)
 	{
 		fprintf (stderr, "PNG error: cannot allocate libpng info struct\n");
 		png_destroy_write_struct (&png_ptr, (png_infopp) NULL);
-		return false;
+		return 1;
 	}
 
 	png_init_io(png_ptr, outputfile);
@@ -93,7 +91,7 @@ bool	WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage)
 				for (j = 0; j < i; j++)
 					free(row_pointers[j]);
 				free(row_pointers);
-				return false;
+				return 1;
 			}
 			
 			for(j = 0; j < width; j++)
@@ -102,8 +100,8 @@ bool	WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage)
 				pixel32		*src_pha_pixel;
 				pixel32		*dst_pixel;
 				
-				src_rgb_pixel = (pixel32 *)&(iconImage->iconData[i*width*image_channels+j*image_channels]);
-				src_pha_pixel = (pixel32 *)&(maskImage->iconData[i*width+j]);
+				src_rgb_pixel = (pixel32 *)&(image->iconData[i*width*image_channels+j*image_channels]);
+				src_pha_pixel = (pixel32 *)&(mask->iconData[i*width+j]);
 				
 				dst_pixel = (pixel32 *)&(row_pointers[i][j*image_channels]);
 				
@@ -125,5 +123,5 @@ bool	WritePNGImage(FILE *outputfile,IconImage *iconImage,IconImage *maskImage)
 		free(row_pointers[j]);
 	free(row_pointers);
 
-	return error;
+	return 0;
 }

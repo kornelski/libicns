@@ -19,17 +19,17 @@
 #
 
 # version number
-version=0.7
+version=0.8
 
 # where make install puts icns2png
 prefix=/usr/local
 
 CFLAGS+=-Wall -g
-LDFLAGS+=-lpng12 -lz -lm
+LDFLAGS+=-lpng12 -lz -lm -lopenjpeg
+
+OBJS = icns2png.o iconvert.o pngwriter.o jp2dec.o
 
 CC=gcc
-
-OBJS = icns2png.o iconvert.o pngwriter.o byteswap.o
 
 all: icns2png icontainer2icns
 
@@ -62,5 +62,5 @@ icontainer2icns:
 	$(CC) -o icontainer2icns icontainer2icns.c 
 
 clean:
-	rm -f *.o icns2png icontainer2icns
+	rm -f *.o icns2png icontainer2icns test/*.png
 
