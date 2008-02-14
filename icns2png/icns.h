@@ -1,5 +1,5 @@
 /*
-File:       iconvert.cpp
+File:       icns.h
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
 Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
@@ -40,10 +40,10 @@ typedef struct IconData {
 	unsigned char *data;
 } IconData;
 
-int ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily);
+int GetIconFamilyFromFileData(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily);
+int GetIconFamilyFromMacResourceFork(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily);
+int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData);
 int GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,IconData *outIcon, int *byteswap);
 int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPtr outIcon, int byteSwap);
-int convertIcon128ToPNG(IconData icon, IconData maskIcon, int byteSwap, char *filename);
-int convertIcon512ToPNG(IconData icon, char *filename);
 
 #endif

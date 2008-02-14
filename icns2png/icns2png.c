@@ -25,19 +25,27 @@ Boston, MA 02111-1307, USA.
 
 #include "apple_mactypes.h"
 #include "apple_icons.h"
-#include "iconvert.h"
+#include "icns.h"
 #include "pngwriter.h"
+#include "jp2dec.h"
 
+void parse_format(char *format);
+void parse_options(int argc, char** argv);
 int ConvertIcnsFile(char *filename);
+int convertIcon128ToPNG(IconData icon, IconData maskIcon, int byteSwap, char *filename);
+int convertIcon512ToPNG(IconData icon, char *filename);
+int ReadFile(char *fileName,long *dataSize,void **dataPtr);
 
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define	MAX_INPUTFILES  4096
+
 
 char 	*inputfiles[MAX_INPUTFILES];
 int	fileindex = 0;
 
 /* default iconType to be extracted */
 int	iconType = kThumbnail32BitData;
+
 
 void parse_format(char *format)
 {
@@ -115,15 +123,17 @@ int main(int argc, char *argv[])
 
 int ConvertIcnsFile(char *filename)
 {
-	int				error = 0;
-	char				*infilename;
-	char				*outfilename;
-	int				filenamelength = 0;
-	int				infilenamelength = 0;
-	int				outfilenamelength = 0;
-	int				byteSwap = 0;
-	IconFamilyPtr			iconFamily = NULL;
-	IconData			icon; icon.data = NULL;
+	int		error = 0;
+	char		*infilename;
+	char		*outfilename;
+	int		filenamelength = 0;
+	int		infilenamelength = 0;
+	int		outfilenamelength = 0;
+	char		*fileDataPtr = NULL;
+	long		fileDataSize = 0;
+	int		byteSwap = 0;
+	IconFamilyPtr	iconFamily = NULL;
+	IconData	icon; icon.data = NULL;
 
 	filenamelength = strlen(filename);
 
@@ -163,10 +173,21 @@ int ConvertIcnsFile(char *filename)
 
 	printf("Converting %s to %s...\n",infilename,outfilename);
 	
-	// The next three functions are the big workhorses
+	error = ReadFile(infilename,&fileDataSize,(void **)&fileDataPtr);
+	
+	// Catch errors...
+	if(error)
+	{
+		fprintf(stderr,"Unable to read file %s!\n",infilename);
+		free(infilename);
+		free(outfilename);
+		if(fileDataPtr != NULL)
+			free(fileDataPtr);
+		return 1;
+	}
 	
 	// ReadXIconFile converts the icns file into an IconFamily
-	error = ReadXIconFile(infilename,&iconFamily);
+	error = GetIconFamilyFromFileData(fileDataSize,fileDataPtr,&iconFamily);
 	
 	if(error) {
 		fprintf(stderr,"Unable to load icns file into icon family!\n");
@@ -217,5 +238,116 @@ int ConvertIcnsFile(char *filename)
 	free(infilename);
 	free(outfilename);
 	
+	return error;
+}
+
+int convertIcon128ToPNG(IconData icon, IconData maskIcon, int byteSwap, char *filename)
+{
+	ImageData iconImage;
+	ImageData maskImage;
+	int err = 0;
+	FILE *outfile = NULL;
+
+	if(!icon.data || !icon.data || !filename)
+		return 0;
+
+	iconImage.iconData = NULL;
+	maskImage.iconData = NULL;
+
+	err = ParseIconData(kThumbnail32BitData, (Ptr)icon.data, icon.size, &iconImage, byteSwap);
+	if(err) goto out;
+
+	err = ParseIconData(kThumbnail8BitMask, (Ptr)maskIcon.data, maskIcon.size, &maskImage, byteSwap);
+	if(err) goto out;
+
+	if(!iconImage.iconData) {
+		err = 1;
+		goto out;
+	}
+
+	outfile = fopen(filename,"w");
+	if(!outfile) goto out;
+
+	err = WritePNGImage(outfile,&iconImage,&maskImage);
+out:
+	if(outfile)
+		fclose(outfile);
+	if(iconImage.iconData)
+		free(iconImage.iconData);
+	if(maskImage.iconData)
+		free(maskImage.iconData);
+	return err;
+}
+
+int convertIcon512ToPNG(IconData icon, char *filename)
+{
+	opj_image_t* image = NULL;
+	int err;
+
+	if(!icon.data || !filename)
+		goto error;
+
+	image = jp2dec(icon.data, icon.size);
+	if(!image)
+		goto error;
+
+	err = savePNG(image, filename);
+	opj_image_destroy(image);
+	
+	return err;
+error:
+	return true;
+}
+
+//***************************** ReadFile **************************//
+// Generic file reading routine
+
+int ReadFile(char *fileName,long *dataSize,void **dataPtr)
+{
+	int	error = 0;
+	FILE	*dataFile = 0;
+
+	*dataSize = 0;
+	dataFile = fopen( fileName, "r" );
+	
+	if ( dataFile != NULL )
+	{
+		if(fseek(dataFile,0,SEEK_END) == 0)
+		{
+			*dataSize = ftell(dataFile);
+			rewind(dataFile);
+			
+			*dataPtr = (void *)malloc(*dataSize);
+
+			if ( (error == 0) && (*dataPtr != NULL) )
+			{
+				if(fread( *dataPtr, sizeof(char), *dataSize, dataFile) != *dataSize)
+				{
+					free( *dataPtr );
+					*dataPtr = NULL;
+					*dataSize = 0;
+					error = true;
+					fprintf(stderr,"Error occured reading file!\n");
+				}
+			}
+			else
+			{
+				error = true;
+				fprintf(stderr,"Error occured allocating memory!\n");
+			}
+		}
+		else
+		{
+			error = true;
+			fprintf(stderr,"Error occured seeking to end of file!\n");
+		}
+		fclose( dataFile );
+	}
+	else
+	{
+		error = true;
+		fprintf(stderr,"Error occured opening file!\n");
+	}
+
 	return error;
 }

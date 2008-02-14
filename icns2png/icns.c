@@ -1,5 +1,5 @@
 /*
-File:       iconvert.cpp
+File:       icns.cpp
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
               2007 Thomas Lübking <thomas.luebking@web.de>
               2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
@@ -30,68 +30,54 @@ Boston, MA 02111-1307, USA.
 #include "apple_iconstorage.h"
 #include "endianswap.h"
 #include "image.h"
-#include "pngwriter.h"
-#include "jp2dec.h"
-#include "iconvert.h"
-
-int ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily);
-int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData);
-int ReadFile(char *fileName,long *dataSize,void **dataPtr);
+#include "icns.h"
 
 uint numOffsets = 3;
 uint offsets[3] = {342, 670, 2606};
 
-#define IS_ICNS (*((OSTypePtr)(iconDataPtr)) == kIconFamilyType || *((OSTypePtr)(iconDataPtr)) == EndianSwap(kIconFamilyType,sizeof(OSType),true))
-#define IS_NOT_ICNS (*((OSTypePtr)(iconDataPtr)) != kIconFamilyType && *((OSTypePtr)(iconDataPtr)) != EndianSwap(kIconFamilyType,sizeof(OSType),true))
+#define IS_ICNS (*((OSTypePtr)(iconDataPtr)) == kIconFamilyType || *((OSTypePtr)(iconDataPtr)) == EndianSwap(kIconFamilyType,sizeof(OSType),1))
+#define IS_NOT_ICNS (*((OSTypePtr)(iconDataPtr)) != kIconFamilyType && *((OSTypePtr)(iconDataPtr)) != EndianSwap(kIconFamilyType,sizeof(OSType),1))
 
-/***************************** ReadXIconFile **************************/
+/***************************** GetIconFamilyFromFileData **************************/
 
-int ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily)
+int GetIconFamilyFromFileData(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 {
 	int	error = 0;
-	char	*dataPtr = NULL;
 	char	*iconDataPtr = NULL;
-	long	dataSize = 0;
 	long	dataOffset = 0;
-
-	// Read the file into memory
-	error = ReadFile(fileName,&dataSize,(void **)&dataPtr);
-	iconDataPtr = dataPtr;
 	
-	// Catch errors...
-	if(error == true)
-	{
-		fprintf(stderr,"Unable to read file %s!\n",fileName);
-	}
-	else if(dataSize == 0)
+	if(dataSize == 0)
 	{
 		fprintf(stderr,"File size is 0 - no data!\n");
+		return 0;
 	}
-	else
-	{
-		// search for icns entry, NG icns haf various offsets!
-		// Note by Mathew 02/13/2008
-		// IMHO, this is hackish and should be fixed
-		// Are there not specs for the NG format??
-		while ((dataOffset < dataSize-sizeof(OSType)) && IS_NOT_ICNS)
-		{
-			++dataOffset; ++iconDataPtr;
-		}
-		
-		// Copy the data to a new block of memory since it moved
+
+	// search for icns entry, NG icns haf various offsets!
+	// Note by Mathew 02/13/2008
+	// IMHO, this is hackish and should be fixed
+	// Are there not specs for the NG format??
+	iconDataPtr = dataPtr;
+	while ((dataOffset < dataSize-sizeof(OSType)) && IS_NOT_ICNS) {
+		++dataOffset;
+		++iconDataPtr;
+	}
+	
+	// Copy the data to a new block of memory
+	if((dataSize-dataOffset) > 0) {
 		iconDataPtr = (char *)malloc(dataSize-dataOffset);
 		memcpy (iconDataPtr,dataPtr+dataOffset,dataSize-dataOffset);
-		free(dataPtr);
+	} else {
+		iconDataPtr = (char *)malloc(dataSize);
+		memcpy (iconDataPtr,dataPtr,dataSize);
 	}
 	
 	if( IS_NOT_ICNS )
 	{
 		// Might be embedded in an rsrc file
-		if((error = ParseXIconResource(dataSize,iconDataPtr,iconFamily)))
+		if((error = GetIconFamilyFromMacResourceFork(dataSize,iconDataPtr,iconFamily)))
 		{
 			fprintf(stderr,"Error parsing X Icon resource!\n");
 			*iconFamily = NULL;
-			free(iconDataPtr);
 		}
 	}
 	else
@@ -103,9 +89,9 @@ int ReadXIconFile(char *fileName,IconFamilyPtr *iconFamily)
 	return error;
 }
 
-/***************************** ParseXIconResource **************************/
+/***************************** GetIconFamilyFromMacResourceFork **************************/
 
-int ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
+int GetIconFamilyFromMacResourceFork(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 {
 	int	error = 0;
 	int	found = 0;
@@ -130,7 +116,7 @@ int ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 	{
 		// rsrc header is 128 bytes - We cannot have a file of a smaller size.
 		fprintf(stderr,"Unable to decode rsrc data! - Data size too small.\n");
-		return true;
+		return 1;
 	}
 
 	// Load Resource Header to if we are dealing with a raw resource fork.
@@ -215,19 +201,19 @@ int ParseXIconResource(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily)
 					{
 						memcpy(resData,(dataPtr+resHeadDataOffset+resDataOffset+4),resDataLength);
 						*iconFamily = (IconFamilyPtr)resData;
-						found = true;
+						found = 1;
 					}
 					else
 					{
 						fprintf(stderr,"Error allocating %ld bytes of memory!\n",resDataLength);
 						*iconFamily = NULL;
-						error = true;
+						error = 1;
 					}
 				}
 				else
 				{
 					fprintf(stderr,"Resource icns id# %d of size 0!\n",resID);
-					error = true;
+					error = 1;
 				}
 			}
 		}
@@ -277,21 +263,21 @@ int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OST
 	{
 		// MacBinary header is 128 bytes - We cannot have a file of a smaller size.
 		fprintf(stderr,"Unable to decode MacBinary data! - Data size too small.\n");
-		return true;
+		return 1;
 	}
 	
 	                                         /* 'mBIN' */
 	if(*((OSTypePtr)(dataPtr+65)) == EndianSwap(0x6D42494E,4,byteSwapped))
 	{
 		// Valid MacBinary III file
-		isValid = true;
+		isValid = 1;
 	}
 	else
 	{
 		// Bytes 0 and 74 should both be zero in a valid MacBinary file
 		if( ( *(dataPtr) == 0 ) && ( *(dataPtr+74) == 0 ) )
 		{
-			isValid = true;
+			isValid = 1;
 		}
 		
 		// There are other checks beyond this, but in this code,
@@ -299,7 +285,7 @@ int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OST
 		// a match on a non MacBinary file are pretty low...
 	}
 	
-	if( !isValid ) return true;
+	if( !isValid ) return 1;
 	
 	// Start MacBinary Parsing routines
 	
@@ -325,12 +311,12 @@ int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OST
 	resourceDataStart = fileDataLength + fileDataPadding + 128;
 
 	// Check that we are not reading invalid memory
-	if( 0 > resourceDataStart ) return true;
-	if( 0 > resourceDataLength ) return true;
-	if( dataSize < resourceDataStart ) return true;
-	if( dataSize < resourceDataLength ) return true;
-	if( 0 > resourceDataStart+resourceDataLength ) return true;
-	if( dataSize < resourceDataStart+resourceDataLength ) return true;
+	if( 0 > resourceDataStart ) return 1;
+	if( 0 > resourceDataLength ) return 1;
+	if( dataSize < resourceDataStart ) return 1;
+	if( dataSize < resourceDataLength ) return 1;
+	if( 0 > resourceDataStart+resourceDataLength ) return 1;
+	if( dataSize < resourceDataStart+resourceDataLength ) return 1;
 	
 	resourceDataPtr = (char *)malloc(resourceDataLength);
 	
@@ -344,60 +330,7 @@ int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OST
 	else
 	{
 		fprintf(stderr,"Error allocating memory for parsed resource!\n");
-		error = true;
-	}
-
-	return error;
-}
-
-//***************************** ReadFile **************************//
-// Generic file reading routine
-
-int ReadFile(char *fileName,long *dataSize,void **dataPtr)
-{
-	int	error = 0;
-	FILE	*dataFile = 0;
-
-	*dataSize = 0;
-	dataFile = fopen( fileName, "r" );
-	
-	if ( dataFile != NULL )
-	{
-		if(fseek(dataFile,0,SEEK_END) == 0)
-		{
-			*dataSize = ftell(dataFile);
-			rewind(dataFile);
-			
-			*dataPtr = (void *)malloc(*dataSize);
-
-			if ( (error == 0) && (*dataPtr != NULL) )
-			{
-				if(fread( *dataPtr, sizeof(char), *dataSize, dataFile) != *dataSize)
-				{
-					free( *dataPtr );
-					*dataPtr = NULL;
-					*dataSize = 0;
-					error = true;
-					fprintf(stderr,"Error occured reading file!\n");
-				}
-			}
-			else
-			{
-				error = true;
-				fprintf(stderr,"Error occured allocating memory!\n");
-			}
-		}
-		else
-		{
-			error = true;
-			fprintf(stderr,"Error occured seeking to end of file!\n");
-		}
-		fclose( dataFile );
-	}
-	else
-	{
-		error = true;
-		fprintf(stderr,"Error occured opening file!\n");
+		error = 1;
 	}
 
 	return error;
@@ -418,11 +351,11 @@ int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, IconData *o
 	if(outIcon == NULL)
 	{
 		fprintf(stderr,"Output pointer icon is NULL!\n");
-		return true;
+		return 1;
 	}
 	
-	if(inPtr->resourceType == EndianSwap(kIconFamilyType, sizeof(kIconFamilyType), true))
-		*byteswap = true;
+	if(inPtr->resourceType == EndianSwap(kIconFamilyType, sizeof(kIconFamilyType), 1))
+		*byteswap = 1;
 	
 	/*
 	printf("Bytes are swapped in file: %s\n",(*byteswap ? "yes" : "no"));
@@ -434,7 +367,7 @@ int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, IconData *o
 	if (( EndianSwap(inPtr->resourceType,sizeof(int),*byteswap) != kIconFamilyType) || (EndianSwap(inPtr->resourceSize,sizeof(int),*byteswap) < sizeof(IconFamilyResource)))
 	{
 		fprintf(stderr,"Error loading icns resource!\n");
-		error = true;
+		error = 1;
 	}
 	else
 	{
@@ -454,7 +387,7 @@ int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, IconData *o
 			if (readDataType == iconType)
 			{
 				iconPtr = (IconFamilyElementPtr)(((char*)inPtr)+hOffset);
-				foundData = true;
+				foundData = 1;
 			}
 			else
 			{
@@ -470,7 +403,7 @@ int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, IconData *o
 		outIcon->data = malloc(outIcon->size);
 		if(!outIcon->data) {
 			fprintf(stderr,"Out of Memory\n");
-			error = true;
+			error = 1;
 		} else {
 			memcpy(outIcon->data, iconPtr->elementData, outIcon->size);
 		}
@@ -478,7 +411,7 @@ int  GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType, IconData *o
 	else
 	{
 		fprintf(stderr,"Unable to find requested icon data!\n");
-		error = true;
+		error = 1;
 	}
 	
 	return error;
@@ -681,7 +614,7 @@ int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPt
 			memcpy(&(((char*)(outIcon->iconData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
 	}
 	
-	if(byteSwap == true)
+	if(byteSwap)
 	{
 		int	packBytes = (iconDepth / kByteSize);
 		char	*swapPtr = (char*)outIcon->iconData;
@@ -692,7 +625,7 @@ int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPt
 			for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
 			{
 				byte2Ptr = (short *)(swapPtr + dataCount);
-				*( byte2Ptr ) = EndianSwap( *( byte2Ptr ) , packBytes, true);
+				*( byte2Ptr ) = EndianSwap( *( byte2Ptr ) , packBytes, 1);
 			}
 		}
 		else if(packBytes == 4)
@@ -701,68 +634,10 @@ int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ImageDataPt
 			for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
 			{
 				byte4Ptr = (int *)(swapPtr + dataCount);
-				*( byte4Ptr ) = EndianSwap( *( byte4Ptr ) , packBytes, true);
+				*( byte4Ptr ) = EndianSwap( *( byte4Ptr ) , packBytes, 1);
 			}
 		}
 	}
 	
 	return error;
-}
-
-int convertIcon128ToPNG(IconData icon, IconData maskIcon, int byteSwap, char *filename)
-{
-	ImageData iconImage;
-	ImageData maskImage;
-	int err = true;
-	FILE *outfile = NULL;
-
-	if(!icon.data || !icon.data || !filename)
-		return 0;
-
-	iconImage.iconData = NULL;
-	maskImage.iconData = NULL;
-
-	err = ParseIconData(kThumbnail32BitData, (Ptr)icon.data, icon.size, &iconImage, byteSwap);
-	if(err) goto out;
-
-	err = ParseIconData(kThumbnail8BitMask, (Ptr)maskIcon.data, maskIcon.size, &maskImage, byteSwap);
-	if(err) goto out;
-
-	if(!iconImage.iconData) {
-		err = true;
-		goto out;
-	}
-
-	outfile = fopen(filename,"w");
-	if(!outfile) goto out;
-
-	err = WritePNGImage(outfile,&iconImage,&maskImage);
-out:
-	if(outfile)
-		fclose(outfile);
-	if(iconImage.iconData)
-		free(iconImage.iconData);
-	if(maskImage.iconData)
-		free(maskImage.iconData);
-	return err;
-}
-
-int convertIcon512ToPNG(IconData icon, char *filename)
-{
-	opj_image_t* image = NULL;
-	int err;
-
-	if(!icon.data || !filename)
-		goto error;
-
-	image = jp2dec(icon.data, icon.size);
-	if(!image)
-		goto error;
-
-	err = savePNG(image, filename);
-	opj_image_destroy(image);
-	
-	return err;
-error:
-	return true;
 }

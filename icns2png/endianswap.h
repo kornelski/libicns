@@ -21,6 +21,14 @@ Boston, MA 02111-1307, USA.
 #ifndef __ENDIANSWAP__
 #define __ENDIANSWAP__
 
+#ifndef true
+#define true 0
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
 // Macros for detecting endianness - the compiler stores string constants as
 // chars, so B-Y-T-E will be in order. We can then check against 4-byte longs
 // that have various iterations of B-Y-T-E according to architecture.

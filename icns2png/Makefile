@@ -27,7 +27,7 @@ prefix=/usr/local
 CFLAGS+=-Wall -g
 LDFLAGS+=-lpng12 -lz -lm -lopenjpeg
 
-OBJS = icns2png.o iconvert.o pngwriter.o jp2dec.o
+OBJS = icns2png.o pngwriter.o jp2dec.o icns.o
 
 CC=gcc
 
