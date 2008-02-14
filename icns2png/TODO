@@ -1,0 +1,9 @@
+TODO
+
+1) Rename functions to make more sense in the context of icns
+2) Modify Makefile to build static and dymanic libraries from icns.c
+3) Modify Makefile to link icns2png against the library instead of directly
+4) Split libicns and icon2png into seperate trees
+   |icns
+   \- libicns
+   \- icon2png
