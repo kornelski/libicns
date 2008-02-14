@@ -123,7 +123,7 @@ install-shared: install-headers $(LIBSO)
 	ln -sf $(LIBSOVER) $(LIBSOMAJ); \
 	ln -sf $(LIBSOMAJ) $(LIBSO))
 
-install-utils:
+install-utils: $(LIBUTILS)
 	-@if [ ! -d $(BINPATH) ]; then mkdir -p $(BINPATH); fi
 	install -m 755 icns2png $(BINPATH)
 	install -m 755 icontainer2icns $(BINPATH)
