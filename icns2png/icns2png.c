@@ -37,12 +37,14 @@ int ReadFile(char *fileName,long *dataSize,void **dataPtr);
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define	MAX_INPUTFILES  4096
 
+#define	kNoMaskData	0x00000000
 
 char 	*inputfiles[MAX_INPUTFILES];
 int	fileindex = 0;
 
 /* default iconType to be extracted */
 int	iconType = kThumbnail32BitData;
+int	maskType = kThumbnail8BitMask;
 
 
 void parse_format(char *format)
@@ -57,10 +59,16 @@ void parse_format(char *format)
 				kIconServices256PixelDataARGB, 
 				kThumbnail32BitData
 			     };
+	const int maskTypes[] = {  
+				kNoMaskData, 
+				kNoMaskData, 
+				kThumbnail8BitMask
+			     };
 	int i;
 	for(i = 0; i < ARRAY_SIZE(formats); i++) {
 		if(strcmp(formats[i], format) == 0) {
 			iconType = iconTypes[i];
+			maskType = maskTypes[i];
 			break;
 		}
 	}
@@ -132,6 +140,10 @@ int ConvertIcnsFile(char *filename)
 	int		byteSwap = 0;
 	IconFamilyPtr	iconFamily = NULL;
 	ICNS_IconData	icon; icon.data = NULL;
+	ICNS_IconData	mask; mask.data = NULL;
+	ICNS_ImageData	iconImage;
+	ICNS_ImageData	maskImage;
+	FILE 		*outfile = NULL;
 
 	filenamelength = strlen(filename);
 
@@ -170,7 +182,6 @@ int ConvertIcnsFile(char *filename)
 	outfilename[outfilenamelength-0] = 0;
 
 	printf("Converting %s...\n",infilename);
-	
 	error = ReadFile(infilename,&fileDataSize,(void **)&fileDataPtr);
 	
 	// Catch errors...
@@ -189,43 +200,59 @@ int ConvertIcnsFile(char *filename)
 	
 	if(error) {
 		fprintf(stderr,"Unable to load icns file into icon family!\n");
-	} else {
-		error = GetIconDataFromIconFamily(iconFamily,iconType,&icon,&byteSwap);
+		goto cleanup;
+	}
+	
+	error = GetIconDataFromIconFamily(iconFamily,iconType,&icon,&byteSwap);
+	
+	if(error) {
+		fprintf(stderr,"Unable to load icon data from icon family!\n");
+		goto cleanup;
+	}
+
+	error = ParseIconData(iconType, (Ptr)icon.data, icon.size, &iconImage, byteSwap);
+
+	if(error) {
+		fprintf(stderr,"Unable to load raw data from icon data!\n");
+		goto cleanup;
+	}
+	
+	if(maskType != kNoMaskData) {
+		error = GetIconDataFromIconFamily(iconFamily,maskType,&mask,&byteSwap);
 	
 		if(error) {
 			fprintf(stderr,"Unable to load icon data from icon family!\n");
-		} else {
-			// Move on to convert data
-			switch(iconType)
-			{
-			case kThumbnail32BitData:
-			    {
-				ICNS_IconData maskIcon; maskIcon.data = NULL;
-				error = GetIconDataFromIconFamily(iconFamily,kThumbnail8BitMask,&maskIcon,&byteSwap);
-				if(error) {
-					fprintf(stderr,"Unable to load icon mask from icon family!\n");
-				} else {
-					convertIcon128ToPNG(icon, maskIcon, byteSwap, outfilename);
-					printf("Saved to %s\n",outfilename);
-				}
-				if(maskIcon.data != NULL) {
-					free(maskIcon.data);
-					maskIcon.data = NULL;
-				}
-				break;
-			    }
-			case kIconServices512PixelDataARGB:
-			case kIconServices256PixelDataARGB:
-				convertIcon512ToPNG(icon, outfilename);
-				printf("Saved to %s\n",outfilename);
-				break;
-			default:
-				break;
-			}
+			goto cleanup;
 		}
+		
+		error = ParseIconData(maskType, (Ptr)mask.data, mask.size, &maskImage, byteSwap);
 	}
 	
-	// If there was an error loading the iconFamily, this could be NULL
+	outfile = fopen(outfilename,"w");
+	if(!outfile) {
+		fprintf(stderr,"Unable to open %s for writing!\n",outfilename);
+		goto cleanup;
+	}
+	
+	// Finally! We save the image
+	if(maskType != kNoMaskData) {
+		error = WritePNGImage(outfile,&iconImage,&maskImage);	
+	} else {
+		error = WritePNGImage(outfile,&iconImage,NULL);	
+	}
+	
+	if(error) {
+		fprintf(stderr,"Error writing PNG image!\n");
+	} else {
+		printf("Saved to %s.\n",outfilename);
+	}
+	
+	// Cleanup
+cleanup:
+	if(outfile != NULL) {
+		fclose(outfile);
+		outfile = NULL;
+	}
 	if(iconFamily != NULL) {
 		free(iconFamily);
 		iconFamily = NULL;
@@ -234,7 +261,10 @@ int ConvertIcnsFile(char *filename)
 		free(icon.data);
 		icon.data = NULL;
 	}
-	
+	if(mask.data != NULL) {
+		free(mask.data);
+		mask.data = NULL;
+	}
 	free(infilename);
 	free(outfilename);
 	
@@ -281,18 +311,27 @@ out:
 
 int convertIcon512ToPNG(ICNS_IconData icon, char *filename)
 {
-	opj_image_t* image = NULL;
+	ICNS_ImageData iconImage;
+	FILE *outfile = NULL;
 	int err;
 
 	if(!icon.data || !filename)
 		goto error;
 
-	image = jp2dec(icon.data, icon.size);
-	if(!image)
-		goto error;
+	err = ParseIconData(kIconServices512PixelDataARGB, (Ptr)icon.data, icon.size, &iconImage, false);
+	if(err) goto out;
 
-	err = savePNG(image, filename);
-	opj_image_destroy(image);
+	outfile = fopen(filename,"w");
+	if(!outfile) goto out;
+	
+	if(!err)
+		err = WritePNGImage(outfile,&iconImage,NULL);
+	
+out:
+	if(outfile)
+		fclose(outfile);
+	if(iconImage.iconData != NULL)
+		free(iconImage.iconData);
 	
 	return err;
 error:

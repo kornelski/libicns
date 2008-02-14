@@ -37,7 +37,7 @@ int	WritePNGImage(FILE *outputfile,ICNS_ImageData *image,ICNS_ImageData *mask)
 {
 	int 			width = image->width;
 	int 			height = image->height;
-	int 			image_channels = 4;
+	int 			image_channels = image->channels;
 	int			image_bit_depth = image->depth/image_channels;
 	png_structp 		png_ptr;
 	png_infop 		info_ptr;
@@ -66,7 +66,7 @@ int	WritePNGImage(FILE *outputfile,ICNS_ImageData *image,ICNS_ImageData *mask)
 	png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
 	
 	png_set_IHDR (png_ptr, info_ptr, width, height, image_bit_depth, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-
+	
 	png_write_info (png_ptr, info_ptr);
 
 	png_set_swap_alpha( png_ptr );
@@ -100,15 +100,20 @@ int	WritePNGImage(FILE *outputfile,ICNS_ImageData *image,ICNS_ImageData *mask)
 				pixel32		*src_pha_pixel;
 				pixel32		*dst_pixel;
 				
-				src_rgb_pixel = (pixel32 *)&(image->iconData[i*width*image_channels+j*image_channels]);
-				src_pha_pixel = (pixel32 *)&(mask->iconData[i*width+j]);
-				
 				dst_pixel = (pixel32 *)&(row_pointers[i][j*image_channels]);
 				
-				dst_pixel->alpha = src_pha_pixel->alpha;
+				src_rgb_pixel = (pixel32 *)&(image->iconData[i*width*image_channels+j*image_channels]);
+
 				dst_pixel->red = src_rgb_pixel->red;
 				dst_pixel->green = src_rgb_pixel->green;
 				dst_pixel->blue = src_rgb_pixel->blue;
+				
+				if(mask != NULL) {
+					src_pha_pixel = (pixel32 *)&(mask->iconData[i*width+j]);
+					dst_pixel->alpha = src_pha_pixel->alpha;
+				} else {
+					dst_pixel->alpha = src_rgb_pixel->alpha;
+				}
 			}
 		}
 	}

@@ -24,8 +24,10 @@ Boston, MA 02111-1307, USA.
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <openjpeg.h>
 
 #include "icns.h"
+#include "jp2dec.h"
 #include "endianswap.h"
 
 uint numOffsets = 3;
@@ -421,6 +423,7 @@ int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ICNS_ImageD
 	int		error = 0;
 	unsigned int	iconWidth = 0;
 	unsigned int	iconHeight = 0;
+	unsigned int	iconChannels = 0;
 	unsigned int	iconDepth = 0;
 	unsigned long	iconDataSize = 0;
 
@@ -433,82 +436,121 @@ int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ICNS_ImageD
 		return 0;
 	}
 	
+	// We use the jp2 processor for these guys
+	if((iconType == kIconServices512PixelDataARGB) || (iconType == kIconServices256PixelDataARGB))
+	{
+		opj_image_t* image = NULL;
+
+		image = jp2dec((unsigned char *)rawDataPtr, (int)rawDataLength);
+		if(!image)
+			return 1;
+		
+		error = opjToICNS_ImageData(image,outIcon);
+		
+		opj_image_destroy(image);
+		
+		return error;
+	}
+	
 	switch(iconType)
 	{
 		// Icon Image Data Types
 		case kThumbnail32BitData:
 			iconWidth = 128;
 			iconHeight = 128;
+			iconChannels = 4;
 			iconDepth = 32;
 			break;
 		case kHuge32BitData:
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 4;
+			iconDepth = 32;
+			break;
 		case kHuge8BitData:
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 1;
+			iconDepth = 8;
+			break;
 		case kHuge1BitData:
 			iconWidth = 48;
 			iconHeight = 48;
-			if(iconType == kHuge32BitData)
-				iconDepth = 32;
-			if(iconType == kHuge8BitData)
-				iconDepth = 8;
-			if(iconType == kHuge1BitData)
-				iconDepth = 1;
+			iconChannels = 1;
+			iconDepth = 1;
 			break;
 		case kLarge32BitData:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 4;
+			iconDepth = 32;
+			break;
 		case kLarge8BitData:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 1;
+			iconDepth = 8;
+			break;
 		case kLarge1BitData:
 			iconWidth = 32;
 			iconHeight = 32;
-			if(iconType == kLarge32BitData)
-				iconDepth = 32;
-			if(iconType == kLarge8BitData)
-				iconDepth = 8;
-			if(iconType == kLarge1BitData)
-				iconDepth = 1;
+			iconChannels = 1;
+			iconDepth = 1;
 			break;
 		case kSmall32BitData:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 4;
+			iconDepth = 32;
+			break;
 		case kSmall8BitData:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 1;
+			iconDepth = 8;
+			break;
 		case kSmall1BitData:
 			iconWidth = 16;
 			iconHeight = 16;
-			if(iconType == kSmall32BitData)
-				iconDepth = 32;
-			if(iconType == kSmall8BitData)
-				iconDepth = 8;
-			if(iconType == kSmall1BitData)
-				iconDepth = 1;
+			iconChannels = 1;
+			iconDepth = 1;
 			break;
 		case kMini8BitData:
+			iconWidth = 16;
+			iconHeight = 12;
+			iconChannels = 1;
+			iconDepth = 8;
+			break;
 		case kMini1BitData:
 			iconWidth = 16;
 			iconHeight = 12;
-			if(iconType == kMini8BitData)
-				iconDepth = 8;
-			if(iconType == kMini1BitData)
-				iconDepth = 1;
+			iconChannels = 1;
+			iconDepth = 1;
 			break;
 		// Icon Mask Data Types
 		case kThumbnail8BitMask:
 			iconWidth = 128;
 			iconHeight = 128;
+			iconChannels = 1;
 			iconDepth = 8;
 			break;
 		case kHuge8BitMask:
 			iconWidth = 48;
 			iconHeight = 48;
-			if(iconType == kHuge8BitMask)
-				iconDepth = 8;
+			iconChannels = 1;
+			iconDepth = 8;
 			break;
 		case kLarge8BitMask:
 			iconWidth = 32;
 			iconHeight = 32;
-			if(iconType == kLarge8BitMask)
-				iconDepth = 8;
+			iconChannels = 1;
+			iconDepth = 8;
 			break;
 		case kSmall8BitMask:
 			iconWidth = 16;
 			iconHeight = 16;
-			if(iconType == kSmall8BitMask)
-				iconDepth = 8;
+			iconChannels = 1;
+			iconDepth = 8;
 			break;
 		default:
 			return 0;
@@ -525,6 +567,7 @@ int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ICNS_ImageD
 	iconDataSize = iconHeight * blockSize;
 	outIcon->width = iconWidth;
 	outIcon->height = iconHeight;
+	outIcon->channels = iconChannels;
 	outIcon->depth = iconDepth;
 	outIcon->dataSize = iconDataSize;
 	outIcon->iconData = (unsigned char *)malloc(iconDataSize);

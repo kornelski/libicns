@@ -22,8 +22,9 @@
 #ifndef __JP2DEC__
 
 #include <openjpeg.h>
+#include "icns.h"
 
-
+int opjToICNS_ImageData(opj_image_t *image, ICNS_ImageDataPtr outIcon);
 opj_image_t* jp2dec(unsigned char *bufin, int len);
-int savePNG(opj_image_t *image, char *filename);
+
 #endif

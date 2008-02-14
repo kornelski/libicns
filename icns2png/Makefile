@@ -47,12 +47,12 @@ INCPATH=$(PREFIX)/include
 CFLAGS+=-Wall -g
 
 # Linker flags
-LDFLAGS+=-L. -lz -lm -lpng12 -lopenjpeg
+LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12 -lopenjpeg
 LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
 LDFLAGS_SO+=$(LDFLAGS) -Wl,-rpath,. -licns
 
 # Library object files
-LIBOBJS = icns.o
+LIBOBJS = icns.o 
 LIBOBJSDLL = $(LIBOBJS:.o=.pic.o)
 
 # Utility programs included in library

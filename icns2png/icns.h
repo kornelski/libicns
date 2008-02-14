@@ -244,10 +244,11 @@ typedef struct ICNS_IconData {
 
 typedef struct ICNS_ImageData
 {
-	int		width;
-	int		height;
-	short		depth;
-	long		dataSize; // This should always = width*height*pixelDepth/8
+	int		width;		// width of image
+	int		height;		// height of image
+	short		channels;	// number of channels in data
+	short		depth;		// bits-per-pixel * channels
+	long		dataSize;	// bytes = width * height * depth / bits-per-pixel
 	unsigned char	*iconData;
 } ICNS_ImageData, *ICNS_ImageDataPtr;
 
