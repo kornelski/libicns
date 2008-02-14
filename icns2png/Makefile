@@ -49,17 +49,17 @@ CFLAGS+=-Wall -g
 # Linker flags
 LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12 -lopenjpeg
 LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
-LDFLAGS_SO+=$(LDFLAGS) -Wl,-rpath,. -licns
+LDFLAGS_SO+=-Wl,-rpath,. -licns $(LDFLAGS)
 
 # Library object files
-LIBOBJS = icns.o 
+LIBOBJS = icns.o jp2dec.o 
 LIBOBJSDLL = $(LIBOBJS:.o=.pic.o)
 
 # Utility programs included in library
 LIBUTILS = icns2png icontainer2icns
 
 # icns2png object files
-UTILOBJS = icns2png.o jp2dec.o pngwriter.o
+UTILOBJS = icns2png.o
 
 # Subdirectories to make
 SUBDIRS = $(TESTDIR)
@@ -96,7 +96,7 @@ $(LIBSOMAJ): $(LIBSOVER)
 	ln -sf $(LIBSOVER) $(LIBSOMAJ)
 
 $(LIBSOVER): $(LIBOBJSDLL)
-	$(CC) -shared -W1,-coname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
+	$(CC) -shared -W1,-soname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
 
 icns2png: $(UTILOBJS) $(LIBSO)
 	$(CC) -o icns2png $(CFLAGS) $(UTILOBJS) $(LDFLAGS_SO)

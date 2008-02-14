@@ -1,7 +1,6 @@
 TODO
 
 1) Rename icns functions to make more sense in the context of icns
-2) Finish seperation of icns2png from libicns (move jp2 support to libicns)
-3) Document libicns API
-4) Update icns2png to support extraction of any icon size with -16 -32 -64, etc.
-5) Add write support to libicns
+2) Document libicns API
+3) Update icns2png to support extraction of any icon size with -16 -32 -64, etc.
+4) Add write support to libicns

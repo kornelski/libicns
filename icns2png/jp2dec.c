@@ -24,7 +24,6 @@ Boston, MA 02111-1307, USA.
 #include <string.h>
 #include <png.h>
 
-#include "pngwriter.h"
 #include "jp2dec.h"
 #include "icns.h"
 
