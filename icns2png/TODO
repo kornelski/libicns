@@ -1,12 +1,13 @@
 TODO
 
-1) Add write support to libicns
-1a) Add function to remove a specific icns element from the icns family
-1c) Add function to set/overwrite an existing icns element
-1c.1) Functionality for 64x64 32-bit icon images
-1c.2) Functionality for 128x128 32-bit RLE icon images
-1c.3) Functionality for 256x256+ 32-bit JP2 icon images
-1c.4) Functionality for 8, 4, and 1 bit (stream compacted) images
+1) Finish write support to libicns
+1a) Add function to set/overwrite an existing icns element in an icns family
+1b) Add function to create an icns element from an icns image
+1b.1) Create element from 64x64 32-bit icon images
+1b.2) Create element from 128x128 32-bit RLE icon images
+1b.3) Create element from 256x256+ 32-bit JP2 icon images
+1b.4) Create element from 8, 4, and 1 bit (stream compacted) images
+
 2) Fix crashes when reading a file that is NOT icns,rsrc, or macbinary
 3) Fix all the crashes detected by zzuf
 4) Fix all endianness, 64-bit and alignment issues

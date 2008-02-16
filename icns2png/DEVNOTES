@@ -22,26 +22,48 @@ the file colormaps.h
 See icns.h for more information
 ===============================================================================
 Functions
+
 -------------------------------------------------------------------------------
-GetICNSImageFromICNSElement
+GetIcnsImage32FromIcnsElement
+- Retreives an icon image from an icns element. Data is returned by
+- reference in an icns image object with 32-bit raw, decoded, uncompressed data
+
+-------------------------------------------------------------------------------
+GetIcnsImageFromIcnsElement
 - Retreives an icon image from an icns element. Data is returned by
 - reference in an icns image object with raw, decoded, uncompressed data
+
 -------------------------------------------------------------------------------
-GetICNSElementFromICNSFamily
-- Retreives an icns element of the requested type from an icns family resource
-GetICNSFamilyFromFileData
+GetIcnsElementFromIcnsFamily
+- Retreives an icns element of the requested type from an icns family
+
+-------------------------------------------------------------------------------
+RemoveIcnsElementFromIcnsFamily
+- Removes an icns element of the requested type from an icns family
+
+-------------------------------------------------------------------------------
+CreateIcnsFamily
+- Creates a new icns family
+
+-------------------------------------------------------------------------------
+GetIcnsFamilyFromFileData
 - Retreives an icns family from a file. Note that if the file is in raw icns
 - format, this essentially means copying the file data to a location in
 - memory. Many icns files, however, are stored as rsrc files, do more decoding
 - is usually necessary
-GetICNSFamilyFromMacResource
+
+-------------------------------------------------------------------------------
+GetIcnsFamilyFromMacResource
 - Primarily for internal use. Parses a Macintosh rsrc data set and retrieves
 - the first 'icns' resource found. Note that it is technically possible for
 - there to be more than one resource of type 'icns'.
+
+-------------------------------------------------------------------------------
 ParseMacBinaryResourceFork
 - Again primarily for internal use. Parses MacBinary data into Macintosh
 - rsrc data. Some icns files are stored within macbinary encoded rsrc files
 See icns.h for reference on the actual parameters used in these functions.
+
 ===============================================================================
 Endianness issues
 The 'icns' icon family type has been in existence since the Mac 68k. The data
@@ -74,14 +96,15 @@ universal_binary/universal_binary_byte_swap/chapter_4_section_3.html
 icns data format is basically an 8-byte header, followed by icns elements
 ---- 8 byte header ----
 +4 byte type id, always 'icns'
-+4 byte int - total size of icns data: equal to total icns size - 8 bytes
++4 byte int - total size of icns data: equal to total icns size
 ---- icns_element objects ----
 |---- 8 byte header ----
 |+ 4 byte type id 'ICN#', 'icl8', etc...
-|+ 4 byte int - total size of element data: equal to size of element - 8 bytes
+|+ 4 byte int - total size of element data: equal to size of element
 |==== raw, rle, or jp2 image data
 |---- 8 byte header ----
 |+ 4 byte type id 'ICN#', 'icl8', etc...
-|+ 4 byte int - total size of image data: equal to size of element - 8 bytes
+|+ 4 byte int - total size of image data: equal to size of element
 |==== raw, rle, or jp2 image data
 |EOF
+

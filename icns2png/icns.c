@@ -33,10 +33,10 @@ Boston, MA 02111-1307, USA.
 
 int DecodeRLE24Data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
 
-int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut)
+int GetIcnsImage32FromIcnsElement(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut)
 {
 	int	error = 0;
-	icns_type_t	iconType = 0x00000000;
+	icns_type_t	icnsType = 0x00000000;
 	
 	if(iconElement == NULL)
 	{
@@ -50,12 +50,12 @@ int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteS
 		return -1;
 	}
 	
-	error = GetICNSImageFromICNSElement(iconElement,byteSwap,imageOut);
+	error = GetIcnsImageFromIcnsElement(iconElement,swapBytes,imageOut);
 	
 	if(error)
 		return -1;
 	
-	iconType = EndianSwap(iconElement->elementType,sizeof(icns_type_t),byteSwap);
+	icnsType = EndianSwap(iconElement->elementType,sizeof(icns_type_t),swapBytes);
 	
 	if(imageOut->imageDepth < 32)
 	{
@@ -88,7 +88,7 @@ int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteS
 		
 		dataCount = 0;
 		
-		switch(iconType)
+		switch(icnsType)
 		{
 			// 8-Bit Icon Mask Data Types
 			case ICNS_128X128_8BIT_MASK:
@@ -192,10 +192,10 @@ int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteS
 	return 0;
 }
 
-//***************************** GetICNSImage32FromICNSElement **************************//
+//***************************** GetIcnsImage32FromIcnsElement **************************//
 // Actual conversion of the icon data into uncompressed raw pixels
 
-int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut)
+int GetIcnsImageFromIcnsElement(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut)
 {
 	int		error = 0;
 	unsigned int	iconWidth = 0;
@@ -207,7 +207,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 	unsigned long	dataCount = 0;
 	unsigned long	blockSize = 0;
 	
-	icns_type_t	iconType = 0x00000000;
+	icns_type_t	icnsType = 0x00000000;
 	unsigned long	rawDataLength = 0;
 	unsigned char	*rawDataPtr = NULL;
 	
@@ -223,17 +223,17 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 		return -1;
 	}
 	
-	iconType = EndianSwap(iconElement->elementType,sizeof(icns_type_t),byteSwap);
-	rawDataLength = EndianSwap(iconElement->elementSize,sizeof(icns_size_t),byteSwap);
+	icnsType = EndianSwap(iconElement->elementType,sizeof(icns_type_t),swapBytes);
+	rawDataLength = EndianSwap(iconElement->elementSize,sizeof(icns_size_t),swapBytes);
 	rawDataPtr = (unsigned char*)&(iconElement->elementData[0]);
 	
 	/*
-	printf("Icon element type is: 0x%8X\n",(unsigned int)iconType);
+	printf("Icon element type is: 0x%8X\n",(unsigned int)icnsType);
 	printf("Icon element size is: %d\n",(int)rawDataLength);	
 	*/
 	
 	// We use the jp2 processor for these two
-	if((iconType == ICNS_512x512_32BIT_ARGB_DATA) || (iconType == ICNS_256x256_32BIT_ARGB_DATA))
+	if((icnsType == ICNS_512x512_32BIT_ARGB_DATA) || (icnsType == ICNS_256x256_32BIT_ARGB_DATA))
 	{
 		opj_image_t* image = NULL;
 
@@ -248,7 +248,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 		return error;
 	}
 	
-	switch(iconType)
+	switch(icnsType)
 	{
 		// 32-Bit Icon Image Data Types
 		case ICNS_128X128_32BIT_DATA:
@@ -381,7 +381,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			break;
 			
 		default:
-			fprintf(stderr,"Unable to parse icon type 0x%8X\n",iconType);
+			fprintf(stderr,"Unable to parse icon type 0x%8X\n",icnsType);
 			return -1;
 			break;
 	}
@@ -423,7 +423,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			for(dataCount = 0; dataCount < iconHeight; dataCount++)
 				memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
 		}
-		if(byteSwap)
+		if(swapBytes)
 		{
 			int	packBytes = iconDepth / icns_byte_bits;
 			char	*swapPtr = (char*)imageOut->imageData;
@@ -525,119 +525,239 @@ int DecodeRLE24Data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned 
 }
 
 
-//***************************** GetIconDataFromIconFamily **************************//
+//***************************** GetIconDataFromIcnsFamily **************************//
 // Parses requested data from an icon family - puts it into a "raw" image format
 
-int GetICNSElementFromICNSFamily(icns_family_t *iconFamily,icns_type_t iconType, icns_bool_t *byteSwap,icns_element_t **iconElementOut)
+int GetIcnsElementFromIcnsFamily(icns_family_t *icnsFamily,icns_type_t icnsType, icns_bool_t *swapBytes,icns_element_t **iconElementOut)
 {
-	icns_uint32_t	hOffset = 0;
 	int		error = 0;
 	int		foundData = 0;
-	icns_type_t	iconFamilyDataType = 0x00000000;
-	icns_size_t	iconFamilyDataSize = 0;
-	icns_type_t	readDataType = 0x00000000;
-	icns_size_t	readDataSize = 0;
-	icns_element_t 	*icon = NULL;
+	icns_bool_t	bigEndian = ES_IS_BIG_ENDIAN;
+	icns_type_t	icnsFamilyDataType = 0x00000000;
+	icns_size_t	icnsFamilyDataSize = 0;
+	icns_element_t	*icnsElement = NULL;
+	icns_type_t	elementDataType = 0x00000000;
+	icns_size_t	elementDataSize = 0;
+	icns_uint32_t	dataOffset = 0;
 	
-	if(iconElementOut == NULL)
+	if(icnsFamily == NULL)
 	{
-		fprintf(stderr,"Output pointer icon is NULL!\n");
+		fprintf(stderr,"icns family is NULL!\n");
 		return -1;
 	}
 	
-	if(iconFamily->resourceType == EndianSwap(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE), 1))
-		*byteSwap = 1;
+	if(icnsFamily->resourceType == EndianSwap(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE), 1)) {
+		*swapBytes = 1;
+	} else if(icnsFamily->resourceType == ICNS_FAMILY_TYPE) {
+		*swapBytes = 0;
+	} else {
+		fprintf(stderr,"Invalid icns family!\n");
+		error = -1;
+	}
 	
-	iconFamilyDataType = EndianSwap(iconFamily->resourceType,sizeof(int),*byteSwap);
-	iconFamilyDataSize = EndianSwap(iconFamily->resourceSize,sizeof(int),*byteSwap);
+	if(*swapBytes == bigEndian) {
+		printf("Warning: endian not as expected.\n");
+	}
+	
+	icnsFamilyDataType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
+	icnsFamilyDataSize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
 	
 	/*
-	printf("Bytes are swapped in file: %s\n",(*byteSwap ? "yes" : "no"));
-	printf("Resource size: %d\n",iconFamilyDataSize);
-	printf("Resource type: 0x%8X ('%c%c%c%c')\n",(unsigned int)iconFamilyDataType);
-	printf("Looking for icon of type: 0x%8X ('%c%c%c%c')\n",(unsigned int)iconType));
+	printf("Bytes are swapped in file: %s\n",(*swapBytes ? "yes" : "no"));
+	printf("Resource size: %d\n",icnsFamilyDataSize);
+	printf("Resource type: 0x%8X ('%c%c%c%c')\n",(unsigned int)icnsFamilyDataType);
+	printf("Looking for icon of type: 0x%8X ('%c%c%c%c')\n",(unsigned int)icnsType));
 	*/
 	
-	if (( iconFamilyDataType != ICNS_FAMILY_TYPE) || (iconFamilyDataSize < sizeof(icns_family_t)))
+	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	
+	while ( (foundData == 0) && (dataOffset < icnsFamilyDataSize) )
 	{
-		fprintf(stderr,"Invalid icns resource!\n");
-		error = 1;
-	}
-	else
-	{
-		hOffset += sizeof(icns_type_t) + sizeof(icns_size_t);
+		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
 		
-		while ( (foundData == 0) && (hOffset < EndianSwap(iconFamily->resourceSize,sizeof(int),*byteSwap) ) )
-		{
-			readDataType = EndianSwap((icns_type_t)((icns_element_t*)(((char*)iconFamily)+hOffset))->elementType,sizeof(icns_type_t),*byteSwap);
-			readDataSize = EndianSwap((icns_size_t)((icns_element_t*)(((char*)iconFamily)+hOffset))->elementSize,sizeof(icns_size_t),*byteSwap);
-			
-			/*
-			printf("Found data...\n");
-			printf("  type: 0x%8X\n",(unsigned int)readDataType);
-			printf("  size: %d\n",(unsigned int)readDataSize);
-			*/
+		/*
+		printf("Found data...\n");
+		printf("  type: 0x%8X\n",(unsigned int)readDataType);
+		printf("  size: %d\n",(unsigned int)readDataSize);
+		*/
 
-			if (readDataType == iconType)
-			{
-				icon = (icns_element_t*)(((char*)iconFamily)+hOffset);
-				foundData = 1;
-			}
-			else
-			{
-				hOffset += EndianSwap(((icns_element_t*)(((char*)iconFamily)+hOffset))->elementSize,sizeof(int),*byteSwap);
-			}
-		}
+		if (elementDataType == icnsType)
+			foundData = 1;
+		else
+			dataOffset += elementDataSize;
 	}
 	
 	if(foundData)
 	{
-		*iconElementOut = malloc(readDataSize);
-		if(!*iconElementOut) {
+		*iconElementOut = malloc(elementDataSize);
+		if(*iconElementOut == NULL) {
 			fprintf(stderr,"Out of Memory\n");
-			error = 1;
-		} else {
-			memcpy( *iconElementOut, icon, readDataSize);
+			return -1;
 		}
+		memcpy( *iconElementOut, icnsElement, elementDataSize);
 	}
 	else
 	{
 		fprintf(stderr,"Unable to find requested icon data!\n");
-		error = 1;
+		error = -1;
 	}
 	
 	return error;
 }
 
-/***************************** GetIconFamilyFromFileData **************************/
+//***************************** RemoveIcnsElementFromIcnsFamily **************************//
+// Parses requested data from an icon family - puts it into a "raw" image format
 
-int CreateICNSFamily(icns_family_t **iconFamilyOut)
+int RemoveIcnsElementFromIcnsFamily(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes)
 {
-	icns_bool_t	byteSwap = 0;
-	icns_family_t	*newIconFamily = NULL;
+	int		error = 0;
+	int		foundData = 0;
+	icns_bool_t	bigEndian = ES_IS_BIG_ENDIAN;
+	icns_family_t	*icnsFamily = NULL;
+	icns_type_t	icnsFamilyDataType = 0x00000000;
+	icns_size_t	icnsFamilyDataSize = 0;
+	icns_element_t	*icnsElement = NULL;
+	icns_type_t	elementDataType = 0x00000000;
+	icns_size_t	elementDataSize = 0;
+	icns_uint32_t	dataOffset = 0;
 	
-	byteSwap = ES_IS_LITTLE_ENDIAN;
+	if(icnsFamilyRef == NULL)
+	{
+		fprintf(stderr,"icns family reference is NULL!\n");
+		return -1;
+	}
 	
-	*iconFamilyOut = NULL;
+	icnsFamily = *icnsFamilyRef;
 	
-	newIconFamily = malloc(sizeof(icns_type_t) + sizeof(icns_size_t);
+	if(icnsFamily == NULL)
+	{
+		fprintf(stderr,"icns family is NULL!\n");
+		return -1;
+	}
+	
+	if(icnsFamily->resourceType == EndianSwap(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE), 1)) {
+		*swapBytes = 1;
+	} else if(icnsFamily->resourceType == ICNS_FAMILY_TYPE) {
+		*swapBytes = 0;
+	} else {
+		fprintf(stderr,"Invalid icns family!\n");
+		error = -1;
+	}
+	
+	if(*swapBytes == bigEndian) {
+		printf("Warning: endian not as expected.\n");
+	}
+	
+	icnsFamilyDataType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
+	icnsFamilyDataSize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
+	
+	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	
+	while ( (foundData == 0) && (dataOffset < icnsFamilyDataSize) )
+	{
+		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
 		
-	if(newIconFamily == NULL)
+		if (elementDataType == icnsType)
+			foundData = 1;
+		else
+			dataOffset += elementDataSize;
+	}
+	
+	if(foundData)
+	{
+		icns_size_t	newIcnsFamilySize = 0;
+		icns_family_t	*newIcnsFamily = NULL;
+		icns_uint32_t	newDataOffset = 0;
+		
+		newIcnsFamilySize = icnsFamilyDataSize - elementDataSize;
+		newIcnsFamily = malloc(newIcnsFamilySize);
+		
+		if(newIcnsFamily == NULL) {
+			fprintf(stderr,"Out of Memory\n");
+			return -1;
+		}
+			
+		newIcnsFamilySize = sizeof(icns_type_t) + sizeof(icns_size_t);
+		
+		newIcnsFamily->resourceType = EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),*swapBytes);
+		newIcnsFamily->resourceSize = EndianSwap(newIcnsFamilySize,sizeof(icns_size_t),*swapBytes);
+		
+		newDataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+		dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+		
+		while ( dataOffset < icnsFamilyDataSize )
+		{
+			icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+			elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+			elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+			
+			if (elementDataType != icnsType)
+			{
+				memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementDataSize);
+				dataOffset += elementDataSize;
+				newDataOffset += elementDataSize;
+			}
+			else
+			{
+				dataOffset += elementDataSize;
+			}
+		}
+	}
+	else
+	{
+		fprintf(stderr,"Unable to find requested icon data for removal!\n");
+		error = -1;
+	}
+	
+	return error;
+}
+
+/***************************** CreateIcnsFamily **************************/
+
+int CreateIcnsFamily(icns_family_t **icnsFamilyOut)
+{
+	icns_bool_t	swapBytes = 0;
+	icns_family_t	*newIcnsFamily = NULL;
+	icns_size_t	newIcnsFamilySize = 0;
+
+	if(icnsFamilyOut == NULL)
+	{
+		fprintf(stderr,"icns family reference is NULL!\n");
+		return -1;
+	}
+	
+	swapBytes = ES_IS_LITTLE_ENDIAN;
+	
+	*icnsFamilyOut = NULL;
+	
+	newIcnsFamily = malloc(sizeof(icns_type_t) + sizeof(icns_size_t));
+		
+	if(newIcnsFamily == NULL)
 	{
 		fprintf(stderr,"Unable to allocate memory for new icns family!\n");
 		return -1;
 	}
 	
-	newIconFamily->resourceType = EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),byteSwap);
-	newIconFamily->resourceSize = 0x00000000;
+	newIcnsFamilySize = sizeof(icns_type_t) + sizeof(icns_size_t);
+	
+	newIcnsFamily->resourceType = EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),swapBytes);
+	newIcnsFamily->resourceSize = EndianSwap(newIcnsFamilySize,sizeof(icns_size_t),swapBytes);
+	
+	*icnsFamilyOut = newIcnsFamily;
+	
+	return 0;
 }
 
-/***************************** GetIconFamilyFromFileData **************************/
+/***************************** GetIcnsFamilyFromFileData **************************/
 
-int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **iconFamilyOut)
+int GetIcnsFamilyFromFileData(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **icnsFamilyOut)
 {
 	int		error = 0;
-	icns_bool_t	byteSwap = 0;
+	icns_bool_t	swapBytes = 0;
 	unsigned char	*iconDataPtr = NULL;
 	unsigned long	dataOffset = 0;
 	
@@ -647,22 +767,22 @@ int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *dataPtr,icns
 		return -1;
 	}
 	
-	if(iconFamilyOut == NULL)
+	if(icnsFamilyOut == NULL)
 	{
-		fprintf(stderr,"iconFamilyOut is NULL!\n");
+		fprintf(stderr,"icnsFamilyOut is NULL!\n");
 		return -1;
 	}
 	
 	// According to Apple Developer Documentation, the icns
 	// format is always big endian. So we swap if we are little endian.
-	byteSwap = ES_IS_LITTLE_ENDIAN;
+	swapBytes = ES_IS_LITTLE_ENDIAN;
 
 	// search for icns entry, NG icns haf various offsets!
 	// Note by Mathew 02/13/2008
 	// IMHO, this is hackish and should be fixed
 	// Are there not specs for the NG format??
 	iconDataPtr = dataPtr;
-	while ( (dataOffset < dataSize-sizeof(icns_type_t)) && (*((icns_type_t*)(iconDataPtr)) != EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),byteSwap)) ) {
+	while ( (dataOffset < dataSize-sizeof(icns_type_t)) && (*((icns_type_t*)(iconDataPtr)) != EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),swapBytes)) ) {
 		++dataOffset;
 		++iconDataPtr;
 	}
@@ -676,29 +796,29 @@ int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *dataPtr,icns
 		memcpy (iconDataPtr,dataPtr,dataSize);
 	}
 	
-	if(*((icns_type_t*)(iconDataPtr)) != EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),byteSwap))
+	if(*((icns_type_t*)(iconDataPtr)) != EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),swapBytes))
 	{
 		// Might be embedded in an rsrc file
-		if((error = GetICNSFamilyFromMacResource(dataSize,iconDataPtr,iconFamilyOut)))
+		if((error = GetIcnsFamilyFromMacResource(dataSize,iconDataPtr,icnsFamilyOut)))
 		{
 			fprintf(stderr,"Error parsing X Icon resource!\n");
-			*iconFamilyOut = NULL;
+			*icnsFamilyOut = NULL;
 		}
 	}
 	else
 	{
 		// Data is an X Icon file - no parsing needed at this point
-		*iconFamilyOut = (icns_family_t*)iconDataPtr;
+		*icnsFamilyOut = (icns_family_t*)iconDataPtr;
 	}
 	
 	return error;
 }
 
-/***************************** GetIconFamilyFromMacResourceFork **************************/
+/***************************** GetIcnsFamilyFromMacResourceFork **************************/
 
-int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **iconFamilyOut)
+int GetIcnsFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **icnsFamilyOut)
 {
-	icns_bool_t	byteSwapped = ES_IS_LITTLE_ENDIAN;
+	icns_bool_t	swapBytesped = ES_IS_LITTLE_ENDIAN;
 	icns_bool_t	error = 0;
 	
 	icns_bool_t	found = 0;
@@ -725,10 +845,10 @@ int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,i
 	}
 
 	// Load Resource Header to if we are dealing with a raw resource fork.
-	resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+0)),sizeof(icns_sint32_t),byteSwapped);
-	resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+4)),sizeof(icns_sint32_t),byteSwapped);
-	resHeadDataLength = EndianSwap(*((icns_sint32_t*)(dataPtr+8)),sizeof(icns_sint32_t),byteSwapped);
-	resHeadMapLength = EndianSwap(*((icns_sint32_t*)(dataPtr+12)),sizeof(icns_sint32_t),byteSwapped);
+	resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+0)),sizeof(icns_sint32_t),swapBytesped);
+	resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+4)),sizeof(icns_sint32_t),swapBytesped);
+	resHeadDataLength = EndianSwap(*((icns_sint32_t*)(dataPtr+8)),sizeof(icns_sint32_t),swapBytesped);
+	resHeadMapLength = EndianSwap(*((icns_sint32_t*)(dataPtr+12)),sizeof(icns_sint32_t),swapBytesped);
 	
 	// Check to see if file is not a raw resource file
 	if( (resHeadMapOffset+resHeadMapLength != dataSize) || (resHeadDataOffset+resHeadDataLength != resHeadMapOffset) )
@@ -738,10 +858,10 @@ int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,i
 		if(!error)
 		{
 			// Reload Actual Resource Header.
-			resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(parsedData+0)),sizeof(icns_sint32_t),byteSwapped);
-			resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(parsedData+4)),sizeof(icns_sint32_t),byteSwapped);
-			resHeadDataLength = EndianSwap(*((icns_sint32_t*)(parsedData+8)),sizeof(icns_sint32_t),byteSwapped);
-			resHeadMapLength = EndianSwap(*((icns_sint32_t*)(parsedData+12)),sizeof(icns_sint32_t),byteSwapped);
+			resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(parsedData+0)),sizeof(icns_sint32_t),swapBytesped);
+			resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(parsedData+4)),sizeof(icns_sint32_t),swapBytesped);
+			resHeadDataLength = EndianSwap(*((icns_sint32_t*)(parsedData+8)),sizeof(icns_sint32_t),swapBytesped);
+			resHeadMapLength = EndianSwap(*((icns_sint32_t*)(parsedData+12)),sizeof(icns_sint32_t),swapBytesped);
 			
 			dataSize = parsedSize;
 			dataPtr = parsedData;
@@ -751,10 +871,10 @@ int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,i
 	if(!error)
 	{
 		// Load Resource Map
-		resMapAttributes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+0+22)), sizeof(icns_sint16_t),byteSwapped);
-		resMapTypeOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+2+22)), sizeof(icns_sint16_t),byteSwapped);
-		resMapNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+4+22)), sizeof(icns_sint16_t),byteSwapped);
-		resMapNumTypes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+6+22)), sizeof(icns_sint16_t),byteSwapped)+1;
+		resMapAttributes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+0+22)), sizeof(icns_sint16_t),swapBytesped);
+		resMapTypeOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+2+22)), sizeof(icns_sint16_t),swapBytesped);
+		resMapNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+4+22)), sizeof(icns_sint16_t),swapBytesped);
+		resMapNumTypes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+6+22)), sizeof(icns_sint16_t),swapBytesped)+1;
 		
 		for(count = 0; count < resMapNumTypes && found == 0; count++)
 		{
@@ -762,9 +882,9 @@ int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,i
 			short	resNumItems = 0;
 			short	resOffset = 0;
 			
-			resType = EndianSwap(*((icns_type_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8))),sizeof(icns_type_t),byteSwapped);
-			resNumItems = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(icns_sint16_t),byteSwapped);
-			resOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(icns_sint16_t),byteSwapped);
+			resType = EndianSwap(*((icns_type_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8))),sizeof(icns_type_t),swapBytesped);
+			resNumItems = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(icns_sint16_t),swapBytesped);
+			resOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(icns_sint16_t),swapBytesped);
 			
 			if(resType == 0x69636E73) /* 'icns' */
 			{
@@ -777,16 +897,16 @@ int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,i
 				char	resName[256] = {0};
 				unsigned char	*resData = NULL;
 				
-				resID = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset)),sizeof(icns_sint16_t),byteSwapped);
-				resNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2)),sizeof(icns_sint16_t),byteSwapped);
+				resID = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset)),sizeof(icns_sint16_t),swapBytesped);
+				resNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2)),sizeof(icns_sint16_t),swapBytesped);
 				resAttributes = *((icns_sint8_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4));
 
 				// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
 				// Load as long, and then cut off extra inital byte.
-				resDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(icns_sint32_t),byteSwapped);
+				resDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(icns_sint32_t),swapBytesped);
 				resDataOffset &= 0x00FFFFFF;
 
-				resDataLength = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(icns_sint32_t),byteSwapped);
+				resDataLength = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(icns_sint32_t),swapBytesped);
 
 				if(resNameOffset != -1)
 				{
@@ -805,20 +925,20 @@ int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,i
 					if(resData != NULL)
 					{
 						memcpy(resData,(dataPtr+resHeadDataOffset+resDataOffset+4),resDataLength);
-						*iconFamilyOut = (icns_family_t*)resData;
+						*icnsFamilyOut = (icns_family_t*)resData;
 						found = 1;
 					}
 					else
 					{
 						fprintf(stderr,"Error allocating %d bytes of memory!\n",(int)resDataLength);
-						*iconFamilyOut = NULL;
-						error = 1;
+						*icnsFamilyOut = NULL;
+						error = -1;
 					}
 				}
 				else
 				{
 					fprintf(stderr,"Resource icns id# %d of size 0!\n",resID);
-					error = 1;
+					error = -1;
 				}
 			}
 		}
@@ -833,7 +953,7 @@ int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,i
 	if(!found)
 	{
 		fprintf(stderr,"Unable to find icon data in file!\n");
-		error = 1;
+		error = -1;
 	}
 
 	return error;
@@ -850,7 +970,7 @@ int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *dataPtr,icn
 	
 	int		error = 0;
 	int		isValid = 0;
-	int		byteSwapped = ES_IS_LITTLE_ENDIAN;
+	int		swapBytesped = ES_IS_LITTLE_ENDIAN;
 	short		secondHeaderLength = 0;
 	long		fileDataPadding = 0;
 	long		resourceDataPadding = 0;
@@ -875,7 +995,7 @@ int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *dataPtr,icn
 	}
 	
 	                                         /* 'mBIN' */
-	if(*((icns_type_t*)(dataPtr+65)) == EndianSwap(0x6D42494E,4,byteSwapped))
+	if(*((icns_type_t*)(dataPtr+65)) == EndianSwap(0x6D42494E,4,swapBytesped))
 	{
 		// Valid MacBinary III file
 		isValid = 1;
@@ -899,16 +1019,16 @@ int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *dataPtr,icn
 	
 	// If mac file type is requested, pass it up
 	if(dataTypeOut != NULL)
-		*dataTypeOut = EndianSwap( *((icns_type_t*)(dataPtr+65)), sizeof(icns_type_t), byteSwapped );
+		*dataTypeOut = EndianSwap( *((icns_type_t*)(dataPtr+65)), sizeof(icns_type_t), swapBytesped );
 
 	// If mac file creator is requested, pass it up
 	if(dataCreatorOut != NULL)
-		*dataCreatorOut = EndianSwap( *((icns_type_t*)(dataPtr+69)), sizeof(icns_type_t), byteSwapped );
+		*dataCreatorOut = EndianSwap( *((icns_type_t*)(dataPtr+69)), sizeof(icns_type_t), swapBytesped );
 	
 	// Load up the data lengths
-	secondHeaderLength = EndianSwap( *((icns_sint16_t *)(dataPtr+120)), sizeof(icns_sint16_t), byteSwapped );
-	fileDataLength = EndianSwap( *((icns_sint32_t *)(dataPtr+83)), sizeof(icns_sint32_t), byteSwapped );
-	resourceDataLength = EndianSwap( *((icns_sint32_t *)(dataPtr+87)), sizeof(icns_sint32_t), byteSwapped );
+	secondHeaderLength = EndianSwap( *((icns_sint16_t *)(dataPtr+120)), sizeof(icns_sint16_t), swapBytesped );
+	fileDataLength = EndianSwap( *((icns_sint32_t *)(dataPtr+83)), sizeof(icns_sint32_t), swapBytesped );
+	resourceDataLength = EndianSwap( *((icns_sint32_t *)(dataPtr+87)), sizeof(icns_sint32_t), swapBytesped );
 
 	// Calculate extra padding length for forks
 	fileDataPadding = (((fileDataLength + 127) >> 7) << 7) - fileDataLength;
@@ -938,7 +1058,7 @@ int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *dataPtr,icn
 	else
 	{
 		fprintf(stderr,"Error allocating memory for parsed resource!\n");
-		error = 1;
+		error = -1;
 	}
 
 	return error;

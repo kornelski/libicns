@@ -118,11 +118,13 @@ typedef struct icns_pixel32_t
 
 /* icns function prototypes */
 
-int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut);
-int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut);
-int GetICNSElementFromICNSFamily(icns_family_t *iconFamily,icns_type_t iconType, icns_bool_t *byteSwap,icns_element_t **iconElementOut);
-int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
-int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
+int GetIcnsImage32FromIcnsElement(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
+int GetIcnsImageFromIcnsElement(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
+int GetIcnsElementFromIcnsFamily(icns_family_t *icnsFamily,icns_type_t icnsType, icns_bool_t *swapBytes,icns_element_t **iconElementOut);
+int RemoveIcnsElementFromIcnsFamily(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes);
+int CreateIcnsFamily(icns_family_t **icnsFamilyOut);
+int GetIcnsFamilyFromFileData(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
+int GetIcnsFamilyFromMacResource(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
 int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *data,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,unsigned long *parsedResSizeOut,unsigned char **parsedResDataOut);
 
 #endif
