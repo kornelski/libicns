@@ -120,7 +120,10 @@ typedef struct icns_pixel32_t
 
 int GetIcnsImage32FromIcnsElement(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
 int GetIcnsImageFromIcnsElement(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
+int DecodeRLE24Data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
+int MakeIcnsElementFromIcnsImage(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn);
 int GetIcnsElementFromIcnsFamily(icns_family_t *icnsFamily,icns_type_t icnsType, icns_bool_t *swapBytes,icns_element_t **iconElementOut);
+int SetIcnsElementForIcnsFamily(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement, icns_bool_t *swapBytes);
 int RemoveIcnsElementFromIcnsFamily(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes);
 int CreateIcnsFamily(icns_family_t **icnsFamilyOut);
 int GetIcnsFamilyFromFileData(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);

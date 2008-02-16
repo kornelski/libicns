@@ -524,9 +524,17 @@ int DecodeRLE24Data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned 
 	return 0;
 }
 
+//***************************** MakeIcnsElementFromIcnsImage **************************//
+// Parses requested data from an icon family - puts it into a "raw" image format
+int MakeIcnsElementFromIcnsImage(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn)
+{
+	
+	
+	return 0;
+}
 
 //***************************** GetIconDataFromIcnsFamily **************************//
-// Parses requested data from an icon family - puts it into a "raw" image format
+// Parses requested data from an icon family - puts it into a icns element
 
 int GetIcnsElementFromIcnsFamily(icns_family_t *icnsFamily,icns_type_t icnsType, icns_bool_t *swapBytes,icns_element_t **iconElementOut)
 {
@@ -607,10 +615,139 @@ int GetIcnsElementFromIcnsFamily(icns_family_t *icnsFamily,icns_type_t icnsType,
 	return error;
 }
 
+//***************************** SetIcnsElementForIcnsFamily **************************//
+// Adds/updates the icns element of it's type in the icon family
+
+int SetIcnsElementForIcnsFamily(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement, icns_bool_t *swapBytes)
+{
+	int		error = 0;
+	int		foundData = 0;
+	int		copiedData = 0;
+	icns_bool_t	bigEndian = ES_IS_BIG_ENDIAN;
+	icns_family_t	*icnsFamily = NULL;
+	icns_type_t	icnsFamilyDataType = 0x00000000;
+	icns_size_t	icnsFamilyDataSize = 0;
+	icns_element_t	*icnsElement = NULL;
+	icns_type_t	newIcnsElementType = 0x00000000;
+	icns_size_t	newIcnsElementSize = 0;
+	icns_type_t	elementDataType = 0x00000000;
+	icns_size_t	elementDataSize = 0;
+	icns_uint32_t	dataOffset = 0;
+	icns_size_t	newIcnsFamilySize = 0;
+	icns_family_t	*newIcnsFamily = NULL;
+	icns_uint32_t	newDataOffset = 0;
+	
+	if(icnsFamilyRef == NULL)
+	{
+		fprintf(stderr,"icns family reference is NULL!\n");
+		return -1;
+	}
+	
+	icnsFamily = *icnsFamilyRef;
+	
+	if(icnsFamily == NULL)
+	{
+		fprintf(stderr,"icns family is NULL!\n");
+		return -1;
+	}
+	
+	if(icnsFamily->resourceType == EndianSwap(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE), 1)) {
+		*swapBytes = 1;
+	} else if(icnsFamily->resourceType == ICNS_FAMILY_TYPE) {
+		*swapBytes = 0;
+	} else {
+		fprintf(stderr,"Invalid icns family!\n");
+		error = -1;
+	}
+	
+	if(*swapBytes == bigEndian) {
+		printf("Warning: endian not as expected.\n");
+	}
+	
+	icnsFamilyDataType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
+	icnsFamilyDataSize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
+
+	if(newIcnsElement == NULL)
+	{
+		fprintf(stderr,"icns element is NULL!\n");
+		return -1;
+	}
+	
+	newIcnsElementType = EndianSwap(newIcnsElement->elementType,sizeof(int),*swapBytes);
+	newIcnsElementSize = EndianSwap(newIcnsElement->elementSize,sizeof(int),*swapBytes);
+	
+	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	
+	while ( (foundData == 0) && (dataOffset < icnsFamilyDataSize) )
+	{
+		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+		
+		if (elementDataType == newIcnsElementType)
+			foundData = 1;
+		else
+			dataOffset += elementDataSize;
+	}
+	
+	if(foundData)
+		newIcnsFamilySize = icnsFamilyDataSize - elementDataSize + newIcnsElementSize;
+	else
+		newIcnsFamilySize = icnsFamilyDataSize + newIcnsElementSize;
+
+	newIcnsFamily = malloc(newIcnsFamilySize);
+	
+	if(newIcnsFamily == NULL) {
+		fprintf(stderr,"Out of Memory\n");
+		return -1;
+	}
+
+	newIcnsFamily->resourceType = EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),*swapBytes);
+	newIcnsFamily->resourceSize = EndianSwap(newIcnsFamilySize,sizeof(icns_size_t),*swapBytes);
+	
+	newDataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	
+	copiedData = 0;
+	
+	while ( dataOffset < icnsFamilyDataSize )
+	{
+		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+		
+		if (elementDataType != newIcnsElementType)
+		{
+			memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementDataSize);
+			newDataOffset += elementDataSize;
+		}
+		else
+		{
+			memcpy( ((char *)(newIcnsFamily))+newDataOffset , (char *)newIcnsElement, newIcnsElementSize);
+			newDataOffset += newIcnsElementSize;
+			copiedData = 1;
+		}
+
+		dataOffset += elementDataSize;
+	}
+	
+	if(!copiedData)
+	{
+		memcpy( ((char *)(newIcnsFamily))+newDataOffset , (char *)newIcnsElement, newIcnsElementSize);
+		newDataOffset += newIcnsElementSize;
+	}
+	
+	*icnsFamilyRef = newIcnsFamily;
+	
+	free(icnsFamily);
+	
+	return error;
+}
+
 //***************************** RemoveIcnsElementFromIcnsFamily **************************//
 // Parses requested data from an icon family - puts it into a "raw" image format
 
-int RemoveIcnsElementFromIcnsFamily(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes)
+int RemoveIcnsElementFromIcnsFamily(icns_family_t **icnsFamilyRef,icns_type_t icnsElementType, icns_bool_t *swapBytes)
 {
 	int		error = 0;
 	int		foundData = 0;
@@ -661,57 +798,54 @@ int RemoveIcnsElementFromIcnsFamily(icns_family_t **icnsFamilyRef,icns_type_t ic
 		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
 		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
 		
-		if (elementDataType == icnsType)
+		if (elementDataType == icnsElementType)
 			foundData = 1;
 		else
 			dataOffset += elementDataSize;
 	}
 	
-	if(foundData)
-	{
-		icns_size_t	newIcnsFamilySize = 0;
-		icns_family_t	*newIcnsFamily = NULL;
-		icns_uint32_t	newDataOffset = 0;
-		
-		newIcnsFamilySize = icnsFamilyDataSize - elementDataSize;
-		newIcnsFamily = malloc(newIcnsFamilySize);
-		
-		if(newIcnsFamily == NULL) {
-			fprintf(stderr,"Out of Memory\n");
-			return -1;
-		}
-			
-		newIcnsFamilySize = sizeof(icns_type_t) + sizeof(icns_size_t);
-		
-		newIcnsFamily->resourceType = EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),*swapBytes);
-		newIcnsFamily->resourceSize = EndianSwap(newIcnsFamilySize,sizeof(icns_size_t),*swapBytes);
-		
-		newDataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
-		dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
-		
-		while ( dataOffset < icnsFamilyDataSize )
-		{
-			icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
-			elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
-			elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
-			
-			if (elementDataType != icnsType)
-			{
-				memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementDataSize);
-				dataOffset += elementDataSize;
-				newDataOffset += elementDataSize;
-			}
-			else
-			{
-				dataOffset += elementDataSize;
-			}
-		}
-	}
-	else
+	if(!foundData)
 	{
 		fprintf(stderr,"Unable to find requested icon data for removal!\n");
-		error = -1;
+		return -1;
 	}
+	
+	icns_size_t	newIcnsFamilySize = 0;
+	icns_family_t	*newIcnsFamily = NULL;
+	icns_uint32_t	newDataOffset = 0;
+	
+	newIcnsFamilySize = icnsFamilyDataSize - elementDataSize;
+	newIcnsFamily = malloc(newIcnsFamilySize);
+	
+	if(newIcnsFamily == NULL) {
+		fprintf(stderr,"Out of Memory\n");
+		return -1;
+	}
+	
+	newIcnsFamily->resourceType = EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),*swapBytes);
+	newIcnsFamily->resourceSize = EndianSwap(newIcnsFamilySize,sizeof(icns_size_t),*swapBytes);
+	
+	newDataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	
+	while ( dataOffset < icnsFamilyDataSize )
+	{
+		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+		
+		if (elementDataType != icnsElementType)
+		{
+			memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementDataSize);
+			newDataOffset += elementDataSize;
+		}
+		
+		dataOffset += elementDataSize;
+	}
+	
+	*icnsFamilyRef = newIcnsFamily;
+
+	free(icnsFamily);
 	
 	return error;
 }

@@ -34,8 +34,16 @@ GetIcnsImageFromIcnsElement
 - reference in an icns image object with raw, decoded, uncompressed data
 
 -------------------------------------------------------------------------------
+MakeIcnsElementFromIcnsImage
+- Creates an icns element structure from an icns image
+
+-------------------------------------------------------------------------------
 GetIcnsElementFromIcnsFamily
 - Retreives an icns element of the requested type from an icns family
+
+-------------------------------------------------------------------------------
+SetIcnsElementForIcnsFamily
+- Adds/updates an icns element of it's type in an icns family
 
 -------------------------------------------------------------------------------
 RemoveIcnsElementFromIcnsFamily
