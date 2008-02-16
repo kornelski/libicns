@@ -33,8 +33,166 @@ Boston, MA 02111-1307, USA.
 
 int DecodeRLE24Data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
 
+int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut)
+{
+	int	error = 0;
+	icns_type_t	iconType = 0x00000000;
+	
+	if(iconElement == NULL)
+	{
+		fprintf(stderr,"Icon element is NULL!\n");
+		return -1;
+	}
+	
+	if(imageOut == NULL)
+	{
+		fprintf(stderr,"Icon image structure is NULL!\n");
+		return -1;
+	}
+	
+	error = GetICNSImageFromICNSElement(iconElement,byteSwap,imageOut);
+	
+	if(error)
+		return -1;
+	
+	iconType = EndianSwap(iconElement->elementType,sizeof(icns_type_t),byteSwap);
+	
+	if(imageOut->imageDepth < 32)
+	{
+		unsigned char	*oldData = NULL;
+		unsigned char	*newData = NULL;
+		unsigned int	oldDepth = 0;
+		unsigned int	oldDataSize = 0;
+		unsigned long	newBlockSize = 0;
+		unsigned long	newDataSize = 0;
+		unsigned long	pixelCount = 0;
+		unsigned long	pixelID = 0;
+		unsigned long	dataCount = 0;
+		unsigned char	dataValue = 0;
+		unsigned char	colorIndex = 0;
+		icns_colormap_rgb_t	colorRGB;
+		
+		oldDepth = imageOut->imageDepth;
+		oldDataSize = imageOut->imageDataSize;
+		
+		pixelCount = imageOut->imageWidth * imageOut->imageHeight;
+		
+		newBlockSize = imageOut->imageWidth * 32;
+		newDataSize = newBlockSize * imageOut->imageHeight;
+		
+		oldData = imageOut->imageData;
+		newData = (unsigned char *)malloc(newDataSize);
+		
+		if(newData == NULL)
+			return -1;
+		
+		dataCount = 0;
+		
+		switch(iconType)
+		{
+			// 8-Bit Icon Mask Data Types
+			case kThumbnail8BitMask:
+			case kHuge8BitMask:
+			case kLarge8BitMask:
+			case kSmall8BitMask:
+				if(oldDepth != 8)
+				{
+					fprintf(stderr,"Bit depth type mismatch!\n");
+					free(newData);
+					return -1;
+				}
+				for(pixelID = 0; pixelID < pixelCount; pixelID++)
+				{
+					colorIndex = oldData[dataCount++];
+					newData[pixelID * 4 + 0] = colorIndex;
+					newData[pixelID * 4 + 1] = 0x00;
+					newData[pixelID * 4 + 2] = 0x00;
+					newData[pixelID * 4 + 3] = 0x00;
+				}
+				break;
+			// 8-Bit Icon Image Data Types
+			case kHuge8BitData:
+			case kLarge8BitData:
+			case kSmall8BitData:
+			case kMini8BitData:
+				if(oldDepth != 8)
+				{
+					fprintf(stderr,"Bit depth type mismatch!\n");
+					free(newData);
+					return -1;
+				}
+				for(pixelID = 0; pixelID < pixelCount; pixelID++)
+				{
+					colorIndex = oldData[dataCount++];
+					colorRGB = icns_colormap_8[colorIndex];
+					newData[pixelID * 4 + 0] = 0xff;
+					newData[pixelID * 4 + 1] = colorRGB.r;
+					newData[pixelID * 4 + 2] = colorRGB.g;
+					newData[pixelID * 4 + 3] = colorRGB.b;
+				}
+				break;
+			// 4-Bit Icon Image Data Types
+			case kHuge4BitData:
+			case kLarge4BitData:
+			case kSmall4BitData:
+			case kMini4BitData:
+				if(oldDepth != 4)
+				{
+					fprintf(stderr,"Bit depth type mismatch!\n");
+					free(newData);
+					return -1;
+				}
+				for(pixelID = 0; pixelID < pixelCount; pixelID++)
+				{
+					if(pixelID % 2 == 0)
+						dataValue = oldData[dataCount++];
+					colorIndex = (dataValue & 0xF0) >> 4;
+					dataValue = dataValue << 4;
+					colorRGB = icns_colormap_4[colorIndex];
+					newData[pixelID * 4 + 0] = 0xFF;
+					newData[pixelID * 4 + 1] = colorRGB.r;
+					newData[pixelID * 4 + 2] = colorRGB.g;
+					newData[pixelID * 4 + 3] = colorRGB.b;
+				}
+				break;
+			// 1-Bit Icon Image/Mask Data Types (Data is the same)
+			case kHuge1BitData:  // Also kHuge1BitMask
+			case kLarge1BitData: // Also kLarge1BitMask
+			case kSmall1BitData: // Also kSmall1BitMask
+			case kMini1BitData:  // Also kMini1BitMask
+				if(oldDepth != 1)
+				{
+					fprintf(stderr,"Bit depth type mismatch!\n");
+					free(newData);
+					return -1;
+				}
+				for(pixelID = 0; pixelID < pixelCount; pixelID++)
+				{
+					if(pixelID % 8 == 0)
+						dataValue = oldData[dataCount++];
+					colorIndex = (dataValue & 0x80) ? 255 : 0;
+					dataValue = dataValue << 1;
+					newData[pixelID * 4 + 0] = colorIndex;
+					newData[pixelID * 4 + 1] = colorIndex;
+					newData[pixelID * 4 + 2] = colorIndex;
+					newData[pixelID * 4 + 3] = colorIndex;
+				}
+				break;
+			default:
+				break;
+		}
+		
+		imageOut->imageDepth = 32;
+		imageOut->imageChannels = 4;
+		imageOut->imageDataSize = newDataSize;
+		imageOut->imageData = newData;
+		
+		free(oldData);
+	}
+	return 0;
+}
 
-//***************************** ParseIconData **************************//
+//***************************** GetICNSImage32FromICNSElement **************************//
 // Actual conversion of the icon data into uncompressed raw pixels
 
 int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut)
@@ -56,13 +214,13 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 	if(iconElement == NULL)
 	{
 		fprintf(stderr,"Icon element is NULL!\n");
-		return 1;
+		return -1;
 	}
 	
 	if(imageOut == NULL)
 	{
 		fprintf(stderr,"Icon image structure is NULL!\n");
-		return 1;
+		return -1;
 	}
 	
 	iconType = EndianSwap(iconElement->elementType,sizeof(icns_type_t),byteSwap);
@@ -81,7 +239,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 
 		image = jp2dec((unsigned char *)rawDataPtr, (int)rawDataLength);
 		if(!image)
-			return 1;
+			return -1;
 		
 		error = opj2icns_image_t(image,imageOut);
 		
@@ -117,37 +275,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			iconChannels = 4;
 			iconDepth = 32;
 			break;
-		// 8-Bit Icon Image Data Types
-		case kHuge8BitData:
-			iconWidth = 48;
-			iconHeight = 48;
-			iconChannels = 1;
-			iconDepth = 8;
-			break;
-		case kHuge1BitData:
-			iconWidth = 48;
-			iconHeight = 48;
-			iconChannels = 1;
-			iconDepth = 1;
-			break;
-		case kLarge8BitData:
-			iconWidth = 32;
-			iconHeight = 32;
-			iconChannels = 1;
-			iconDepth = 8;
-			break;
-		case kSmall8BitData:
-			iconWidth = 16;
-			iconHeight = 16;
-			iconChannels = 1;
-			iconDepth = 8;
-			break;
-		case kMini8BitData:
-			iconWidth = 16;
-			iconHeight = 12;
-			iconChannels = 1;
-			iconDepth = 8;
-			break;
+			
 		// 8-Bit Icon Mask Data Types
 		case kThumbnail8BitMask:
 			iconWidth = 128;
@@ -173,28 +301,88 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
+			
+		// 8-Bit Icon Image Data Types
+		case kHuge8BitData:
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 1;
+			iconDepth = 8;
+			break;
+		case kLarge8BitData:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 1;
+			iconDepth = 8;
+			break;
+		case kSmall8BitData:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 1;
+			iconDepth = 8;
+			break;
+		case kMini8BitData:
+			iconWidth = 16;
+			iconHeight = 12;
+			iconChannels = 1;
+			iconDepth = 8;
+			break;
+
+		// 4-Bit Icon Image Data Types
+		case kHuge4BitData:
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 1;
+			iconDepth = 4;
+			break;
+		case kLarge4BitData:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 1;
+			iconDepth = 4;
+			break;
+		case kSmall4BitData:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 1;
+			iconDepth = 4;
+			break;
+		case kMini4BitData:
+			iconWidth = 16;
+			iconHeight = 12;
+			iconChannels = 1;
+			iconDepth = 4;
+			break;
+
 		// 1-Bit Icon Image/Mask Data Types (Data is the same)
-		case kLarge1BitMask: // Also kLarge1BitData
+		case kHuge1BitData:  // Also kHuge1BitMask
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 1;
+			iconDepth = 1;
+			break;
+		case kLarge1BitData: // Also kLarge1BitMask
 			iconWidth = 32;
 			iconHeight = 32;
 			iconChannels = 1;
 			iconDepth = 1;
 			break;
-		case kSmall1BitMask: // Also kSmall1BitData
+		case kSmall1BitData: // Also kSmall1BitMask
 			iconWidth = 16;
 			iconHeight = 16;
 			iconChannels = 1;
 			iconDepth = 1;
 			break;
-		case kMini1BitMask: // Also kMini1BitData
+		case kMini1BitData: // Also kMini1BitMask
 			iconWidth = 16;
 			iconHeight = 12;
 			iconChannels = 1;
 			iconDepth = 1;
 			break;
+			
 		default:
 			fprintf(stderr,"Unable to parse icon type 0x%8X\n",iconType);
-			return 1;
+			return -1;
 			break;
 	}
 	
@@ -219,7 +407,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 	imageOut->imageData = (unsigned char *)malloc(iconDataSize);
 	if(!imageOut->imageData) {
 		fprintf(stderr,"Out of memory!\n");
-		return 1;
+		return -1;
 	}
 	memset(imageOut->imageData,0,iconDataSize);
 	
@@ -249,20 +437,14 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 		}
 		break;
 	case 8:
-		for(dataCount = 0; dataCount < iconHeight; dataCount++)
-			memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
-		break;
 	case 4:
-		for(dataCount = 0; dataCount < iconHeight; dataCount++)
-			memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
-		break;
 	case 1:
 		for(dataCount = 0; dataCount < iconHeight; dataCount++)
 			memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
 		break;
 	default:
 		fprintf(stderr,"Unknown bit depth!\n");
-		return 1;
+		return -1;
 		break;
 	}
 	
@@ -360,7 +542,7 @@ int GetICNSElementFromICNSFamily(icns_family_t *iconFamily,icns_type_t iconType,
 	if(iconElementOut == NULL)
 	{
 		fprintf(stderr,"Output pointer icon is NULL!\n");
-		return 1;
+		return -1;
 	}
 	
 	if(iconFamily->resourceType == EndianSwap(kIconFamilyType, sizeof(kIconFamilyType), 1))
@@ -429,6 +611,29 @@ int GetICNSElementFromICNSFamily(icns_family_t *iconFamily,icns_type_t iconType,
 
 /***************************** GetIconFamilyFromFileData **************************/
 
+int CreateICNSFamily(icns_family_t **iconFamilyOut)
+{
+	icns_bool_t	byteSwap = 0;
+	icns_family_t	*newIconFamily = NULL;
+	
+	byteSwap = ES_IS_LITTLE_ENDIAN;
+	
+	*iconFamilyOut = NULL;
+	
+	newIconFamily = malloc(sizeof(icns_type_t) + sizeof(icns_size_t);
+		
+	if(newIconFamily == NULL)
+	{
+		fprintf(stderr,"Unable to allocate memory for new icns family!\n");
+		return -1;
+	}
+	
+	newIconFamily->resourceType = EndianSwap(kIconFamilyType,sizeof(icns_type_t),byteSwap);
+	newIconFamily->resourceSize = 0x00000000;
+}
+
+/***************************** GetIconFamilyFromFileData **************************/
+
 int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int		error = 0;
@@ -439,7 +644,13 @@ int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *dataPtr,icns
 	if(dataSize == 0)
 	{
 		fprintf(stderr,"File size is 0 - no data!\n");
-		return 0;
+		return -1;
+	}
+	
+	if(iconFamilyOut == NULL)
+	{
+		fprintf(stderr,"iconFamilyOut is NULL!\n");
+		return -1;
 	}
 	
 	// According to Apple Developer Documentation, the icns
@@ -510,7 +721,7 @@ int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *dataPtr,i
 	{
 		// rsrc header is 128 bytes - We cannot have a file of a smaller size.
 		fprintf(stderr,"Unable to decode rsrc data! - Data size too small.\n");
-		return 1;
+		return -1;
 	}
 
 	// Load Resource Header to if we are dealing with a raw resource fork.
@@ -660,7 +871,7 @@ int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *dataPtr,icn
 	{
 		// MacBinary header is 128 bytes - We cannot have a file of a smaller size.
 		fprintf(stderr,"Unable to decode MacBinary data! - Data size too small.\n");
-		return 1;
+		return -1;
 	}
 	
 	                                         /* 'mBIN' */
@@ -682,7 +893,7 @@ int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *dataPtr,icn
 		// a match on a non MacBinary file are pretty low...
 	}
 	
-	if( !isValid ) return 1;
+	if( !isValid ) return -1;
 	
 	// Start MacBinary Parsing routines
 	
@@ -708,12 +919,12 @@ int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *dataPtr,icn
 	resourceDataStart = fileDataLength + fileDataPadding + 128;
 
 	// Check that we are not reading invalid memory
-	if( resourceDataStart < 0 ) return 1;
-	if( resourceDataLength < 0 ) return 1;
-	if( resourceDataStart < dataSize ) return 1;
-	if( resourceDataLength < dataSize ) return 1;
-	if( resourceDataStart+resourceDataLength < 0 ) return 1;
-	if( resourceDataStart+resourceDataLength < dataSize ) return 1;
+	if( resourceDataStart < 0 ) return -1;
+	if( resourceDataLength < 0 ) return -1;
+	if( resourceDataStart < dataSize ) return -1;
+	if( resourceDataLength < dataSize ) return -1;
+	if( resourceDataStart+resourceDataLength < 0 ) return -1;
+	if( resourceDataStart+resourceDataLength < dataSize ) return -1;
 	
 	resourceDataPtr = (unsigned char *)malloc(resourceDataLength);
 	

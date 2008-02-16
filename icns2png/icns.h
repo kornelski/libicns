@@ -205,13 +205,22 @@ typedef struct icns_family_t {
 typedef struct icns_image_t
 {
 	long		imageDataSize;	// bytes = width * height * depth / bits-per-pixel
-	int		imageWidth;		// width of image in pixels
+	int		imageWidth;	// width of image in pixels
 	int		imageHeight;	// height of image in pixels
 	short		imageChannels;	// number of channels in data
-	short		imageDepth;		// bits-per-pixel * channels
+	short		imageDepth;	// channels * bits-per-pixel
 	unsigned char	*imageData;	// pointer to base address of uncompressed raw image data
 } icns_image_t;
 
+typedef struct icns_pixel32_t
+{
+	unsigned char	 alpha;
+	unsigned char	 red;
+	unsigned char	 green;
+	unsigned char	 blue;
+} icns_pixel32_t;
+
+int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut);
 int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut);
 int GetICNSElementFromICNSFamily(icns_family_t *iconFamily,icns_type_t iconType, icns_bool_t *byteSwap,icns_element_t **iconElementOut);
 int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);

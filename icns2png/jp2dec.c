@@ -27,14 +27,6 @@ Boston, MA 02111-1307, USA.
 #include "jp2dec.h"
 #include "icns.h"
 
-typedef struct pixel32_struct
-{
-	unsigned char alpha;
-	unsigned char red;
-	unsigned char green;
-	unsigned char blue;
-} pixel32;
-
 /**
 sample error callback expecting a FILE* client object
 */
@@ -72,7 +64,7 @@ int opj2icns_image_t(opj_image_t *image, icns_image_t *outIcon)
 	int i,j;
 	
 	if(image == NULL) {
-		return 1;
+		return -1;
 	}
 	
 	iconWidth = image->comps[0].w;
@@ -118,7 +110,7 @@ int opj2icns_image_t(opj_image_t *image, icns_image_t *outIcon)
 	
 	for (i = 0; i < iconHeight; i++) {
 		for(j = 0; j < iconWidth; j++) {
-			pixel32 *dst_pixel;
+			icns_pixel32_t *dst_pixel;
 			int r, g, b, a;
 						
 			a = image->comps[3].data[i*iconWidth+j];
@@ -130,7 +122,7 @@ int opj2icns_image_t(opj_image_t *image, icns_image_t *outIcon)
 			b = image->comps[2].data[i*iconWidth+j];
 			b += (image->comps[2].sgnd ? 1 << (image->comps[2].prec - 1) : 0);
 
-			dst_pixel = (pixel32 *)&(dataPtr[i*iconWidth*iconChannels+j*iconChannels]);
+			dst_pixel = (icns_pixel32_t *)&(dataPtr[i*iconWidth*iconChannels+j*iconChannels]);
 
 			dst_pixel->alpha = (unsigned char) ((a >> adjustA)+((a >> (adjustA-1))%2));
 			dst_pixel->red = (unsigned char) ((r >> adjustR)+((r >> (adjustR-1))%2));

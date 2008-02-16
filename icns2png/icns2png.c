@@ -36,14 +36,6 @@ int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 #define	kNoMaskData	0x00000000
 #define	kNoIconData	0x00000000
 
-typedef struct pixel32_struct
-{
-	unsigned char	 alpha;
-	unsigned char	 red;
-	unsigned char	 green;
-	unsigned char	 blue;
-} pixel32;
-
 char 	*inputfiles[MAX_INPUTFILES];
 int	fileindex = 0;
 
@@ -246,7 +238,7 @@ int parse_options(int argc, char** argv)
 				}
 				break;
 			case 'h':
-				return 1;
+				return -1;
 				break;
 			case 's':
 				if((err = parse_size(optarg))) {
@@ -377,7 +369,7 @@ int ConvertIcnsFile(char *filename)
 		free(outfilename);
 		if(fileDataPtr != NULL)
 			free(fileDataPtr);
-		return 1;
+		return -1;
 	}
 	
 	// ReadXIconFile converts the icns file into an IconFamily
@@ -395,7 +387,7 @@ int ConvertIcnsFile(char *filename)
 		goto cleanup;
 	}
 
-	error = GetICNSImageFromICNSElement(icon, byteSwap, &iconImage);
+	error = GetICNSImage32FromICNSElement(icon, byteSwap, &iconImage);
 
 	if(error) {
 		fprintf(stderr,"Unable to load raw data from icon data!\n");
@@ -410,7 +402,7 @@ int ConvertIcnsFile(char *filename)
 			goto cleanup;
 		}
 		
-		error = GetICNSImageFromICNSElement(mask, byteSwap, &maskImage);
+		error = GetICNSImage32FromICNSElement(mask, byteSwap, &maskImage);
 	}
 	
 	outfile = fopen(outfilename,"w");
@@ -514,21 +506,39 @@ int ReadFile(char *fileName,unsigned long *dataSize,void **dataPtr)
 
 int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 {
-	int 			width = image->imageWidth;
-	int 			height = image->imageHeight;
-	int 			image_channels = image->imageChannels;
-	int			image_bit_depth = image->imageDepth/image_channels;
+	int 			width = 0;
+	int 			height = 0;
+	int 			image_channels = 0;
+	int			image_bit_depth = 0;
+	int 			mask_channels = 0;
+	int			mask_bit_depth = 0;
 	png_structp 		png_ptr;
 	png_infop 		info_ptr;
 	png_bytep 		*row_pointers;
 	int			i, j;
+	
+	if (image == NULL)
+	{
+		fprintf (stderr, "icns image NULL!\n");
+		return -1;
+	}
+	
+	width = image->imageWidth;
+	height = image->imageHeight;
+	image_channels = image->imageChannels;
+	image_bit_depth = image->imageDepth/image_channels;
+	
+	if(mask != NULL) {
+		mask_channels = mask->imageChannels;
+		mask_bit_depth = mask->imageDepth/image_channels;
+	}
 	
 	png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	
 	if (png_ptr == NULL)
 	{
 		fprintf (stderr, "PNG error: cannot allocate libpng main struct\n");
-		return 1;
+		return -1;
 	}
 
 	info_ptr = png_create_info_struct (png_ptr);
@@ -537,7 +547,7 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	{
 		fprintf (stderr, "PNG error: cannot allocate libpng info struct\n");
 		png_destroy_write_struct (&png_ptr, (png_infopp) NULL);
-		return 1;
+		return -1;
 	}
 
 	png_init_io(png_ptr, outputfile);
@@ -570,25 +580,25 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 				for (j = 0; j < i; j++)
 					free(row_pointers[j]);
 				free(row_pointers);
-				return 1;
+				return -1;
 			}
 			
 			for(j = 0; j < width; j++)
 			{
-				pixel32		*src_rgb_pixel;
-				pixel32		*src_pha_pixel;
-				pixel32		*dst_pixel;
+				icns_pixel32_t	*src_rgb_pixel;
+				icns_pixel32_t	*src_pha_pixel;
+				icns_pixel32_t	*dst_pixel;
 				
-				dst_pixel = (pixel32 *)&(row_pointers[i][j*image_channels]);
+				dst_pixel = (icns_pixel32_t *)&(row_pointers[i][j*image_channels]);
 				
-				src_rgb_pixel = (pixel32 *)&(image->imageData[i*width*image_channels+j*image_channels]);
+				src_rgb_pixel = (icns_pixel32_t *)&(image->imageData[i*width*image_channels+j*image_channels]);
 
 				dst_pixel->red = src_rgb_pixel->red;
 				dst_pixel->green = src_rgb_pixel->green;
 				dst_pixel->blue = src_rgb_pixel->blue;
 				
 				if(mask != NULL) {
-					src_pha_pixel = (pixel32 *)&(mask->imageData[i*width+j]);
+					src_pha_pixel = (icns_pixel32_t *)&(mask->imageData[i*width*mask_channels+j*mask_channels]);
 					dst_pixel->alpha = src_pha_pixel->alpha;
 				} else {
 					dst_pixel->alpha = src_rgb_pixel->alpha;

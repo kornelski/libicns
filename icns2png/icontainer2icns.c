@@ -33,7 +33,7 @@ static inline unsigned short clamp(short s) {
 static inline int isChar(char c) {
    if (c > 'z') return 0;
    if (c < 'a') return (c == '_');
-   return 1;
+   return -1;
 }
 
 int main(int argc, char **argv)
@@ -41,11 +41,11 @@ int main(int argc, char **argv)
    printf("icontainer2icns, (C) 2005/2007 by Thomas Lübking\n\n");
    if (argc < 2) {
       printf("\nusage: icontainer2icns foo.icontainer\n\n");
-      return 1;
+      return -1;
    }
    else if (argc > 2) {
       printf("\nusage: icontainer2icns foo.icontainer\nif your icontainer file contains spaces etc.,\nuse a system valid form (i.e. use \"my foo.icontainer\" or my\\ foo.icontainer)\n\n");
-      return 1;
+      return -1;
    }
    char buffer[118];
    FILE *icontainer = NULL;
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
    if( (icontainer = fopen(argv[1], "r")) == NULL ) {
       printf("error while opening file %s\n",argv[1]);
-      return 1;
+      return -1;
    }
    
    rewind(icontainer);
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
                   
             if( (icns = fopen(name, "w")) == NULL ) {
                printf("error while opening icns file %s\n", name);
-               return 1;
+               return -1;
             }
             
             rewind(icns);
