@@ -1,6 +1,6 @@
 /*
 File:       icns2png.c
-Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
 Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
 This library is free software; you can redistribute it and/or
@@ -26,8 +26,6 @@ Boston, MA 02111-1307, USA.
 
 #include "icns.h"
 
-void parse_format(char *format);
-void parse_options(int argc, char** argv);
 int ConvertIcnsFile(char *filename);
 int ReadFile(char *fileName,unsigned long *dataSize,void **dataPtr);
 int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
@@ -36,6 +34,7 @@ int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 #define	MAX_INPUTFILES  4096
 
 #define	kNoMaskData	0x00000000
+#define	kNoIconData	0x00000000
 
 typedef struct pixel32_struct
 {
@@ -49,85 +48,265 @@ char 	*inputfiles[MAX_INPUTFILES];
 int	fileindex = 0;
 
 /* default iconType to be extracted */
-int	iconType = kThumbnail32BitData;
-int	maskType = kThumbnail8BitMask;
+int		iconExtractSizeID = 5;	// 128x128
+int		iconExtractDepth = 32;
+icns_type_t	iconType = kThumbnail32BitData;
+icns_type_t	maskType = kThumbnail8BitMask;
 
-
-void parse_format(char *format)
+icns_type_t getIconDataType(int sizeID,int depthVal)
 {
-	const char *formats[] = {
-				 "ICON512", 
-				 "ICON256", 
-				 "ICON128"
-				};
-	const int iconTypes[] = {  
-				kIconServices512PixelDataARGB, 
-				kIconServices256PixelDataARGB, 
-				kThumbnail32BitData
+	const icns_type_t iconTypes32[] = {  
+				kIconServices512PixelDataARGB,
+				kIconServices512PixelDataARGB,
+				kIconServices256PixelDataARGB,
+				kIconServices256PixelDataARGB,
+				kThumbnail32BitData,
+				kThumbnail32BitData,
+				kHuge32BitData,
+				kHuge32BitData,
+				kLarge32BitData,
+				kLarge32BitData,
+				kSmall32BitData,
+				kSmall32BitData,
+				kNoIconData
 			     };
-	const int maskTypes[] = {  
-				kNoMaskData, 
-				kNoMaskData, 
-				kThumbnail8BitMask
+
+	const icns_type_t iconTypes8[] = {  
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kHuge8BitData,
+				kHuge8BitData,
+				kLarge8BitData,
+				kLarge8BitData,
+				kSmall8BitData,
+				kSmall8BitData,
+				kMini8BitData
 			     };
-	int i;
-	for(i = 0; i < ARRAY_SIZE(formats); i++) {
-		if(strcmp(formats[i], format) == 0) {
-			iconType = iconTypes[i];
-			maskType = maskTypes[i];
-			break;
-		}
+
+	const icns_type_t iconTypes4[] = {  
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kHuge4BitData,
+				kHuge4BitData,
+				kLarge4BitData,
+				kLarge4BitData,
+				kSmall4BitData,
+				kSmall4BitData,
+				kMini4BitData
+			     };
+			     
+	const icns_type_t iconTypes1[] = {  
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kNoIconData,
+				kHuge1BitData,
+				kHuge1BitData,
+				kLarge1BitData,
+				kLarge1BitData,
+				kSmall1BitData,
+				kSmall1BitData,
+				kMini1BitData
+	};
+	
+	switch(depthVal) {
+		case 32:
+			return iconTypes32[sizeID];
+		case 8:
+			return iconTypes8[sizeID];
+		case 4:
+			return iconTypes4[sizeID];
+		case 1:
+			return iconTypes1[sizeID];
+		default:
+			return kNoIconData;
 	}
 }
 
-void parse_options(int argc, char** argv)
+icns_type_t getIconMaskType(int sizeID,int depthVal)
 {
-	int opt;
+	const icns_type_t maskTypes32[] = {  
+				kNoMaskData, 
+				kNoMaskData, 
+				kNoMaskData,
+				kNoMaskData,
+				kThumbnail8BitMask,
+				kThumbnail8BitMask,
+				kHuge8BitMask,
+				kHuge8BitMask,
+				kLarge8BitMask,
+				kLarge8BitMask,
+				kSmall8BitMask,
+				kSmall8BitMask,
+				kNoMaskData
+			     };
+	const icns_type_t maskTypes8x[] = {  
+				kNoMaskData, 
+				kNoMaskData, 
+				kNoMaskData,
+				kNoMaskData,
+				kNoMaskData,
+				kNoMaskData,
+				kHuge1BitMask,
+				kHuge1BitMask,
+				kLarge1BitMask,
+				kLarge1BitMask,
+				kSmall1BitMask,
+				kSmall1BitMask,
+				kMini1BitMask
+			     };
+     if(depthVal <= 8)
+	     return maskTypes8x[sizeID];
+     else
+	     return maskTypes32[sizeID];
+}
 
-	while(1) {
-		opt = getopt(argc, argv, "-t:");
-		if(opt < 0)
-			break;
-		switch(opt) {
-		case 't':
-			parse_format(optarg);
-			break;
-		case 1:
-			if(fileindex >= MAX_INPUTFILES) {
-				fprintf(stderr, "No more file can be added\n");
-				break;
-			}
-			inputfiles[fileindex] = malloc(strlen(optarg)+1);
-			if(!inputfiles[fileindex]) {
-				printf("Out of Memory\n");
-				exit(1);
-			}
-			strcpy(inputfiles[fileindex], optarg);
-			fileindex++;
-			break;
-		default:
-			exit(1);
+int parse_size(char *size)
+{
+	const char *sizes[] = {
+				 "512",
+				 "512x512",
+				 "256",
+				 "256x256",
+				 "128",
+				 "128x128",
+				 "64",
+				 "64x64",
+				 "32",
+				 "32x32",
+				 "16",
+				 "16x16",
+				 "16x12"
+				};
+				
+			     
+
+	int i;
+	int found = 0;
+	if(size == NULL)
+		return -1;
+	for(i = 0; i < ARRAY_SIZE(sizes); i++) {
+		if(strcmp(sizes[i], size) == 0) {
+			iconExtractSizeID = i;
+			iconType = getIconDataType(iconExtractSizeID,iconExtractDepth);
+			maskType = getIconMaskType(iconExtractSizeID,iconExtractDepth);
+			found = 1;
 			break;
 		}
 	}
+	if(!found)
+		return -1;
+	return 0;
+}
+
+int parse_depth(char *cdepth)
+{
+	const char *depths[] =   {"32", "8", "4", "1"};
+	const int depthVals[] =  { 32 ,  8 ,  4 ,  1 };
+	int i;
+	int found = 0;
+	if(cdepth == NULL)
+		return -1;
+	for(i = 0; i < ARRAY_SIZE(depths); i++) {
+		if(strcmp(depths[i], cdepth) == 0) {
+			iconExtractDepth = depthVals[i];
+			iconType = getIconDataType(iconExtractSizeID,iconExtractDepth);
+			maskType = getIconMaskType(iconExtractSizeID,iconExtractDepth);
+			found = 1;
+		}
+	}
+	if(!found)
+		return -1;
+	return 0;
+}
+
+int parse_options(int argc, char** argv)
+{
+	int err,opt;
+	err = 0;
+	while(1) {
+		opt = getopt(argc, argv, "-d:h:s:");
+		if(opt < 0)
+			break;
+		switch(opt) {
+			case 'd':
+				if((err = parse_depth(optarg))) {
+					fprintf(stderr, "Invalid icon color depth specified.\n");
+					return err;
+				}
+				break;
+			case 'h':
+				return 1;
+				break;
+			case 's':
+				if((err = parse_size(optarg))) {
+					fprintf(stderr, "Invalid icon size specified.\n");
+					return err;
+				}
+				break;
+			case 1:
+				if(fileindex >= MAX_INPUTFILES) {
+					fprintf(stderr, "No more file can be added\n");
+					break;
+				}
+				inputfiles[fileindex] = malloc(strlen(optarg)+1);
+				if(!inputfiles[fileindex]) {
+					printf("Out of Memory\n");
+					exit(1);
+				}
+				strcpy(inputfiles[fileindex], optarg);
+				fileindex++;
+				break;
+			default:
+				exit(1);
+				break;
+		}
+	}
+	return 0;
 }
 
 int main(int argc, char *argv[])
 {
 	int count;
-
+	
 	if(argc < 2)
 	{
-		printf("Usage: icns2png input.icns\n");
+		printf("Usage: icns2png [options] [file]\n");
 		return -1;
 	}
 	
-	parse_options(argc, argv);
-
+	if(parse_options(argc, argv) != 0)
+	{
+		printf("Usage: icns2png [options] [file]                                              \n");
+		printf("icns2png extracts images from mac .icns files, and exports them to png format.\n");
+		printf("                                                                              \n");
+		printf("Examples:                                                                     \n");
+		printf("icns2png anicon.icns            # Extract 128x128 32-bit icon to anicon.png   \n");
+		printf("icns2png -s 64 anicon.icns      # Extract 64x64 32-bit icon to anicon.png     \n");
+		printf("icns2png -s 32 -d 1 anicon.icns # Extract 32x32 1-bit icon to anicon.png      \n");
+		printf("                                                                              \n");
+		printf("Options:                                                                      \n");
+		printf(" -d            Sets the pixel depth of the icon to extract. (1,4,8,32)        \n");
+		printf(" -s            Sets the size of the icon to extract. (16,32,64,128,256,512)   \n");
+		printf("               Sizes 16x12, 16x16, 32x32, 64x64, 128x128, etc. are also valid.\n");
+		printf(" -h            Shows this help message.                                       \n");
+		return 0;
+	}
+	
 	for(count = 0; count < fileindex; count++)
 	{
 		if(ConvertIcnsFile(inputfiles[count]))
-			fprintf(stderr, "Conversion of %s failed!\n",argv[count]);
+			fprintf(stderr, "Conversion of %s failed!\n",inputfiles[count]);
 	}
 	
 	return 0;
@@ -145,8 +324,8 @@ int ConvertIcnsFile(char *filename)
 	unsigned long	fileDataSize = 0;
 	icns_bool_t	byteSwap = 0;
 	icns_family_t	*iconFamily = NULL;
-	icns_element_t	*icon;
-	icns_element_t	*mask;
+	icns_element_t	*icon = NULL;
+	icns_element_t	*mask = NULL;
 	icns_image_t	iconImage;
 	icns_image_t	maskImage;
 	FILE 		*outfile = NULL;

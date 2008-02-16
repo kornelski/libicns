@@ -1,6 +1,6 @@
 /*
 File:       icns.cpp
-Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
               2007 Thomas Lübking <thomas.luebking@web.de>
               2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
@@ -29,6 +29,10 @@ Boston, MA 02111-1307, USA.
 #include "icns.h"
 #include "jp2dec.h"
 #include "endianswap.h"
+#include "colormaps.h"
+
+int DecodeRLE24Data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
+
 
 //***************************** ParseIconData **************************//
 // Actual conversion of the icon data into uncompressed raw pixels
@@ -88,7 +92,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 	
 	switch(iconType)
 	{
-		// Icon Image Data Types
+		// 32-Bit Icon Image Data Types
 		case kThumbnail32BitData:
 			iconWidth = 128;
 			iconHeight = 128;
@@ -101,6 +105,19 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			iconChannels = 4;
 			iconDepth = 32;
 			break;
+		case kLarge32BitData:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 4;
+			iconDepth = 32;
+			break;
+		case kSmall32BitData:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 4;
+			iconDepth = 32;
+			break;
+		// 8-Bit Icon Image Data Types
 		case kHuge8BitData:
 			iconWidth = 48;
 			iconHeight = 48;
@@ -113,29 +130,11 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			iconChannels = 1;
 			iconDepth = 1;
 			break;
-		case kLarge32BitData:
-			iconWidth = 32;
-			iconHeight = 32;
-			iconChannels = 4;
-			iconDepth = 32;
-			break;
 		case kLarge8BitData:
 			iconWidth = 32;
 			iconHeight = 32;
 			iconChannels = 1;
 			iconDepth = 8;
-			break;
-		case kLarge1BitData:
-			iconWidth = 32;
-			iconHeight = 32;
-			iconChannels = 1;
-			iconDepth = 1;
-			break;
-		case kSmall32BitData:
-			iconWidth = 16;
-			iconHeight = 16;
-			iconChannels = 4;
-			iconDepth = 32;
 			break;
 		case kSmall8BitData:
 			iconWidth = 16;
@@ -143,25 +142,13 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
-		case kSmall1BitData:
-			iconWidth = 16;
-			iconHeight = 16;
-			iconChannels = 1;
-			iconDepth = 1;
-			break;
 		case kMini8BitData:
 			iconWidth = 16;
 			iconHeight = 12;
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
-		case kMini1BitData:
-			iconWidth = 16;
-			iconHeight = 12;
-			iconChannels = 1;
-			iconDepth = 1;
-			break;
-		// Icon Mask Data Types
+		// 8-Bit Icon Mask Data Types
 		case kThumbnail8BitMask:
 			iconWidth = 128;
 			iconHeight = 128;
@@ -186,8 +173,28 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
+		// 1-Bit Icon Image/Mask Data Types (Data is the same)
+		case kLarge1BitMask: // Also kLarge1BitData
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 1;
+			iconDepth = 1;
+			break;
+		case kSmall1BitMask: // Also kSmall1BitData
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 1;
+			iconDepth = 1;
+			break;
+		case kMini1BitMask: // Also kMini1BitData
+			iconWidth = 16;
+			iconHeight = 12;
+			iconChannels = 1;
+			iconDepth = 1;
+			break;
 		default:
-			return 0;
+			fprintf(stderr,"Unable to parse icon type 0x%8X\n",iconType);
+			return 1;
 			break;
 	}
 	
@@ -212,112 +219,127 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 	imageOut->imageData = (unsigned char *)malloc(iconDataSize);
 	if(!imageOut->imageData) {
 		fprintf(stderr,"Out of memory!\n");
-		return 0;
+		return 1;
 	}
 	memset(imageOut->imageData,0,iconDataSize);
 	
-	// Data is RLE Encoded
-	if((iconDepth == 32) && (rawDataLength < (iconHeight * blockSize)))
+	switch(iconDepth)
 	{
-		unsigned int	myshift = 0;
-		unsigned int	mymask = 0;
-		unsigned int	length = 0;
-		unsigned int	value = 0;
-		long			r = 0;
-		long			y = 0;
-		long			i = 0;
-		long			destIconLength = 0;
-		unsigned int	*destIconData = NULL;	// Decompressed Raw Icon Data
-		unsigned int	*destIconDataBaseAddr = NULL;	// Decompressed Raw Icon Data Base Address
-		
-		destIconData = (unsigned int	*)imageOut->imageData;
-		destIconDataBaseAddr = (unsigned int *)imageOut->imageData;
-		
-		destIconLength = (iconWidth * iconHeight);
-		
-		myshift = 24;
-		mymask = 0xFFFFFFFF;
-		r = 0;
-		
-		// What's this??? In the 128x128+ icons,
-		// The red channel will be 2 pixels off if we don't start
-		// 4 bytes ahead. Perhaps it is a part of some flag?
-		if(iconWidth >= 128)
-			r+=4;
-		
-		for(i = 0; i < destIconLength; i++)
-			destIconData[i] = 0x00000000;
-		
-		// Alpha?, Red,   Green, Blue
-		// 24,     16,    8,     0   
-		while(myshift > 0)
+	case 32:
+		if(rawDataLength < (iconHeight * blockSize))
 		{
-			// Next Color Byte
-			myshift -= 8;
-			
-			// Right shift mask 8 bits to prevent overwriting our other colors
-			mymask >>= 8;
-			
-			y = 0;
-			while(y < destIconLength)
-			{
-				if( (rawDataPtr[r] & 0x80) == 0)
-				{
-					// Top bit is clear - run of various values to follow
-					length = (int)(0xFF & rawDataPtr[r++]) + 1; // 1 <= len <= 128
-					
-					for(i = 0; i < (int)length; i++)
-						destIconData[y++] |= ( ((int)rawDataPtr[r++]) << myshift) & mymask;
-				}
-				else
-				{
-					// Top bit is set - run of one value to follow
-					length = (int)(0xFF & rawDataPtr[r++]) - 125; // 3 <= len <= 130
-					
-					// Set the value to the color shifted to the correct bit offset
-					value = ( ((int)rawDataPtr[r++]) << myshift) & mymask;
-
-					for(i = 0; i < (int)length; i++)
-						destIconData[y++] |= value;
-				}
-			}
+			DecodeRLE24Data(rawDataLength,(icns_sint32_t*)rawDataPtr,iconDataSize,(icns_sint32_t*)(imageOut->imageData));
 		}
-		
-		destIconDataBaseAddr = NULL;
-		destIconData = NULL;
-	}
-	else
-	{
-		for(dataCount = 0; dataCount < iconHeight; dataCount++)
-			memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
-	}
-	
-	if(byteSwap)
-	{
-		int	packBytes = iconDepth / icns_byte_bits;
-		char	*swapPtr = (char*)imageOut->imageData;
-		
-		if(packBytes == 2)
+		else
 		{
-			short	*byte2Ptr = NULL;
-			for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
-			{
-				byte2Ptr = (short *)(swapPtr + dataCount);
-				*( byte2Ptr ) = EndianSwap( *( byte2Ptr ) , packBytes, 1);
-			}
+			for(dataCount = 0; dataCount < iconHeight; dataCount++)
+				memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
 		}
-		else if(packBytes == 4)
+		if(byteSwap)
 		{
+			int	packBytes = iconDepth / icns_byte_bits;
+			char	*swapPtr = (char*)imageOut->imageData;
 			int	*byte4Ptr = NULL;
+			
 			for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
 			{
 				byte4Ptr = (int *)(swapPtr + dataCount);
 				*( byte4Ptr ) = EndianSwap( *( byte4Ptr ) , packBytes, 1);
 			}
 		}
+		break;
+	case 8:
+		for(dataCount = 0; dataCount < iconHeight; dataCount++)
+			memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
+		break;
+	case 4:
+		for(dataCount = 0; dataCount < iconHeight; dataCount++)
+			memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
+		break;
+	case 1:
+		for(dataCount = 0; dataCount < iconHeight; dataCount++)
+			memcpy(&(((char*)(imageOut->imageData))[dataCount*blockSize]),&(((char*)(rawDataPtr))[dataCount*blockSize]),blockSize);
+		break;
+	default:
+		fprintf(stderr,"Unknown bit depth!\n");
+		return 1;
+		break;
 	}
 	
 	return error;
+}
+
+int DecodeRLE24Data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr)
+{
+	unsigned int	myshift = 0;
+	unsigned int	mymask = 0;
+	unsigned int	length = 0;
+	unsigned int	value = 0;
+	long		r = 0;
+	long		y = 0;
+	long		i = 0;
+	unsigned char	*rawDataPtr = NULL;
+	long		destIconLength = 0;
+	unsigned int	*destIconData = NULL;	// Decompressed Raw Icon Data
+	unsigned int	*destIconDataBaseAddr = NULL;	// Decompressed Raw Icon Data Base Address
+	
+	rawDataPtr = (unsigned char *)dataInPtr;
+	destIconData = (unsigned int *)dataOutPtr;
+	destIconDataBaseAddr = (unsigned int *)dataOutPtr;
+	
+	destIconLength = dataOutSize / 4;
+	
+	myshift = 24;
+	mymask = 0xFFFFFFFF;
+	
+	// What's this??? In the 128x128 icons, we need to start 4 bytes
+	// ahead. There see to be a NULL padding here for some reason. If
+	// we don't, the red channel will be off by 2 pixels
+	r = 4;
+	
+	for(i = 0; i < destIconLength; i++)
+		destIconData[i] = 0x00000000;
+	
+	// Data is stored in red...run, green...run,blue...run
+	// Red, Green, Blue
+	// 24,  16,    8   
+	while(myshift > 0)
+	{
+		// Next Color Byte
+		myshift -= 8;
+		
+		// Right shift mask 8 bits to prevent overwriting our other colors
+		mymask >>= 8;
+		
+		y = 0;
+		while(y < destIconLength)
+		{
+			if( (rawDataPtr[r] & 0x80) == 0)
+			{
+				// Top bit is clear - run of various values to follow
+				length = (int)(0xFF & rawDataPtr[r++]) + 1; // 1 <= len <= 128
+				
+				for(i = 0; i < (int)length; i++)
+					destIconData[y++] |= ( ((int)rawDataPtr[r++]) << myshift) & mymask;
+			}
+			else
+			{
+				// Top bit is set - run of one value to follow
+				length = (int)(0xFF & rawDataPtr[r++]) - 125; // 3 <= len <= 130
+				
+				// Set the value to the color shifted to the correct bit offset
+				value = ( ((int)rawDataPtr[r++]) << myshift) & mymask;
+				
+				for(i = 0; i < (int)length; i++)
+					destIconData[y++] |= value;
+			}
+		}
+	}
+	
+	destIconDataBaseAddr = NULL;
+	destIconData = NULL;
+	
+	return 0;
 }
 
 
@@ -693,7 +715,7 @@ int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *dataPtr,icn
 	if( resourceDataStart+resourceDataLength < 0 ) return 1;
 	if( resourceDataStart+resourceDataLength < dataSize ) return 1;
 	
-	resourceDataPtr = (char *)malloc(resourceDataLength);
+	resourceDataPtr = (unsigned char *)malloc(resourceDataLength);
 	
 	if(resourceDataPtr != NULL)
 	{

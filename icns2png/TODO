@@ -1,4 +1,12 @@
 TODO
 
-1) Update icns2png to support extraction of any icon size with -16 -32 -64, etc.
-2) Add write support to libicns
+1) Update libicns to properly handle icon bit depths 8, 4, and 1
+2) Add write support to libicns (note we don't actually need write
+   support, just to be able to create the icns data structure
+2a) Add function to create an empty icns family data structure
+2b) Add function to remove a specific icns element from the icns family
+2c) Add function to set/overwrite an existing icns element
+2c.1) Functionality for 64x64 32-bit icon images
+2c.2) Functionality for 128x128 32-bit RLE icon images
+2c.3) Functionality for 256x256+ 32-bit JP2 icon images
+2c.4) Functionality for 8, 4, and 1 bit (stream compacted) images
