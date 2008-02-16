@@ -42,24 +42,24 @@ int	fileindex = 0;
 /* default iconType to be extracted */
 int		iconExtractSizeID = 5;	// 128x128
 int		iconExtractDepth = 32;
-icns_type_t	iconType = kThumbnail32BitData;
-icns_type_t	maskType = kThumbnail8BitMask;
+icns_type_t	iconType = ICNS_128X128_32BIT_DATA;
+icns_type_t	maskType = ICNS_128X128_8BIT_MASK;
 
 icns_type_t getIconDataType(int sizeID,int depthVal)
 {
 	const icns_type_t iconTypes32[] = {  
-				kIconServices512PixelDataARGB,
-				kIconServices512PixelDataARGB,
-				kIconServices256PixelDataARGB,
-				kIconServices256PixelDataARGB,
-				kThumbnail32BitData,
-				kThumbnail32BitData,
-				kHuge32BitData,
-				kHuge32BitData,
-				kLarge32BitData,
-				kLarge32BitData,
-				kSmall32BitData,
-				kSmall32BitData,
+				ICNS_512x512_32BIT_ARGB_DATA,
+				ICNS_512x512_32BIT_ARGB_DATA,
+				ICNS_256x256_32BIT_ARGB_DATA,
+				ICNS_256x256_32BIT_ARGB_DATA,
+				ICNS_128X128_32BIT_DATA,
+				ICNS_128X128_32BIT_DATA,
+				ICNS_64x64_32BIT_DATA,
+				ICNS_64x64_32BIT_DATA,
+				ICNS_32x32_32BIT_DATA,
+				ICNS_32x32_32BIT_DATA,
+				ICNS_16x16_32BIT_DATA,
+				ICNS_16x16_32BIT_DATA,
 				kNoIconData
 			     };
 
@@ -70,13 +70,13 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 				kNoIconData,
 				kNoIconData,
 				kNoIconData,
-				kHuge8BitData,
-				kHuge8BitData,
-				kLarge8BitData,
-				kLarge8BitData,
-				kSmall8BitData,
-				kSmall8BitData,
-				kMini8BitData
+				ICNS_64x64_8BIT_DATA,
+				ICNS_64x64_8BIT_DATA,
+				ICNS_32x32_8BIT_DATA,
+				ICNS_32x32_8BIT_DATA,
+				ICNS_16x16_8BIT_DATA,
+				ICNS_16x16_8BIT_DATA,
+				ICNS_16x12_8BIT_DATA
 			     };
 
 	const icns_type_t iconTypes4[] = {  
@@ -86,13 +86,13 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 				kNoIconData,
 				kNoIconData,
 				kNoIconData,
-				kHuge4BitData,
-				kHuge4BitData,
-				kLarge4BitData,
-				kLarge4BitData,
-				kSmall4BitData,
-				kSmall4BitData,
-				kMini4BitData
+				ICNS_64x64_4BIT_DATA,
+				ICNS_64x64_4BIT_DATA,
+				ICNS_32x32_4BIT_DATA,
+				ICNS_32x32_4BIT_DATA,
+				ICNS_16x16_4BIT_DATA,
+				ICNS_16x16_4BIT_DATA,
+				ICNS_16x12_4BIT_DATA
 			     };
 			     
 	const icns_type_t iconTypes1[] = {  
@@ -102,13 +102,13 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 				kNoIconData,
 				kNoIconData,
 				kNoIconData,
-				kHuge1BitData,
-				kHuge1BitData,
-				kLarge1BitData,
-				kLarge1BitData,
-				kSmall1BitData,
-				kSmall1BitData,
-				kMini1BitData
+				ICNS_64x64_1BIT_DATA,
+				ICNS_64x64_1BIT_DATA,
+				ICNS_32x32_1BIT_DATA,
+				ICNS_32x32_1BIT_DATA,
+				ICNS_16x16_1BIT_DATA,
+				ICNS_16x16_1BIT_DATA,
+				ICNS_16x12_1BIT_DATA
 	};
 	
 	switch(depthVal) {
@@ -132,14 +132,14 @@ icns_type_t getIconMaskType(int sizeID,int depthVal)
 				kNoMaskData, 
 				kNoMaskData,
 				kNoMaskData,
-				kThumbnail8BitMask,
-				kThumbnail8BitMask,
-				kHuge8BitMask,
-				kHuge8BitMask,
-				kLarge8BitMask,
-				kLarge8BitMask,
-				kSmall8BitMask,
-				kSmall8BitMask,
+				ICNS_128X128_8BIT_MASK,
+				ICNS_128X128_8BIT_MASK,
+				ICNS_64x64_8BIT_MASK,
+				ICNS_64x64_8BIT_MASK,
+				ICNS_32x32_8BIT_DATA,
+				ICNS_32x32_8BIT_DATA,
+				ICNS_16x16_8BIT_MASK,
+				ICNS_16x16_8BIT_MASK,
 				kNoMaskData
 			     };
 	const icns_type_t maskTypes8x[] = {  
@@ -149,13 +149,13 @@ icns_type_t getIconMaskType(int sizeID,int depthVal)
 				kNoMaskData,
 				kNoMaskData,
 				kNoMaskData,
-				kHuge1BitMask,
-				kHuge1BitMask,
-				kLarge1BitMask,
-				kLarge1BitMask,
-				kSmall1BitMask,
-				kSmall1BitMask,
-				kMini1BitMask
+				ICNS_64x64_1BIT_MASK,
+				ICNS_64x64_1BIT_MASK,
+				ICNS_32x32_1BIT_MASK,
+				ICNS_32x32_1BIT_MASK,
+				ICNS_16x16_1BIT_MASK,
+				ICNS_16x16_1BIT_MASK,
+				ICNS_16x12_1BIT_MASK
 			     };
      if(depthVal <= 8)
 	     return maskTypes8x[sizeID];

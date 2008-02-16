@@ -7,7 +7,7 @@ TODO
 1c.2) Functionality for 128x128 32-bit RLE icon images
 1c.3) Functionality for 256x256+ 32-bit JP2 icon images
 1c.4) Functionality for 8, 4, and 1 bit (stream compacted) images
-2) Fix crashes when reading a file that is NOT icns,rsrc,macbinary
+2) Fix crashes when reading a file that is NOT icns,rsrc, or macbinary
 3) Fix all the crashes detected by zzuf
 4) Fix all endianness, 64-bit and alignment issues
-5) Get rid of Apple copyrighted bits
+

@@ -91,10 +91,10 @@ int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteS
 		switch(iconType)
 		{
 			// 8-Bit Icon Mask Data Types
-			case kThumbnail8BitMask:
-			case kHuge8BitMask:
-			case kLarge8BitMask:
-			case kSmall8BitMask:
+			case ICNS_128X128_8BIT_MASK:
+			case ICNS_64x64_8BIT_MASK:
+			case ICNS_32x32_8BIT_MASK:
+			case ICNS_16x16_8BIT_MASK:
 				if(oldDepth != 8)
 				{
 					fprintf(stderr,"Bit depth type mismatch!\n");
@@ -111,10 +111,10 @@ int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteS
 				}
 				break;
 			// 8-Bit Icon Image Data Types
-			case kHuge8BitData:
-			case kLarge8BitData:
-			case kSmall8BitData:
-			case kMini8BitData:
+			case ICNS_64x64_8BIT_DATA:
+			case ICNS_32x32_8BIT_DATA:
+			case ICNS_16x16_8BIT_DATA:
+			case ICNS_16x12_8BIT_DATA:
 				if(oldDepth != 8)
 				{
 					fprintf(stderr,"Bit depth type mismatch!\n");
@@ -132,10 +132,10 @@ int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteS
 				}
 				break;
 			// 4-Bit Icon Image Data Types
-			case kHuge4BitData:
-			case kLarge4BitData:
-			case kSmall4BitData:
-			case kMini4BitData:
+			case ICNS_64x64_4BIT_DATA:
+			case ICNS_32x32_4BIT_DATA:
+			case ICNS_16x16_4BIT_DATA:
+			case ICNS_16x12_4BIT_DATA:
 				if(oldDepth != 4)
 				{
 					fprintf(stderr,"Bit depth type mismatch!\n");
@@ -156,10 +156,10 @@ int GetICNSImage32FromICNSElement(icns_element_t *iconElement, icns_bool_t byteS
 				}
 				break;
 			// 1-Bit Icon Image/Mask Data Types (Data is the same)
-			case kHuge1BitData:  // Also kHuge1BitMask
-			case kLarge1BitData: // Also kLarge1BitMask
-			case kSmall1BitData: // Also kSmall1BitMask
-			case kMini1BitData:  // Also kMini1BitMask
+			case ICNS_64x64_1BIT_DATA:  // Also ICNS_64x64_1BIT_MASK
+			case ICNS_32x32_1BIT_DATA: // Also ICNS_32x32_1BIT_MASK
+			case ICNS_16x16_1BIT_DATA: // Also ICNS_16x16_1BIT_MASK
+			case ICNS_16x12_1BIT_DATA:  // Also ICNS_16x12_1BIT_MASK
 				if(oldDepth != 1)
 				{
 					fprintf(stderr,"Bit depth type mismatch!\n");
@@ -233,7 +233,7 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 	*/
 	
 	// We use the jp2 processor for these two
-	if((iconType == kIconServices512PixelDataARGB) || (iconType == kIconServices256PixelDataARGB))
+	if((iconType == ICNS_512x512_32BIT_ARGB_DATA) || (iconType == ICNS_256x256_32BIT_ARGB_DATA))
 	{
 		opj_image_t* image = NULL;
 
@@ -251,25 +251,25 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 	switch(iconType)
 	{
 		// 32-Bit Icon Image Data Types
-		case kThumbnail32BitData:
+		case ICNS_128X128_32BIT_DATA:
 			iconWidth = 128;
 			iconHeight = 128;
 			iconChannels = 4;
 			iconDepth = 32;
 			break;
-		case kHuge32BitData:
+		case ICNS_64x64_32BIT_DATA:
 			iconWidth = 48;
 			iconHeight = 48;
 			iconChannels = 4;
 			iconDepth = 32;
 			break;
-		case kLarge32BitData:
+		case ICNS_32x32_32BIT_DATA:
 			iconWidth = 32;
 			iconHeight = 32;
 			iconChannels = 4;
 			iconDepth = 32;
 			break;
-		case kSmall32BitData:
+		case ICNS_16x16_32BIT_DATA:
 			iconWidth = 16;
 			iconHeight = 16;
 			iconChannels = 4;
@@ -277,25 +277,25 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			break;
 			
 		// 8-Bit Icon Mask Data Types
-		case kThumbnail8BitMask:
+		case ICNS_128X128_8BIT_MASK:
 			iconWidth = 128;
 			iconHeight = 128;
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
-		case kHuge8BitMask:
+		case ICNS_64x64_8BIT_MASK:
 			iconWidth = 48;
 			iconHeight = 48;
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
-		case kLarge8BitMask:
+		case ICNS_32x32_8BIT_MASK:
 			iconWidth = 32;
 			iconHeight = 32;
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
-		case kSmall8BitMask:
+		case ICNS_16x16_8BIT_MASK:
 			iconWidth = 16;
 			iconHeight = 16;
 			iconChannels = 1;
@@ -303,25 +303,25 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			break;
 			
 		// 8-Bit Icon Image Data Types
-		case kHuge8BitData:
+		case ICNS_64x64_8BIT_DATA:
 			iconWidth = 48;
 			iconHeight = 48;
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
-		case kLarge8BitData:
+		case ICNS_32x32_8BIT_DATA:
 			iconWidth = 32;
 			iconHeight = 32;
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
-		case kSmall8BitData:
+		case ICNS_16x16_8BIT_DATA:
 			iconWidth = 16;
 			iconHeight = 16;
 			iconChannels = 1;
 			iconDepth = 8;
 			break;
-		case kMini8BitData:
+		case ICNS_16x12_8BIT_DATA:
 			iconWidth = 16;
 			iconHeight = 12;
 			iconChannels = 1;
@@ -329,25 +329,25 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			break;
 
 		// 4-Bit Icon Image Data Types
-		case kHuge4BitData:
+		case ICNS_64x64_4BIT_DATA:
 			iconWidth = 48;
 			iconHeight = 48;
 			iconChannels = 1;
 			iconDepth = 4;
 			break;
-		case kLarge4BitData:
+		case ICNS_32x32_4BIT_DATA:
 			iconWidth = 32;
 			iconHeight = 32;
 			iconChannels = 1;
 			iconDepth = 4;
 			break;
-		case kSmall4BitData:
+		case ICNS_16x16_4BIT_DATA:
 			iconWidth = 16;
 			iconHeight = 16;
 			iconChannels = 1;
 			iconDepth = 4;
 			break;
-		case kMini4BitData:
+		case ICNS_16x12_4BIT_DATA:
 			iconWidth = 16;
 			iconHeight = 12;
 			iconChannels = 1;
@@ -355,25 +355,25 @@ int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwa
 			break;
 
 		// 1-Bit Icon Image/Mask Data Types (Data is the same)
-		case kHuge1BitData:  // Also kHuge1BitMask
+		case ICNS_64x64_1BIT_DATA:  // Also ICNS_64x64_1BIT_MASK
 			iconWidth = 48;
 			iconHeight = 48;
 			iconChannels = 1;
 			iconDepth = 1;
 			break;
-		case kLarge1BitData: // Also kLarge1BitMask
+		case ICNS_32x32_1BIT_DATA: // Also ICNS_32x32_1BIT_MASK
 			iconWidth = 32;
 			iconHeight = 32;
 			iconChannels = 1;
 			iconDepth = 1;
 			break;
-		case kSmall1BitData: // Also kSmall1BitMask
+		case ICNS_16x16_1BIT_DATA: // Also ICNS_16x16_1BIT_MASK
 			iconWidth = 16;
 			iconHeight = 16;
 			iconChannels = 1;
 			iconDepth = 1;
 			break;
-		case kMini1BitData: // Also kMini1BitMask
+		case ICNS_16x12_1BIT_DATA: // Also ICNS_16x12_1BIT_MASK
 			iconWidth = 16;
 			iconHeight = 12;
 			iconChannels = 1;
@@ -545,7 +545,7 @@ int GetICNSElementFromICNSFamily(icns_family_t *iconFamily,icns_type_t iconType,
 		return -1;
 	}
 	
-	if(iconFamily->resourceType == EndianSwap(kIconFamilyType, sizeof(kIconFamilyType), 1))
+	if(iconFamily->resourceType == EndianSwap(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE), 1))
 		*byteSwap = 1;
 	
 	iconFamilyDataType = EndianSwap(iconFamily->resourceType,sizeof(int),*byteSwap);
@@ -558,7 +558,7 @@ int GetICNSElementFromICNSFamily(icns_family_t *iconFamily,icns_type_t iconType,
 	printf("Looking for icon of type: 0x%8X ('%c%c%c%c')\n",(unsigned int)iconType));
 	*/
 	
-	if (( iconFamilyDataType != kIconFamilyType) || (iconFamilyDataSize < sizeof(icns_family_t)))
+	if (( iconFamilyDataType != ICNS_FAMILY_TYPE) || (iconFamilyDataSize < sizeof(icns_family_t)))
 	{
 		fprintf(stderr,"Invalid icns resource!\n");
 		error = 1;
@@ -628,7 +628,7 @@ int CreateICNSFamily(icns_family_t **iconFamilyOut)
 		return -1;
 	}
 	
-	newIconFamily->resourceType = EndianSwap(kIconFamilyType,sizeof(icns_type_t),byteSwap);
+	newIconFamily->resourceType = EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),byteSwap);
 	newIconFamily->resourceSize = 0x00000000;
 }
 
@@ -662,7 +662,7 @@ int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *dataPtr,icns
 	// IMHO, this is hackish and should be fixed
 	// Are there not specs for the NG format??
 	iconDataPtr = dataPtr;
-	while ( (dataOffset < dataSize-sizeof(icns_type_t)) && (*((icns_type_t*)(iconDataPtr)) != EndianSwap(kIconFamilyType,sizeof(icns_type_t),byteSwap)) ) {
+	while ( (dataOffset < dataSize-sizeof(icns_type_t)) && (*((icns_type_t*)(iconDataPtr)) != EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),byteSwap)) ) {
 		++dataOffset;
 		++iconDataPtr;
 	}
@@ -676,7 +676,7 @@ int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *dataPtr,icns
 		memcpy (iconDataPtr,dataPtr,dataSize);
 	}
 	
-	if(*((icns_type_t*)(iconDataPtr)) != EndianSwap(kIconFamilyType,sizeof(icns_type_t),byteSwap))
+	if(*((icns_type_t*)(iconDataPtr)) != EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),byteSwap))
 	{
 		// Might be embedded in an rsrc file
 		if((error = GetICNSFamilyFromMacResource(dataSize,iconDataPtr,iconFamilyOut)))
