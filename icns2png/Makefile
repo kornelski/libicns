@@ -1,4 +1,4 @@
-# Makefile for Icns2PNG, MacOS X / Linux
+# Makefile for libicns and icns2png
 #
 # Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
 #
@@ -21,7 +21,7 @@
 # Version information
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 0.8
+LIBVERMIN = 0.9
 
 VERSION = $(LIBVERMAJ).$(LIBVERMIN)
 LIBSTATIC = $(LIBNAME).a
@@ -37,7 +37,7 @@ AR_RC=ar rc
 RANLIB=ranlib
 MAKE=make
 
-# Where make install puts icns2png
+# Where make install puts libicns and icns2png
 PREFIX=/usr/local
 LIBPATH=$(PREFIX)/lib
 BINPATH=$(PREFIX)/bin

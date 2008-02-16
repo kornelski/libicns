@@ -29,10 +29,8 @@ Boston, MA 02111-1307, USA.
 void parse_format(char *format);
 void parse_options(int argc, char** argv);
 int ConvertIcnsFile(char *filename);
-int convertIcon128ToPNG(ICNS_IconData icon, ICNS_IconData maskIcon, int byteSwap, char *filename);
-int convertIcon512ToPNG(ICNS_IconData icon, char *filename);
-int ReadFile(char *fileName,long *dataSize,void **dataPtr);
-int WritePNGImage(FILE *outputfile,ICNS_ImageData *image,ICNS_ImageData *mask);
+int ReadFile(char *fileName,unsigned long *dataSize,void **dataPtr);
+int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define	MAX_INPUTFILES  4096
@@ -140,17 +138,17 @@ int ConvertIcnsFile(char *filename)
 	int		error = 0;
 	char		*infilename;
 	char		*outfilename;
-	int		filenamelength = 0;
-	int		infilenamelength = 0;
-	int		outfilenamelength = 0;
-	char		*fileDataPtr = NULL;
-	long		fileDataSize = 0;
-	int		byteSwap = 0;
-	IconFamilyPtr	iconFamily = NULL;
-	ICNS_IconData	icon; icon.data = NULL;
-	ICNS_IconData	mask; mask.data = NULL;
-	ICNS_ImageData	iconImage;
-	ICNS_ImageData	maskImage;
+	unsigned int	filenamelength = 0;
+	unsigned int	infilenamelength = 0;
+	unsigned int	outfilenamelength = 0;
+	unsigned char	*fileDataPtr = NULL;
+	unsigned long	fileDataSize = 0;
+	icns_bool_t	byteSwap = 0;
+	icns_family_t	*iconFamily = NULL;
+	icns_element_t	*icon;
+	icns_element_t	*mask;
+	icns_image_t	iconImage;
+	icns_image_t	maskImage;
 	FILE 		*outfile = NULL;
 
 	filenamelength = strlen(filename);
@@ -204,21 +202,21 @@ int ConvertIcnsFile(char *filename)
 	}
 	
 	// ReadXIconFile converts the icns file into an IconFamily
-	error = GetIconFamilyFromFileData(fileDataSize,fileDataPtr,&iconFamily);
+	error = GetICNSFamilyFromFileData(fileDataSize,fileDataPtr,&iconFamily);
 	
 	if(error) {
 		fprintf(stderr,"Unable to load icns file into icon family!\n");
 		goto cleanup;
 	}
 	
-	error = GetIconDataFromIconFamily(iconFamily,iconType,&icon,&byteSwap);
+	error = GetICNSElementFromICNSFamily(iconFamily,iconType,&byteSwap,&icon);
 	
 	if(error) {
 		fprintf(stderr,"Unable to load icon data from icon family!\n");
 		goto cleanup;
 	}
 
-	error = ParseIconData(iconType, (Ptr)icon.data, icon.size, &iconImage, byteSwap);
+	error = GetICNSImageFromICNSElement(icon, byteSwap, &iconImage);
 
 	if(error) {
 		fprintf(stderr,"Unable to load raw data from icon data!\n");
@@ -226,14 +224,14 @@ int ConvertIcnsFile(char *filename)
 	}
 	
 	if(maskType != kNoMaskData) {
-		error = GetIconDataFromIconFamily(iconFamily,maskType,&mask,&byteSwap);
+		error = GetICNSElementFromICNSFamily(iconFamily,maskType,&byteSwap,&mask);
 	
 		if(error) {
 			fprintf(stderr,"Unable to load icon data from icon family!\n");
 			goto cleanup;
 		}
 		
-		error = ParseIconData(maskType, (Ptr)mask.data, mask.size, &maskImage, byteSwap);
+		error = GetICNSImageFromICNSElement(mask, byteSwap, &maskImage);
 	}
 	
 	outfile = fopen(outfilename,"w");
@@ -265,13 +263,13 @@ cleanup:
 		free(iconFamily);
 		iconFamily = NULL;
 	}
-	if(icon.data != NULL) {
-		free(icon.data);
-		icon.data = NULL;
+	if(icon != NULL) {
+		free(icon);
+		icon = NULL;
 	}
-	if(mask.data != NULL) {
-		free(mask.data);
-		mask.data = NULL;
+	if(mask != NULL) {
+		free(mask);
+		mask = NULL;
 	}
 	free(infilename);
 	free(outfilename);
@@ -279,77 +277,10 @@ cleanup:
 	return error;
 }
 
-int convertIcon128ToPNG(ICNS_IconData icon, ICNS_IconData maskIcon, int byteSwap, char *filename)
-{
-	ICNS_ImageData iconImage;
-	ICNS_ImageData maskImage;
-	int err = 0;
-	FILE *outfile = NULL;
-
-	if(!icon.data || !icon.data || !filename)
-		return 0;
-
-	iconImage.iconData = NULL;
-	maskImage.iconData = NULL;
-
-	err = ParseIconData(kThumbnail32BitData, (Ptr)icon.data, icon.size, &iconImage, byteSwap);
-	if(err) goto out;
-
-	err = ParseIconData(kThumbnail8BitMask, (Ptr)maskIcon.data, maskIcon.size, &maskImage, byteSwap);
-	if(err) goto out;
-
-	if(!iconImage.iconData) {
-		err = 1;
-		goto out;
-	}
-
-	outfile = fopen(filename,"w");
-	if(!outfile) goto out;
-
-	err = WritePNGImage(outfile,&iconImage,&maskImage);
-out:
-	if(outfile)
-		fclose(outfile);
-	if(iconImage.iconData)
-		free(iconImage.iconData);
-	if(maskImage.iconData)
-		free(maskImage.iconData);
-	return err;
-}
-
-int convertIcon512ToPNG(ICNS_IconData icon, char *filename)
-{
-	ICNS_ImageData iconImage;
-	FILE *outfile = NULL;
-	int err;
-
-	if(!icon.data || !filename)
-		goto error;
-
-	err = ParseIconData(kIconServices512PixelDataARGB, (Ptr)icon.data, icon.size, &iconImage, false);
-	if(err) goto out;
-
-	outfile = fopen(filename,"w");
-	if(!outfile) goto out;
-	
-	if(!err)
-		err = WritePNGImage(outfile,&iconImage,NULL);
-	
-out:
-	if(outfile)
-		fclose(outfile);
-	if(iconImage.iconData != NULL)
-		free(iconImage.iconData);
-	
-	return err;
-error:
-	return true;
-}
-
 //***************************** ReadFile **************************//
 // Generic file reading routine
 
-int ReadFile(char *fileName,long *dataSize,void **dataPtr)
+int ReadFile(char *fileName,unsigned long *dataSize,void **dataPtr)
 {
 	int	error = 0;
 	FILE	*dataFile = 0;
@@ -402,12 +333,12 @@ int ReadFile(char *fileName,long *dataSize,void **dataPtr)
 //***************************** WritePNGImage **************************//
 // Relatively generic PNG file writing routine
 
-int	WritePNGImage(FILE *outputfile,ICNS_ImageData *image,ICNS_ImageData *mask)
+int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 {
-	int 			width = image->width;
-	int 			height = image->height;
-	int 			image_channels = image->channels;
-	int			image_bit_depth = image->depth/image_channels;
+	int 			width = image->imageWidth;
+	int 			height = image->imageHeight;
+	int 			image_channels = image->imageChannels;
+	int			image_bit_depth = image->imageDepth/image_channels;
 	png_structp 		png_ptr;
 	png_infop 		info_ptr;
 	png_bytep 		*row_pointers;
@@ -471,14 +402,14 @@ int	WritePNGImage(FILE *outputfile,ICNS_ImageData *image,ICNS_ImageData *mask)
 				
 				dst_pixel = (pixel32 *)&(row_pointers[i][j*image_channels]);
 				
-				src_rgb_pixel = (pixel32 *)&(image->iconData[i*width*image_channels+j*image_channels]);
+				src_rgb_pixel = (pixel32 *)&(image->imageData[i*width*image_channels+j*image_channels]);
 
 				dst_pixel->red = src_rgb_pixel->red;
 				dst_pixel->green = src_rgb_pixel->green;
 				dst_pixel->blue = src_rgb_pixel->blue;
 				
 				if(mask != NULL) {
-					src_pha_pixel = (pixel32 *)&(mask->iconData[i*width+j]);
+					src_pha_pixel = (pixel32 *)&(mask->imageData[i*width+j]);
 					dst_pixel->alpha = src_pha_pixel->alpha;
 				} else {
 					dst_pixel->alpha = src_rgb_pixel->alpha;

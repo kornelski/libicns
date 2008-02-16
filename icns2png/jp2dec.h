@@ -24,7 +24,7 @@
 #include <openjpeg.h>
 #include "icns.h"
 
-int opjToICNS_ImageData(opj_image_t *image, ICNS_ImageDataPtr outIcon);
+int opj2icns_image_t(opj_image_t *image, icns_image_t *out_image);
 opj_image_t* jp2dec(unsigned char *bufin, int len);
 
 #endif

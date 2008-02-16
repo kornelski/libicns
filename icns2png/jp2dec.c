@@ -58,7 +58,7 @@ void info_callback(const char *msg, void *client_data) {
 }
 
 // Convert from uncompressed opj data to ICNS_ImageData
-int opjToICNS_ImageData(opj_image_t *image, ICNS_ImageDataPtr outIcon)
+int opj2icns_image_t(opj_image_t *image, icns_image_t *outIcon)
 {
 	int		error = 0;
 	unsigned int	iconWidth = 0;
@@ -80,20 +80,20 @@ int opjToICNS_ImageData(opj_image_t *image, ICNS_ImageDataPtr outIcon)
 	iconChannels = image->numcomps;
 	iconDepth = image->comps[0].prec * image->numcomps;
 	
-	blockSize = iconWidth *(iconDepth / kICNS_ByteSize);
+	blockSize = iconWidth *(iconDepth / sizeof(icns_uint8_t));
 	iconDataSize = iconHeight * blockSize;
-	outIcon->width = iconWidth;
-	outIcon->height = iconHeight;
-	outIcon->channels = iconChannels;
-	outIcon->depth = iconDepth;
-	outIcon->dataSize = iconDataSize;
-	outIcon->iconData = (unsigned char *)malloc(iconDataSize);
-	if(!outIcon->iconData) {
+	outIcon->imageWidth = iconWidth;
+	outIcon->imageHeight = iconHeight;
+	outIcon->imageChannels = iconChannels;
+	outIcon->imageDepth = iconDepth;
+	outIcon->imageDataSize = iconDataSize;
+	outIcon->imageData = (unsigned char *)malloc(iconDataSize);
+	if(!outIcon->imageData) {
 		printf("Failed alloc iconData\n");
 		return 0;
 	}
-	memset(outIcon->iconData,0,iconDataSize);
-	dataPtr = outIcon->iconData;
+	memset(outIcon->imageData,0,iconDataSize);
+	dataPtr = outIcon->imageData;
 	
 	if (image->comps[3].prec > 8) {
 		adjustR = image->comps[3].prec - 8;

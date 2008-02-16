@@ -27,48 +27,6 @@ Boston, MA 02111-1307, USA.
 #include <openjpeg.h>
 
 /*
-Section:       apple_mactypes.h
-
-The following section is based on information found in the file
-MacTypes.h originating in the 2002, Quicktime 6.0.2 developer's
-kit as developed by Apple Computer, Inc.
-
-Modifications have been made to make it more compatible with the
-GNU gcc and g++ compilers, and to limit the information to that
-necessary for the icns format. To be clear, bug reports on this
-file should NOT be filed to Apple Computer, Inc. This is a work
-in derivative, not the original work.
-
-All data types and naming conventions in this file were created and
-Copyright: (c) 1985-2001 by Apple Computer, Inc., all rights reserved.
-
-*/
-
-#ifndef __APPLE_MACTYPES__
-#define	__APPLE_MACTYPES__	1
-
-#define FOUR_CHAR_CODE(x)           	(unsigned long)(x)
-
-typedef unsigned char                   UInt8;
-typedef signed char                     SInt8;
-typedef unsigned short                  UInt16;
-typedef signed short                    SInt16;
-typedef unsigned long                   UInt32;
-typedef signed long                     SInt32;
-
-typedef char *                          Ptr;
-typedef Ptr *                           Handle;
-typedef long                            Size;
-
-typedef unsigned long                   FourCharCode;
-typedef FourCharCode                    OSType;
-typedef FourCharCode                    ResType;
-
-typedef	OSType *			OSTypePtr;
-
-#endif
-
-/*
 Section:       apple_iconstorage.h
 
 The following section is based on information found in the file
@@ -189,25 +147,6 @@ enum {
   kIconFamilyType		= 0x69636E73	/* icns */
 };
 
-struct IconFamilyElement {
-  OSType              elementType;		/* 'ICN#', 'icl8', etc...*/
-  Size                elementSize;		/* Size of this element*/
-  unsigned char       elementData[1];
-};
-typedef struct IconFamilyElement        IconFamilyElement;
-typedef IconFamilyElement *		IconFamilyElementPtr;
-
-struct IconFamilyResource {
-	OSType              resourceType;	/* Always seems to be 'icns' */
-	Size                resourceSize;	/* Total size of this resource*/
-	IconFamilyElement   elements[1];
-};
-
-typedef struct IconFamilyResource       IconFamilyResource;
-typedef IconFamilyResource *            IconFamilyPtr;
-typedef IconFamilyPtr *                 IconFamilyHandle;
-
-
 #endif /* __APPLE_ICONS__ */
 
 /*
@@ -235,28 +174,48 @@ Boston, MA 02111-1307, USA.
 #ifndef _ICNS_H_
 #define	_ICNS_H_	1
 
-#define	kICNS_ByteSize	8
+#define			icns_byte_bits	8
 
-typedef struct ICNS_IconData {
-	OSType type;
-	size_t size;
-	unsigned char *data;
-} ICNS_IconData;
+typedef unsigned char   icns_bool_t;
 
-typedef struct ICNS_ImageData
+typedef unsigned char   icns_uint8_t;
+typedef signed char     icns_sint8_t;
+typedef unsigned short  icns_uint16_t;
+typedef signed short    icns_sint16_t;
+typedef unsigned int    icns_uint32_t;
+typedef signed int      icns_sint32_t;
+typedef unsigned long   icns_uint64_t;
+typedef signed long     icns_sint64_t;
+
+typedef icns_uint32_t   icns_size_t;
+typedef icns_uint32_t   icns_type_t;
+
+typedef struct icns_element_t {
+  icns_type_t           elementType;    /* 'ICN#', 'icl8', etc...*/
+  icns_size_t           elementSize;    /* Size of this element*/
+  unsigned char         elementData[1];
+} icns_element_t;
+
+typedef struct icns_family_t {
+  icns_type_t           resourceType;	/* Always seems to be 'icns' */
+  icns_size_t           resourceSize;	/* Total size of this resource*/
+  icns_element_t        elements[1];
+} icns_family_t;
+
+typedef struct icns_image_t
 {
-	int		width;		// width of image
-	int		height;		// height of image
-	short		channels;	// number of channels in data
-	short		depth;		// bits-per-pixel * channels
-	long		dataSize;	// bytes = width * height * depth / bits-per-pixel
-	unsigned char	*iconData;
-} ICNS_ImageData, *ICNS_ImageDataPtr;
+	long		imageDataSize;	// bytes = width * height * depth / bits-per-pixel
+	int		imageWidth;		// width of image in pixels
+	int		imageHeight;	// height of image in pixels
+	short		imageChannels;	// number of channels in data
+	short		imageDepth;		// bits-per-pixel * channels
+	unsigned char	*imageData;	// pointer to base address of uncompressed raw image data
+} icns_image_t;
 
-int GetIconFamilyFromFileData(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily);
-int GetIconFamilyFromMacResourceFork(long dataSize,char *dataPtr,IconFamilyPtr *iconFamily);
-int ParseMacBinaryResourceFork(long dataSize,char *dataPtr,OSType *dataType, OSType *dataCreator,long *parsedResSize,char **parsedResData);
-int GetIconDataFromIconFamily(IconFamilyPtr inPtr,ResType iconType,ICNS_IconData *outIcon, int *byteswap);
-int ParseIconData(ResType iconType,Ptr rawDataPtr,long rawDataLength,ICNS_ImageDataPtr outIcon, int byteSwap);
+int GetICNSImageFromICNSElement(icns_element_t *iconElement, icns_bool_t byteSwap,icns_image_t *imageOut);
+int GetICNSElementFromICNSFamily(icns_family_t *iconFamily,icns_type_t iconType, icns_bool_t *byteSwap,icns_element_t **iconElementOut);
+int GetICNSFamilyFromFileData(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
+int GetICNSFamilyFromMacResource(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
+int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *data,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,unsigned long *parsedResSizeOut,unsigned char **parsedResDataOut);
 
 #endif

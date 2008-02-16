@@ -1,7 +1,16 @@
-Welcome to Icon2PNG Linux Edition 0.8
-
+===============================================================================
+README for libicns 0.0.8 - February 15th, 2008
 Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
 
+===============================================================================
+This package include the following libraries and utilities:
+1) libicns - A library for the translation of the icns format
+2) icns2png - A utility for converting icns files into png images
+3) icontainer2icns - A utility for extracting icns files from icontainer packs
+
+You should be able to get the latest version at http://sf.net/projects/icns
+
+===============================================================================
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
 License as published by the Free Software Foundation; either
@@ -17,7 +26,7 @@ License along with this library; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 
-
+===============================================================================
 NOTICE: icontainer2icns is NOT related to www.iconfactory.com - though it
 decodes this library type. They are NOT involved, please don't bother them
 with bug reports.
@@ -25,28 +34,29 @@ with bug reports.
 For bug/wishes regarding icontainer2icns mailto: baghira-style@gmx.net
 
 ===============================================================================
-Building Icon2PNG - Linux Edition
+Building libicns
 
-You will need a copy of libpng, and zlib. After building libpng, and zlib,
-update the Makefile ZLIBINC, and LPNGINC to show the install paths for
-zlib and libpng.
+You will need a copy of zlib, libpng, and openjpeg. If you do not want to
+install those libraries, you will need to build them, then modify the Makefile
+to reference the local paths to each library.
 
-You should then only have to run
+For a complete build of libicns and icns2png, you should then only have to run
 make
 make test
 make install
 
-===============================================================================
-Using Icon2PNG - Linux Edition
+Please see the Makefile for alternative possibilities
 
-Basic Usage:
+===============================================================================
+Using icns2png
+
 ./icns2png OmniWeb.icns
 Converting OmniWeb.icns to OmniWeb.png...
 
 This will result in a file OmniWeb.png with a 128x128 icon from OmniWeb.icns.
 
 ===============================================================================
-Using iContainer2icns
+Using icontainer2icns
 
 ./icontainer2icns foo.icontainer
 
@@ -54,14 +64,12 @@ This will end up with a couple of icns files identified by the iContainer ID
 and the iContainer name in a (new) folder carrying the icontainer name
 (without any suffix)
 
-
 ===============================================================================
 Understanding the Mac OS X Icons
 
-Mac OS X Icon files come in two formats - resource forks, and .icns files.
-
-icns2png can convert both formats. It can also decode the resource forks
-contained within MacBinary files.
+Mac OS X Icon files come in two formats - icns files, and icns resources
+embedded with rsrc files. They may also be stored in a macbinary encoded
+rsrc files. libicns (and icns2png) can decode all three formats
 
 The .icns files are much easier to deal with, since they are in a format that
 can be easily accesed from Linux/UNIX/Windows.
@@ -104,21 +112,7 @@ icns2png currently only extracts the 128x128 8 bit mask and 24 bit icon image
 ===============================================================================
 Requirements
 
-Icon2PNG should be able to run on just about any *nux distribution
-
-The source is cross-platform - I have successfully built and run it on
-PowerPC Linux, x86 Linux, and Mac OS X (UNIX)
+libicns should build just about any *nux distribution The source is cross
+platform and has been tested on PowerPC Linux, x86 Linux, and Mac OS X (UNIX)
 
 ===============================================================================
-About Icon2PNG - Linux Edition
-
-I wrote Icon2PNG as a Macintosh utility for converting some of my Mac icons to
-PNG images so I could edit them with a more powerfull utility, and also to use
-them in Linux and put them on websites. I had previously been using Photoshop
-to save the PNG images, and another icon editor to extract the 32bit icons
-and alpha channel from the new icns format.
-
-After I released Icon2PNG for the Mac, I began to receive several e-mails
-requesting a version for Linux. You asked, I delivered. :)
-
-You should be able to get the latest version at http://sf.net/projects/icns
