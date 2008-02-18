@@ -138,3 +138,7 @@ icns data format is basically an 8-byte header, followed by icns elements
 |==== raw, rle, or jp2 image data
 |EOF
 
+==============================================================================
+More information on icns can be found at the unrelated (Mac OS X only) project 
+http://iconfamily.sourceforge.net/
+
