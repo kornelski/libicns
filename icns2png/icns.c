@@ -420,7 +420,7 @@ int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int 
 	imageOut->imageData = (unsigned char *)malloc(iconDataSize);
 	if(!imageOut->imageData)
 	{
-		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",(int)iconDataSize);
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d ($s:%m)!\n",(int)iconDataSize);
 		return -1;
 	}
 	memset(imageOut->imageData,0,iconDataSize);
@@ -699,6 +699,40 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 	return error;
 }
 
+//////////////////////////////// TEMPORARY RE FNCTS ///////////////////////////
+void bin_print_byte(int x)
+{
+   int n;
+   for(n=0; n<8; n++)
+   {
+	if((x & 0x80) !=0)
+	{
+	printf("1");
+	}
+	else
+	{
+   	printf("0");
+   	}
+	if (n==3)
+	{
+	printf(" "); /* insert a space between nybbles */
+	}
+	x = x<<1;
+   }
+}
+
+void bin_print_int(int x)
+{
+   int hi, lo;
+   hi=(x>>8) & 0xff;
+   lo=x&0xff;
+   bin_print_byte(hi);
+   printf(" ");
+   bin_print_byte(lo);
+}
+//***************************** icns_decode_rle24_data ****************************//
+// Decode a rgb 24 bit rle encoded data stream into 32 bit argb (alpha is ignored)
+
 int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr)
 {
 	unsigned int	myshift = 0;
@@ -717,6 +751,11 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	destIconData = (unsigned int *)dataOutPtr;
 	destIconDataBaseAddr = (unsigned int *)dataOutPtr;
 	
+	printf("Compressed data size is %d\n",(int)dataInSize);
+	
+	// There's always going to be 4 channels in this
+	// so we want our counter to increment through
+	// channels, not bytes....
 	destIconLength = dataOutSize / 4;
 	
 	myshift = 24;
@@ -729,17 +768,21 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	
 	for(i = 0; i < destIconLength; i++)
 		destIconData[i] = 0x00000000;
-	
+		
 	// Data is stored in red...run, green...run,blue...run
 	// Red, Green, Blue
 	// 24,  16,    8   
 	while(myshift > 0)
 	{
+		int	runCount = 0;
+
 		// Next Color Byte
 		myshift -= 8;
 		
 		// Right shift mask 8 bits to prevent overwriting our other colors
 		mymask >>= 8;
+		
+		// Start with mask 0x00FFFFFF, then 0x0000FFFF, then 0x0000FF
 		
 		y = 0;
 		while(y < destIconLength)
@@ -751,6 +794,8 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 				
 				for(i = 0; i < (int)length; i++)
 					destIconData[y++] |= ( ((int)rawDataPtr[r++]) << myshift) & mymask;
+				
+				runCount++;
 			}
 			else
 			{
@@ -762,9 +807,16 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 				
 				for(i = 0; i < (int)length; i++)
 					destIconData[y++] |= value;
+				
+				runCount++;
 			}
 		}
+		
+		printf("Total runs: %d\n",runCount);
 	}
+	
+	printf("Testing RLE encoder with data size of %d\n",(int)dataOutSize);
+	icns_encode_rle24_data(dataOutSize,dataOutPtr,0,NULL);
 	
 	destIconDataBaseAddr = NULL;
 	destIconData = NULL;
@@ -772,13 +824,232 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	return 0;
 }
 
-//***************************** icns_new_element_from_image **************************//
-// Parses requested data from an icon family - puts it into a "raw" image format
-int icns_new_element_from_image(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn)
+//***************************** icns_encode_rle24_data *******************************************//
+// Encode an 32 bit argb data stream into a 24 bit rgb rle encoded data stream (alpha is ignored)
+
+int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr)
 {
+	icns_sint8_t	*dataTemp = NULL;
+	unsigned long	dataTempCount = 0;
+	unsigned long	dataTempFinalCount = 0;
+	unsigned long	dataInCount = 0;
+	unsigned long	dataOutCount = 0;
+	icns_sint32_t	dataValue = 0;
+	icns_uint8_t	dataByte = 0;
 	
+	icns_uint8_t	*dataRun = NULL;
+	icns_bool_t	runType = 0;
+	icns_uint8_t	runLength = 0; // Runs will never go over 131, one byte is ok
+	
+	int		runCount = 0;
+	
+	unsigned int	myshift = 0;
+	unsigned int	mymask = 0;
+	
+	// Assumptions of what icns rle data is all about:
+	// A) Each channel is encoded indepenent of the next.
+	// B) An encoded channel looks like this:
+	//    0xRL 0xCV 0xCV 0xRL 0xCV - RL is run-length and CV is color value.
+	// C) There are two types of runs
+	//    1) Run of same value - high bit of RL is set
+	//    2) Run of differing values - high bit of RL is NOT set
+	// D) 0xRL also has two ranges
+	//    1) for set high bit RL, 3 to 130
+	//    2) for clr high bit RL, 1 to 128
+	// E) 0xRL byte is therefore set as follows:
+	//    1) for same values, RL = RL - 1
+	//    2) different values, RL = RL + 125
+	//    3) both methods will automatically set the high bit appropriately
+	// Estimations put the absolute worst case scenario as the
+	// final compressed data being slightly LARGER. So we need to be
+	// careful about allocating memory. (Did I miss something?)
+	
+	// This block is for the new RLE encoded data - make it 25% larger
+	dataTemp = (icns_sint8_t *)malloc(dataInSize + (dataInSize / 4));
+	if(dataTemp == NULL)
+	{
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",(int)dataInSize);
+		return -1;
+	}
+	memset(dataTemp,0,dataInSize);
+	
+	// This block is for a run of RLE encoded data
+	dataRun = (icns_uint8_t *)malloc(128);
+	if(dataRun == NULL)
+	{
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",128);
+		free(dataTemp);
+		return -1;
+	}
+	memset(dataRun,0,128);
+	
+	// There's always going to be 4 channels in this
+	// so we want our counter to increment through
+	// channels, not bytes....
+	dataInSize = dataInSize / 4;
+	
+	myshift = 24;
+	mymask = 0xFF000000;
+	
+	while(myshift > 0)
+	{
+		dataTempCount = 0;
+		runCount = 0;
+		
+		// Next Color Byte
+		myshift -= 8;
+		
+		// Right shift mask 8 bits to prevent overwriting our other colors
+		mymask >>= 8;
+		
+		// Set the first byte of the run...
+		dataRun[0] = (icns_uint8_t)((*dataInPtr & mymask) >> myshift);
+		
+		// Start with a runlength of 1 for the first byte
+		runLength = 1;
+		
+		// Assume that the run will be different for now... We can change this later
+		runType = 0; // 0 for low bit (different), 1 for high bit (same)	
+		
+		// Start one byte ahead
+		for(dataInCount = 1; dataInCount < dataInSize; dataInCount++)
+		{
+			dataValue = *(dataInPtr+dataInCount);
+			dataByte = (icns_uint8_t)((dataValue & mymask) >> myshift);	// Red Channel
+			
+			if(runLength < 2)
+			{
+				// Simply append to the current run
+				dataRun[runLength++] = dataByte;
+			}
+			else if(runLength == 2)
+			{
+				// Decide here if the run should be same values or different values
+				
+				// If the last three values were the same, we can change to a same-type run
+				if((dataByte == dataRun[runLength-1])&&(dataByte == dataRun[runLength-2]))
+					runType = 1;
+				else
+					runType = 0;
+				
+				dataRun[runLength++] = dataByte;
+			}
+			else // Greater than or equal to 2
+			{
+				if(runType == 0 && runLength < 128) // Different type run
+				{
+					// If the new value matches both of the last two values, we have a new
+					// same-type run starting with the previous two bytes
+					if((dataByte == dataRun[runLength-1])&&(dataByte == dataRun[runLength-2]))
+					{
+						// Set the RL byte
+						*(dataTemp+dataTempCount) = runLength - 1;
+						dataTempCount++;
+						// Copy 0 to runLength-2 bytes to the RLE data here
+						memcpy( dataTemp+dataTempCount , dataRun , runLength - 2 );
+						dataTempCount = dataTempCount + (runLength - 2);
+						runCount++;
+						
+						// Set up the new same-type run
+						dataRun[0] = dataRun[runLength-2];
+						dataRun[1] = dataRun[runLength-1];
+						dataRun[2] = dataByte;
+						runLength = 3;
+						runType = 1;
+					}
+					else // They don't match, so we can proceed
+					{
+						dataRun[runLength++] = dataByte;
+					}
+				}
+				else if(runType == 1 && runLength < 131) // Same type run
+				{
+					// If the new value matches both of the last two values, we
+					// can safely continue
+					if((dataByte == dataRun[runLength-1])&&(dataByte == dataRun[runLength-2]))
+					{
+						dataRun[runLength++] = dataByte;
+					}
+					else // They don't match, so we need to start a new run
+					{
+						// Set the RL byte
+						*(dataTemp+dataTempCount) = runLength + 125;
+						dataTempCount++;
+						// Copy 0 to runLength bytes to the RLE data here
+						memcpy( dataTemp+dataTempCount , dataRun , runLength );
+						dataTempCount = dataTempCount + runLength;
+						runCount++;
+	
+						// Copy 0 to runLength bytes to the RLE data here
+						dataRun[0] = dataByte;
+						runLength = 1;
+						runType = 0;
+					}
+				}
+				else // Exceeded run limit, need to start a new one
+				{
+					// Set the RL byte
+					if(runType == 0)
+						*(dataTemp+dataTempCount) = runLength - 1;
+					if(runType == 1)
+						*(dataTemp+dataTempCount) = runLength + 125;
+					dataTempCount++;
+
+					// Copy 0 to runLength bytes to the RLE data here
+					memcpy( dataTemp+dataTempCount , dataRun , runLength );
+					dataTempCount = dataTempCount + runLength;
+					runCount++;
+	
+					// Copy 0 to runLength bytes to the RLE data here
+					dataRun[0] = dataByte;
+					runLength = 1;
+					runType = 0;
+				}
+			}
+		}
+		
+		if(runLength > 0)
+		{
+			// Set the RL byte
+			if(runType == 0)
+				*(dataTemp+dataTempCount) = runLength - 1;
+			if(runType == 1)
+				*(dataTemp+dataTempCount) = runLength + 125;
+			dataTempCount++;
+			// Copy the last part of the run here
+			memcpy( dataTemp+dataTempCount , dataRun , runLength );
+			dataTempCount = dataTempCount + runLength;
+			runCount++;
+		}
+		
+		printf("Total runs: %d\n",runCount);
+		
+		printf("Post-Compressed channel size: %d\n",(int)dataTempCount);
+		
+		if(dataTempCount > dataTempFinalCount)
+			dataTempFinalCount = dataTempCount;
+	}
+	
+	printf("Post-Compressed final data size: %d\n",(int)dataTempFinalCount);
+	
+	free(dataRun);
+	free(dataTemp);
 	
 	return 0;
+}
+
+
+//***************************** icns_new_element_from_image **************************//
+// Creates a new icns element from an image
+int icns_new_element_from_image(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn)
+{
+	int		error = 0;
+	icns_bool_t	swapBytes = ES_IS_LITTLE_ENDIAN;
+	
+	
+	
+	
+	return error;
 }
 
 //***************************** GetIconDataFromIcnsFamily **************************//

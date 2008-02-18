@@ -149,6 +149,7 @@ icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
 int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
 int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
 int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
+int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
 int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut);
 int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut);
 #ifdef ICNS_OPENJPEG
