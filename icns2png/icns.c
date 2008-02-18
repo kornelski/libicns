@@ -79,13 +79,13 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 	
 	if(iconElement == NULL)
 	{
-		fprintf(stderr,"Icon element is NULL!\n");
+		fprintf(stderr,"libicns: Icon element is NULL!\n");
 		return -1;
 	}
 	
 	if(imageOut == NULL)
 	{
-		fprintf(stderr,"Icon image structure is NULL!\n");
+		fprintf(stderr,"libicns: Icon image structure is NULL!\n");
 		return -1;
 	}
 	
@@ -136,7 +136,7 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 			case ICNS_16x16_8BIT_MASK:
 				if(oldBitDepth != 8)
 				{
-					fprintf(stderr,"Bit depth type mismatch!\n");
+					fprintf(stderr,"libicns: Bit depth type mismatch!\n");
 					free(newData);
 					return -1;
 				}
@@ -156,7 +156,7 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 			case ICNS_16x12_8BIT_DATA:
 				if(oldBitDepth != 8)
 				{
-					fprintf(stderr,"Bit depth type mismatch!\n");
+					fprintf(stderr,"libicns: Bit depth type mismatch!\n");
 					free(newData);
 					return -1;
 				}
@@ -177,7 +177,7 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 			case ICNS_16x12_4BIT_DATA:
 				if(oldBitDepth != 4)
 				{
-					fprintf(stderr,"Bit depth type mismatch!\n");
+					fprintf(stderr,"libicns: Bit depth type mismatch!\n");
 					free(newData);
 					return -1;
 				}
@@ -201,7 +201,7 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 			case ICNS_16x12_1BIT_DATA:  // Also ICNS_16x12_1BIT_MASK
 				if(oldBitDepth != 1)
 				{
-					fprintf(stderr,"Bit depth type mismatch!\n");
+					fprintf(stderr,"libicns: Bit depth type mismatch!\n");
 					free(newData);
 					return -1;
 				}
@@ -244,7 +244,7 @@ int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut)
 	
 	if(imageOut == NULL)
 	{
-		fprintf(stderr,"Icon image structure is NULL!\n");
+		fprintf(stderr,"libicns: Icon image structure is NULL!\n");
 		return -1;
 	}
 	
@@ -381,7 +381,7 @@ int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut)
 			break;
 			
 		default:
-			fprintf(stderr,"Unable to parse icon type 0x%8X\n",icnsType);
+			fprintf(stderr,"libicns: Unable to parse icon type 0x%8X\n",icnsType);
 			return -1;
 			break;
 	}
@@ -418,8 +418,9 @@ int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int 
 	imageOut->pixel_depth = (iconBitDepth / iconChannels);
 	imageOut->imageDataSize = iconDataSize;
 	imageOut->imageData = (unsigned char *)malloc(iconDataSize);
-	if(!imageOut->imageData) {
-		fprintf(stderr,"Out of memory!\n");
+	if(!imageOut->imageData)
+	{
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",(int)iconDataSize);
 		return -1;
 	}
 	memset(imageOut->imageData,0,iconDataSize);
@@ -600,13 +601,13 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 	
 	if(iconElement == NULL)
 	{
-		fprintf(stderr,"Icon element is NULL!\n");
+		fprintf(stderr,"libicns: Icon element is NULL!\n");
 		return -1;
 	}
 	
 	if(imageOut == NULL)
 	{
-		fprintf(stderr,"Icon image structure is NULL!\n");
+		fprintf(stderr,"libicns: Icon image structure is NULL!\n");
 		return -1;
 	}
 	
@@ -638,7 +639,7 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 		
 		#else
 		
-		fprintf(stderr,"libicns requires openjpeg for this data type!\n");
+		fprintf(stderr,"libicns: libicns requires openjpeg for this data type!\n");
 		return -1;
 		
 		#endif
@@ -648,7 +649,7 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 	
 	if(error)
 	{
-		fprintf(stderr,"Error allocating new icns image!\n");
+		fprintf(stderr,"libicns: Error allocating new icns image!\n");
 		return -1;
 	}
 	
@@ -690,7 +691,7 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 			memcpy(&(((char*)(imageOut->imageData))[dataCount*iconDataRowSize]),&(((char*)(rawDataPtr))[dataCount*iconDataRowSize]),iconDataRowSize);
 		break;
 	default:
-		fprintf(stderr,"Unknown bit depth!\n");
+		fprintf(stderr,"libicns: Unknown bit depth!\n");
 		return -1;
 		break;
 	}
@@ -797,7 +798,7 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 	
 	if(icnsFamily == NULL)
 	{
-		fprintf(stderr,"icns family is NULL!\n");
+		fprintf(stderr,"libicns: icns family is NULL!\n");
 		return -1;
 	}
 	
@@ -806,7 +807,7 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 	} else if(icnsFamily->resourceType == ICNS_FAMILY_TYPE) {
 		*swapBytes = 0;
 	} else {
-		fprintf(stderr,"Invalid icns family!\n");
+		fprintf(stderr,"libicns: Invalid icns family!\n");
 		error = -1;
 	}
 	
@@ -847,15 +848,16 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 	if(foundData)
 	{
 		*iconElementOut = malloc(elementDataSize);
-		if(*iconElementOut == NULL) {
-			fprintf(stderr,"Out of Memory\n");
+		if(*iconElementOut == NULL)
+		{
+			fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",elementDataSize);
 			return -1;
 		}
 		memcpy( *iconElementOut, icnsElement, elementDataSize);
 	}
 	else
 	{
-		fprintf(stderr,"Unable to find requested icon data!\n");
+		fprintf(stderr,"libicns: Unable to find requested icon data!\n");
 		error = -1;
 	}
 	
@@ -886,7 +888,7 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 	
 	if(icnsFamilyRef == NULL)
 	{
-		fprintf(stderr,"icns family reference is NULL!\n");
+		fprintf(stderr,"libicns: icns family reference is NULL!\n");
 		return -1;
 	}
 	
@@ -894,7 +896,7 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 	
 	if(icnsFamily == NULL)
 	{
-		fprintf(stderr,"icns family is NULL!\n");
+		fprintf(stderr,"libicns: icns family is NULL!\n");
 		return -1;
 	}
 	
@@ -903,7 +905,7 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 	} else if(icnsFamily->resourceType == ICNS_FAMILY_TYPE) {
 		*swapBytes = 0;
 	} else {
-		fprintf(stderr,"Invalid icns family!\n");
+		fprintf(stderr,"libicns: Invalid icns family!\n");
 		error = -1;
 	}
 	
@@ -916,7 +918,7 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 
 	if(newIcnsElement == NULL)
 	{
-		fprintf(stderr,"icns element is NULL!\n");
+		fprintf(stderr,"libicns: icns element is NULL!\n");
 		return -1;
 	}
 	
@@ -944,8 +946,9 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 
 	newIcnsFamily = malloc(newIcnsFamilySize);
 	
-	if(newIcnsFamily == NULL) {
-		fprintf(stderr,"Out of Memory\n");
+	if(newIcnsFamily == NULL)
+	{
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",newIcnsFamilySize);
 		return -1;
 	}
 
@@ -1009,7 +1012,7 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 	
 	if(icnsFamilyRef == NULL)
 	{
-		fprintf(stderr,"icns family reference is NULL!\n");
+		fprintf(stderr,"libicns: icns family reference is NULL!\n");
 		return -1;
 	}
 	
@@ -1017,7 +1020,7 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 	
 	if(icnsFamily == NULL)
 	{
-		fprintf(stderr,"icns family is NULL!\n");
+		fprintf(stderr,"libicns: icns family is NULL!\n");
 		return -1;
 	}
 	
@@ -1026,7 +1029,7 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 	} else if(icnsFamily->resourceType == ICNS_FAMILY_TYPE) {
 		*swapBytes = 0;
 	} else {
-		fprintf(stderr,"Invalid icns family!\n");
+		fprintf(stderr,"libicns: Invalid icns family!\n");
 		error = -1;
 	}
 	
@@ -1053,7 +1056,7 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 	
 	if(!foundData)
 	{
-		fprintf(stderr,"Unable to find requested icon data for removal!\n");
+		fprintf(stderr,"libicns: Unable to find requested icon data for removal!\n");
 		return -1;
 	}
 	
@@ -1064,8 +1067,9 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 	newIcnsFamilySize = icnsFamilyDataSize - elementDataSize;
 	newIcnsFamily = malloc(newIcnsFamilySize);
 	
-	if(newIcnsFamily == NULL) {
-		fprintf(stderr,"Out of Memory\n");
+	if(newIcnsFamily == NULL)
+	{
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",newIcnsFamilySize);
 		return -1;
 	}
 	
@@ -1107,7 +1111,7 @@ int icns_create_family(icns_family_t **icnsFamilyOut)
 
 	if(icnsFamilyOut == NULL)
 	{
-		fprintf(stderr,"icns family reference is NULL!\n");
+		fprintf(stderr,"libicns: icns family reference is NULL!\n");
 		return -1;
 	}
 	
@@ -1115,15 +1119,15 @@ int icns_create_family(icns_family_t **icnsFamilyOut)
 	
 	*icnsFamilyOut = NULL;
 	
-	newIcnsFamily = malloc(sizeof(icns_type_t) + sizeof(icns_size_t));
+	newIcnsFamilySize = sizeof(icns_type_t) + sizeof(icns_size_t);
+
+	newIcnsFamily = malloc(newIcnsFamilySize);
 		
 	if(newIcnsFamily == NULL)
 	{
-		fprintf(stderr,"Unable to allocate memory for new icns family!\n");
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",newIcnsFamilySize);
 		return -1;
 	}
-	
-	newIcnsFamilySize = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
 	newIcnsFamily->resourceType = EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),swapBytes);
 	newIcnsFamily->resourceSize = EndianSwap(newIcnsFamilySize,sizeof(icns_size_t),swapBytes);
@@ -1144,13 +1148,13 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 	
 	if(dataSize == 0)
 	{
-		fprintf(stderr,"File size is 0 - no data!\n");
+		fprintf(stderr,"libicns: File size is 0 - no data!\n");
 		return -1;
 	}
 	
 	if(icnsFamilyOut == NULL)
 	{
-		fprintf(stderr,"icnsFamilyOut is NULL!\n");
+		fprintf(stderr,"libicns: icnsFamilyOut is NULL!\n");
 		return -1;
 	}
 	
@@ -1182,7 +1186,7 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 		// Might be embedded in an rsrc file
 		if((error = icns_family_from_mac_resource(dataSize,iconDataPtr,icnsFamilyOut)))
 		{
-			fprintf(stderr,"Error parsing X Icon resource!\n");
+			fprintf(stderr,"libicns: Error parsing X Icon resource!\n");
 			*icnsFamilyOut = NULL;
 		}
 	}
@@ -1221,7 +1225,7 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 	if(dataSize < 16)
 	{
 		// rsrc header is 128 bytes - We cannot have a file of a smaller size.
-		fprintf(stderr,"Unable to decode rsrc data! - Data size too small.\n");
+		fprintf(stderr,"libicns: Unable to decode rsrc data! - Data size too small.\n");
 		return -1;
 	}
 
@@ -1311,14 +1315,14 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 					}
 					else
 					{
-						fprintf(stderr,"Error allocating %d bytes of memory!\n",(int)resDataSize);
+						fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",resDataSize);
 						*icnsFamilyOut = NULL;
 						error = -1;
 					}
 				}
 				else
 				{
-					fprintf(stderr,"Resource icns id# %d of size 0!\n",resID);
+					fprintf(stderr,"libicns: Resource icns id# %d of size 0!\n",resID);
 					error = -1;
 				}
 			}
@@ -1333,7 +1337,7 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 	
 	if(!found)
 	{
-		fprintf(stderr,"Unable to find icon data in file!\n");
+		fprintf(stderr,"libicns: Unable to find icon data in file!\n");
 		error = -1;
 	}
 
@@ -1371,7 +1375,7 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	if(dataSize < 128)
 	{
 		// MacBinary header is 128 bytes - We cannot have a file of a smaller size.
-		fprintf(stderr,"Unable to decode MacBinary data! - Data size too small.\n");
+		fprintf(stderr,"libicns: Unable to decode MacBinary data! - Data size too small.\n");
 		return -1;
 	}
 	
@@ -1429,18 +1433,16 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	
 	resourceDataPtr = (unsigned char *)malloc(resourceDataSize);
 	
-	if(resourceDataPtr != NULL)
+	if(resourceDataPtr == NULL)
 	{
-		memcpy(resourceDataPtr,(dataPtr+resourceDataStart),resourceDataSize);
-		
-		*parsedResSizeOut = resourceDataSize;
-		*parsedResDataOut = resourceDataPtr;
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",(int)resourceDataSize);
+		return -1;
 	}
-	else
-	{
-		fprintf(stderr,"Error allocating memory for parsed resource!\n");
-		error = -1;
-	}
+
+	memcpy(resourceDataPtr,(dataPtr+resourceDataStart),resourceDataSize);
+	
+	*parsedResSizeOut = resourceDataSize;
+	*parsedResDataOut = resourceDataPtr;
 
 	return error;
 }
