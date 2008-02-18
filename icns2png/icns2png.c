@@ -33,8 +33,8 @@ int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define	MAX_INPUTFILES  4096
 
-#define	kNoMaskData	0x00000000
-#define	kNoIconData	0x00000000
+#define	ICNS_INVALID_MASK	0x00000000
+#define	ICNS_INVALID_DATA	0x00000000
 
 char 	*inputfiles[MAX_INPUTFILES];
 int	fileindex = 0;
@@ -54,24 +54,24 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 				ICNS_256x256_32BIT_ARGB_DATA,
 				ICNS_128X128_32BIT_DATA,
 				ICNS_128X128_32BIT_DATA,
-				ICNS_64x64_32BIT_DATA,
-				ICNS_64x64_32BIT_DATA,
+				ICNS_48x48_32BIT_DATA,
+				ICNS_48x48_32BIT_DATA,
 				ICNS_32x32_32BIT_DATA,
 				ICNS_32x32_32BIT_DATA,
 				ICNS_16x16_32BIT_DATA,
 				ICNS_16x16_32BIT_DATA,
-				kNoIconData
+				ICNS_INVALID_DATA
 			     };
 
 	const icns_type_t icnsTypes8[] = {  
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				ICNS_64x64_8BIT_DATA,
-				ICNS_64x64_8BIT_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_48x48_8BIT_DATA,
+				ICNS_48x48_8BIT_DATA,
 				ICNS_32x32_8BIT_DATA,
 				ICNS_32x32_8BIT_DATA,
 				ICNS_16x16_8BIT_DATA,
@@ -80,14 +80,14 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 			     };
 
 	const icns_type_t icnsTypes4[] = {  
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				ICNS_64x64_4BIT_DATA,
-				ICNS_64x64_4BIT_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_48x48_4BIT_DATA,
+				ICNS_48x48_4BIT_DATA,
 				ICNS_32x32_4BIT_DATA,
 				ICNS_32x32_4BIT_DATA,
 				ICNS_16x16_4BIT_DATA,
@@ -96,14 +96,14 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 			     };
 			     
 	const icns_type_t icnsTypes1[] = {  
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				kNoIconData,
-				ICNS_64x64_1BIT_DATA,
-				ICNS_64x64_1BIT_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_INVALID_DATA,
+				ICNS_48x48_1BIT_DATA,
+				ICNS_48x48_1BIT_DATA,
 				ICNS_32x32_1BIT_DATA,
 				ICNS_32x32_1BIT_DATA,
 				ICNS_16x16_1BIT_DATA,
@@ -121,46 +121,8 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 		case 1:
 			return icnsTypes1[sizeID];
 		default:
-			return kNoIconData;
+			return ICNS_INVALID_DATA;
 	}
-}
-
-icns_type_t getIconMaskType(int sizeID,int depthVal)
-{
-	const icns_type_t maskTypes32[] = {  
-				kNoMaskData, 
-				kNoMaskData, 
-				kNoMaskData,
-				kNoMaskData,
-				ICNS_128X128_8BIT_MASK,
-				ICNS_128X128_8BIT_MASK,
-				ICNS_64x64_8BIT_MASK,
-				ICNS_64x64_8BIT_MASK,
-				ICNS_32x32_8BIT_DATA,
-				ICNS_32x32_8BIT_DATA,
-				ICNS_16x16_8BIT_MASK,
-				ICNS_16x16_8BIT_MASK,
-				kNoMaskData
-			     };
-	const icns_type_t maskTypes8x[] = {  
-				kNoMaskData, 
-				kNoMaskData, 
-				kNoMaskData,
-				kNoMaskData,
-				kNoMaskData,
-				kNoMaskData,
-				ICNS_64x64_1BIT_MASK,
-				ICNS_64x64_1BIT_MASK,
-				ICNS_32x32_1BIT_MASK,
-				ICNS_32x32_1BIT_MASK,
-				ICNS_16x16_1BIT_MASK,
-				ICNS_16x16_1BIT_MASK,
-				ICNS_16x12_1BIT_MASK
-			     };
-     if(depthVal <= 8)
-	     return maskTypes8x[sizeID];
-     else
-	     return maskTypes32[sizeID];
 }
 
 int parse_size(char *size)
@@ -173,15 +135,13 @@ int parse_size(char *size)
 				 "128",
 				 "128x128",
 				 "64",
-				 "64x64",
+				 "48x48",
 				 "32",
 				 "32x32",
 				 "16",
 				 "16x16",
 				 "16x12"
 				};
-				
-			     
 
 	int i;
 	int found = 0;
@@ -191,7 +151,7 @@ int parse_size(char *size)
 		if(strcmp(sizes[i], size) == 0) {
 			iconExtractSizeID = i;
 			icnsType = getIconDataType(iconExtractSizeID,iconExtractDepth);
-			maskType = getIconMaskType(iconExtractSizeID,iconExtractDepth);
+			maskType = icns_get_mask_type_for_icon_type(icnsType);
 			found = 1;
 			break;
 		}
@@ -213,7 +173,7 @@ int parse_depth(char *cdepth)
 		if(strcmp(depths[i], cdepth) == 0) {
 			iconExtractDepth = depthVals[i];
 			icnsType = getIconDataType(iconExtractSizeID,iconExtractDepth);
-			maskType = getIconMaskType(iconExtractSizeID,iconExtractDepth);
+			maskType = icns_get_mask_type_for_icon_type(icnsType);
 			found = 1;
 		}
 	}
@@ -284,13 +244,13 @@ int main(int argc, char *argv[])
 		printf("                                                                              \n");
 		printf("Examples:                                                                     \n");
 		printf("icns2png anicon.icns            # Extract 128x128 32-bit icon to anicon.png   \n");
-		printf("icns2png -s 64 anicon.icns      # Extract 64x64 32-bit icon to anicon.png     \n");
+		printf("icns2png -s 64 anicon.icns      # Extract 48x48 32-bit icon to anicon.png     \n");
 		printf("icns2png -s 32 -d 1 anicon.icns # Extract 32x32 1-bit icon to anicon.png      \n");
 		printf("                                                                              \n");
 		printf("Options:                                                                      \n");
 		printf(" -d            Sets the pixel depth of the icon to extract. (1,4,8,32)        \n");
 		printf(" -s            Sets the size of the icon to extract. (16,32,64,128,256,512)   \n");
-		printf("               Sizes 16x12, 16x16, 32x32, 64x64, 128x128, etc. are also valid.\n");
+		printf("               Sizes 16x12, 16x16, 32x32, 48x48, 128x128, etc. are also valid.\n");
 		printf(" -h            Shows this help message.                                       \n");
 		return 0;
 	}
@@ -373,36 +333,36 @@ int ConvertIcnsFile(char *filename)
 	}
 	
 	// ReadXIconFile converts the icns file into an IcnsFamily
-	error = GetIcnsFamilyFromFileData(fileDataSize,fileDataPtr,&icnsFamily);
+	error = icns_family_from_file_data(fileDataSize,fileDataPtr,&icnsFamily);
 	
 	if(error) {
 		fprintf(stderr,"Unable to load icns file into icon family!\n");
 		goto cleanup;
 	}
 	
-	error = GetIcnsElementFromIcnsFamily(icnsFamily,icnsType,&swapBytes,&icon);
+	error = icns_get_element_from_family(icnsFamily,icnsType,&swapBytes,&icon);
 	
 	if(error) {
 		fprintf(stderr,"Unable to load icon data from icon family!\n");
 		goto cleanup;
 	}
 
-	error = GetIcnsImage32FromIcnsElement(icon, swapBytes, &iconImage);
+	error = icns_get_image32_from_element(icon, swapBytes, &iconImage);
 
 	if(error) {
 		fprintf(stderr,"Unable to load raw data from icon data!\n");
 		goto cleanup;
 	}
 	
-	if(maskType != kNoMaskData) {
-		error = GetIcnsElementFromIcnsFamily(icnsFamily,maskType,&swapBytes,&mask);
+	if(maskType != ICNS_INVALID_MASK) {
+		error = icns_get_element_from_family(icnsFamily,maskType,&swapBytes,&mask);
 	
 		if(error) {
 			fprintf(stderr,"Unable to load icon data from icon family!\n");
 			goto cleanup;
 		}
 		
-		error = GetIcnsImage32FromIcnsElement(mask, swapBytes, &maskImage);
+		error = icns_get_image32_from_element(mask, swapBytes, &maskImage);
 	}
 	
 	outfile = fopen(outfilename,"w");
@@ -412,7 +372,7 @@ int ConvertIcnsFile(char *filename)
 	}
 	
 	// Finally! We save the image
-	if(maskType != kNoMaskData) {
+	if(maskType != ICNS_INVALID_MASK) {
 		error = WritePNGImage(outfile,&iconImage,&maskImage);	
 	} else {
 		error = WritePNGImage(outfile,&iconImage,NULL);	
@@ -526,11 +486,11 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	width = image->imageWidth;
 	height = image->imageHeight;
 	image_channels = image->imageChannels;
-	image_bit_depth = image->imageDepth/image_channels;
+	image_bit_depth = image->pixel_depth;
 	
 	if(mask != NULL) {
 		mask_channels = mask->imageChannels;
-		mask_bit_depth = mask->imageDepth/image_channels;
+		mask_bit_depth = mask->pixel_depth;
 	}
 	
 	png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);

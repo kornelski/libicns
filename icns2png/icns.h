@@ -24,10 +24,32 @@ Boston, MA 02111-1307, USA.
 #include <stdlib.h>
 #include <string.h>
 #include <png.h>
-#include <openjpeg.h>
 
 #ifndef _ICNS_H_
-#define	_ICNS_H_	1
+#define	_ICNS_H_
+
+/*  Compile-time variables   */
+
+// Enable debugging messages?
+#define	ICNS_DEBUG
+
+// Use openjpeg for 256x256 and 512x512 support
+#define	ICNS_OPENPJEG
+
+
+/*  OpenJPEG version check   */
+
+#ifdef ICNS_OPENPJEG
+#include <openjpeg.h>
+
+// OPENJPEG_VERSION seems to be a reliable test for having
+// the proper openjpeg header files.
+#ifndef OPENJPEG_VERSION
+	#warning "libicns: Can't determine OpenJPEG version."
+	#warning "libicns: 256x256 and 512x512 support will not be available."
+#endif
+#endif
+
 
 /*  icns element type constants */
 
@@ -37,12 +59,12 @@ Boston, MA 02111-1307, USA.
 #define ICNS_128X128_32BIT_DATA	      0x69743332 /* it32 */
 #define ICNS_128X128_8BIT_MASK	      0x74386D6B /* t8mk */
 
-#define ICNS_64x64_1BIT_MASK          0x69636823 /* ich# */
-#define ICNS_64x64_1BIT_DATA	      ICNS_64x64_1BIT_MASK
-#define ICNS_64x64_4BIT_DATA          0x69636834 /* ich4 */
-#define ICNS_64x64_8BIT_DATA          0x69636838 /* ich8 */
-#define ICNS_64x64_32BIT_DATA	      0x69683332 /* ih32 */
-#define ICNS_64x64_8BIT_MASK          0x68386D6B /* h8mk */
+#define ICNS_48x48_1BIT_MASK          0x69636823 /* ich# */
+#define ICNS_48x48_1BIT_DATA	      ICNS_48x48_1BIT_MASK
+#define ICNS_48x48_4BIT_DATA          0x69636834 /* ich4 */
+#define ICNS_48x48_8BIT_DATA          0x69636838 /* ich8 */
+#define ICNS_48x48_32BIT_DATA	      0x69683332 /* ih32 */
+#define ICNS_48x48_8BIT_MASK          0x68386D6B /* h8mk */
 
 #define ICNS_32x32_1BIT_MASK          0x49434E23 /* ICN# */
 #define ICNS_32x32_1BIT_DATA	      ICNS_32x32_1BIT_MASK
@@ -63,8 +85,11 @@ Boston, MA 02111-1307, USA.
 #define ICNS_16x12_4BIT_DATA          0x69636D34 /* icm4 */
 #define ICNS_16x12_8BIT_DATA          0x69636D38 /* icm8 */
 
+#define ICNS_INVALID_DATA             0x00000000
+#define ICNS_INVALID_MASK             0x00000000
 
 #define ICNS_FAMILY_TYPE              0x69636E73 /* icns */
+
 
 /* icns data types */
 
@@ -100,7 +125,7 @@ typedef struct icns_image_t
 	int		imageWidth;	// width of image in pixels
 	int		imageHeight;	// height of image in pixels
 	short		imageChannels;	// number of channels in data
-	short		imageDepth;	// channels * bits-per-pixel
+	short		pixel_depth;	// number of bits-per-pixel
 	unsigned char	*imageData;	// pointer to base address of uncompressed raw image data
 } icns_image_t;
 
@@ -112,22 +137,34 @@ typedef struct icns_pixel32_t
 	unsigned char	 blue;
 } icns_pixel32_t;
 
+
 /* icns constants */
 
 #define			icns_byte_bits	8
 
+
 /* icns function prototypes */
 
-int GetIcnsImage32FromIcnsElement(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
-int GetIcnsImageFromIcnsElement(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
-int DecodeRLE24Data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
-int MakeIcnsElementFromIcnsImage(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn);
-int GetIcnsElementFromIcnsFamily(icns_family_t *icnsFamily,icns_type_t icnsType, icns_bool_t *swapBytes,icns_element_t **iconElementOut);
-int SetIcnsElementForIcnsFamily(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement, icns_bool_t *swapBytes);
-int RemoveIcnsElementFromIcnsFamily(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes);
-int CreateIcnsFamily(icns_family_t **icnsFamilyOut);
-int GetIcnsFamilyFromFileData(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
-int GetIcnsFamilyFromMacResource(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
-int ParseMacBinaryResourceFork(unsigned long dataSize,unsigned char *data,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,unsigned long *parsedResSizeOut,unsigned char **parsedResDataOut);
+icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
+int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
+int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
+int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
+int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut);
+int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut);
+#ifdef ICNS_OPENJPEG
+void icns_opj_error_callback(const char *msg, void *client_data);
+void icns_opj_warning_callback(const char *msg, void *client_data);
+void icns_opj_info_callback(const char *msg, void *client_data);
+int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
+opj_image_t * jp2dec(unsigned char *bufin, int len);
+#endif
+int icns_new_element_from_image(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn);
+int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType, icns_bool_t *swapBytes,icns_element_t **iconElementOut);
+int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement, icns_bool_t *swapBytes);
+int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes);
+int icns_create_family(icns_family_t **icnsFamilyOut);
+int icns_family_from_file_data(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
+int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
+int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *data,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,unsigned long *parsedResSizeOut,unsigned char **parsedResDataOut);
 
 #endif

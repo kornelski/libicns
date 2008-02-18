@@ -52,7 +52,7 @@ LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
 LDFLAGS_SO+=-Wl,-rpath,. -licns $(LDFLAGS)
 
 # Library object files
-LIBOBJS = icns.o jp2dec.o 
+LIBOBJS = icns.o 
 LIBOBJSDLL = $(LIBOBJS:.o=.pic.o)
 
 # Utility programs included in library

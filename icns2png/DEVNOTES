@@ -1,15 +1,20 @@
 ===============================================================================
 Developers notes for libicns 0.0.9 - February 15th, 2008
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
+
 ===============================================================================
-libicns currently provides two data structures and five functions for
-manipulating icns data. These are futher documented at the location of thier 
-definitions and prototypes near the end of icns.h
-The naming conventions used here will almost certainly change before the
-release of libicns 0.1.0, however, the binary data structures are gauranteed
-to remain the same.
+Section I:  (For those wishing to use libicns)
+  Structures
+  Functions
+  Example
+Section II: (For those wishing to contribute to libicns)
+  Naming Conventions
+  Endianness issues
+  icns data format
 ===============================================================================
-Data Structures
+Section I
+===============================================================================
+Structures
 typedef struct icns_element_t
 typedef struct icns_family_t
 typedef struct icns_image_t
@@ -24,56 +29,72 @@ See icns.h for more information
 Functions
 
 -------------------------------------------------------------------------------
-GetIcnsImage32FromIcnsElement
+icns_get_image32_from_element
 - Retreives an icon image from an icns element. Data is returned by
 - reference in an icns image object with 32-bit raw, decoded, uncompressed data
 
 -------------------------------------------------------------------------------
-GetIcnsImageFromIcnsElement
+icns_get_image_from_element
 - Retreives an icon image from an icns element. Data is returned by
 - reference in an icns image object with raw, decoded, uncompressed data
 
 -------------------------------------------------------------------------------
-MakeIcnsElementFromIcnsImage
+icns_decode_rle24_data
+- Decodes rgb run-length-encoded data into a 24-bit rgb data stream (stored in
+  32-bit argb format, the alpha is simply ignored.
+
+-------------------------------------------------------------------------------
+icns_new_element_from_image
 - Creates an icns element structure from an icns image
 
 -------------------------------------------------------------------------------
-GetIcnsElementFromIcnsFamily
+icns_get_element_from_family
 - Retreives an icns element of the requested type from an icns family
 
 -------------------------------------------------------------------------------
-SetIcnsElementForIcnsFamily
+icns_set_element_in_family
 - Adds/updates an icns element of it's type in an icns family
 
 -------------------------------------------------------------------------------
-RemoveIcnsElementFromIcnsFamily
+icns_remove_element_in_family
 - Removes an icns element of the requested type from an icns family
 
 -------------------------------------------------------------------------------
-CreateIcnsFamily
+icns_create_family
 - Creates a new icns family
 
 -------------------------------------------------------------------------------
-GetIcnsFamilyFromFileData
+icns_family_from_file_data
 - Retreives an icns family from a file. Note that if the file is in raw icns
 - format, this essentially means copying the file data to a location in
 - memory. Many icns files, however, are stored as rsrc files, do more decoding
 - is usually necessary
 
 -------------------------------------------------------------------------------
-GetIcnsFamilyFromMacResource
+icns_family_from_mac_resource
 - Primarily for internal use. Parses a Macintosh rsrc data set and retrieves
 - the first 'icns' resource found. Note that it is technically possible for
 - there to be more than one resource of type 'icns'.
 
 -------------------------------------------------------------------------------
-ParseMacBinaryResourceFork
+icns_parse_macbinary_resource_fork
 - Again primarily for internal use. Parses MacBinary data into Macintosh
 - rsrc data. Some icns files are stored within macbinary encoded rsrc files
 See icns.h for reference on the actual parameters used in these functions.
 
+
+
+
+===============================================================================
+Naming conventions
+
+Where possible, the naming conventions are to be similar in scope to the
+libpng library. libpng has been around for a long time, it's naming conventions
+are mature, and developers are well aquanted with them.
+
 ===============================================================================
 Endianness issues
+
 The 'icns' icon family type has been in existence since the Mac 68k. The data
 stored within the files is, therefore, big-endian native. From experience, it
 seems unclear whether we are guaranteed this to be the case.
@@ -100,6 +121,7 @@ Network-Related Data.
 -------------------------------------------------------------------------------
 Source: http://developer.apple.com/documentation/MacOSX/Conceptual/
 universal_binary/universal_binary_byte_swap/chapter_4_section_3.html
+
 ===============================================================================
 icns data format is basically an 8-byte header, followed by icns elements
 ---- 8 byte header ----
