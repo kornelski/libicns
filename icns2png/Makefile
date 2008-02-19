@@ -22,9 +22,12 @@
 DARWIN := $(shell uname)
 
 # Version information
+# Note, versions are in the format of the following
+# 0.0.0a
+# See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 1.0
+LIBVERMIN = 1.0a
 
 VERSION = $(LIBVERMAJ).$(LIBVERMIN)
 LIBSTATIC = $(LIBNAME).a

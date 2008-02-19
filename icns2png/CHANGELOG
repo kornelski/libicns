@@ -1,0 +1,49 @@
+
+
+0.1.0 (02/18/2008)
+- first major release of libicns with write support
+- added read support for 1,4,8 bit icons
+- removed all possible Apple copyrighted stuff
+- added support to modify the icns structure
+- added support for 32-bit image manipulation
+- added support to do internal rle compression
+- added file read/write support using the library directly
+- fixed Mac OS X build
+
+0.0.9 (02/14/2008)
+- merged in test icns files from original source tree
+- added TODO for libicns developers
+- finished breakdown of libicns and icns2png
+- merged all headers required by libicns into icns.h
+- moved jpeg decoding routines into icns.c
+- established libicns development naming conventions
+- added DEVNOTES
+
+0.0.8 (02/13/2008)
+- merged forked source trees from chenxio and baghira
+- preliminary split of source into libicns and icns2png
+
+0.0.7 (01/16/2008)
+- forked by chenxiao.zhao at Google Code
+- added 256x256 and 512x512 support via openjpeg
+- added command-line parameters
+
+0.0.6 (08/30/2007)
+- forked by baghira at CLI-Apps
+- added "NG" icns support
+- added icontainter2icns utility
+
+0.0.5 (01/28/2003)
+- Fixed bug in resource fork parsing
+
+0.0.4 (01/23/2003)
+- Fixed a bug with filenames that was causing segfaults
+
+0.0.3 (12/18/2002)
+- Much improved parsing of the icons within resource forks and resource files.
+- Much improved MacBinary support.
+- Updated README with unstuff information
+
+0.0.2 (01/11/2002)
+- Inital public release
+

@@ -8,6 +8,7 @@ Section I:  (For those wishing to use libicns)
   Functions
   Example
 Section II: (For those wishing to contribute to libicns)
+  Versioning Notes
   Naming Conventions
   Endianness issues
   icns data format
@@ -135,6 +136,18 @@ icns_parse_macbinary_resource_fork *internal*
 - Again primarily for internal use. Parses MacBinary data into Macintosh
 - rsrc data. Some icns files are stored within macbinary encoded rsrc files
 See icns.h for reference on the actual parameters used in these functions.
+
+===============================================================================
+Version information
+versions are in the format of: 0.0.0a (MAJOR.MINOR.RELEASE[dev])
+
+Development changes should increment the letter with each commit
+Releases should increment the last number
+Milestone releases should increment the middle number and remove the letter
+  -- beta relases should be odd numbered
+  -- stable releases should be even numbered
+Major number should increment only for file format changes causing breakage
+to a previously stable version, or on the decision of two or more developers
 
 ===============================================================================
 Naming conventions
