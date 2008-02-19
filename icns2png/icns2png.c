@@ -184,13 +184,15 @@ int parse_depth(char *cdepth)
 
 int parse_options(int argc, char** argv)
 {
-	int err,opt;
-	err = 0;
+	int err = 0;
+	int opt;
+
 	while(1) {
-		opt = getopt(argc, argv, "-d:h:s:");
+		opt = getopt(argc, argv, "d:h:s:");
 		if(opt < 0)
 			break;
-		switch(opt) {
+		switch(opt)
+		{
 			case 'd':
 				if((err = parse_depth(optarg))) {
 					fprintf(stderr, "Invalid icon color depth specified.\n");
@@ -206,26 +208,35 @@ int parse_options(int argc, char** argv)
 					return err;
 				}
 				break;
-			case 1:
-				if(fileindex >= MAX_INPUTFILES) {
-					fprintf(stderr, "No more file can be added\n");
-					break;
-				}
-				inputfiles[fileindex] = malloc(strlen(optarg)+1);
-				if(!inputfiles[fileindex]) {
-					printf("Out of Memory\n");
-					exit(1);
-				}
-				strcpy(inputfiles[fileindex], optarg);
-				fileindex++;
-				break;
 			default:
-				exit(1);
+				fprintf(stderr, "Invalid options specified. %c (%d)\n",(char)opt,opt);
+				return -1;
 				break;
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	
+	while (argc) {
+		if(fileindex >= MAX_INPUTFILES) {
+			fprintf(stderr, "No more file can be added\n");
+			break;
+		}
+		inputfiles[fileindex] = malloc(strlen(argv[0])+1);
+		if(!inputfiles[fileindex]) {
+			printf("Out of Memory\n");
+			exit(1);
+		}
+		strcpy(inputfiles[fileindex], argv[0]);
+		fileindex++;
+		argc--;
+		argv++;
+	}
+	
 	return 0;
 }
+
 
 int main(int argc, char *argv[])
 {

@@ -159,7 +159,7 @@ void icns_opj_info_callback(const char *msg, void *client_data);
 int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
 opj_image_t * jp2dec(unsigned char *bufin, int len);
 #endif
-int icns_new_element_from_image(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn);
+int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_element_t **iconElementOut);
 int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType, icns_bool_t *swapBytes,icns_element_t **iconElementOut);
 int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement, icns_bool_t *swapBytes);
 int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes);

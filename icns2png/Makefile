@@ -18,6 +18,9 @@
 # Boston, MA 02111-1307, USA.
 #
 
+# Check for Mac OS X
+DARWIN := $(shell uname)
+
 # Version information
 LIBNAME = libicns
 LIBVERMAJ = 0
@@ -38,13 +41,13 @@ RANLIB=ranlib
 MAKE=make
 
 # Where make install puts libicns and icns2png
-PREFIX=/usr/local
+PREFIX ?= /usr/local
 LIBPATH=$(PREFIX)/lib
 BINPATH=$(PREFIX)/bin
 INCPATH=$(PREFIX)/include
 
 # Compiler flags
-CFLAGS+=-Wall -g
+CFLAGS+=-Wall -g -I$(INCPATH)
 
 # Linker flags
 LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12 -lopenjpeg
@@ -96,7 +99,11 @@ $(LIBSOMAJ): $(LIBSOVER)
 	ln -sf $(LIBSOVER) $(LIBSOMAJ)
 
 $(LIBSOVER): $(LIBOBJSDLL)
+ifeq "$(DARWIN)" "Darwin"
+	$(CC) -dynamiclib -W1,-soname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL) $(CFLAGS) $(LDFLAGS_SO)
+else
 	$(CC) -shared -W1,-soname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
+endif
 
 icns2png: $(UTILOBJS) $(LIBSO)
 	$(CC) -o icns2png $(CFLAGS) $(UTILOBJS) $(LDFLAGS_SO)

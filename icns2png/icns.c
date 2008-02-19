@@ -1109,7 +1109,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 
 //***************************** icns_new_element_from_image **************************//
 // Creates a new icns element from an image
-int icns_new_element_from_image(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn)
+int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_element_t **iconElementOut)
 {
 	int		error = 0;
 	//icns_bool_t	swapBytes = ES_IS_LITTLE_ENDIAN;
