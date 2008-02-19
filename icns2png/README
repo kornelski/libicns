@@ -2,15 +2,6 @@
 README for libicns 0.0.9 - February 15th, 2008
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
 
-===============================================================================
-This package include the following libraries and utilities:
-1) libicns - A library for the translation of the icns format
-2) icns2png - A utility for converting icns files into png images
-3) icontainer2icns - A utility for extracting icns files from icontainer packs
-
-You should be able to get the latest version at http://sf.net/projects/icns
-
-===============================================================================
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
 License as published by the Free Software Foundation; either
@@ -25,13 +16,24 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
+===============================================================================
+This package include the following libraries and utilities:
+1) libicns - A library for the translation of the icns format
+2) icns2png - A utility for converting icns files into png images
+3) icontainer2icns - A utility for extracting icns files from icontainer packs
+
+You should be able to get the latest version at http://sf.net/projects/icns
 
 ===============================================================================
-NOTICE: icontainer2icns is NOT related to www.iconfactory.com - though it
-decodes this library type. They are NOT involved, please don't bother them
-with bug reports.
+libicns is a library for manipulation of the Mac OS icns resource format, also
+known as the IconFamily resource type. It can read and write files from the
+Mac OS X icns format, as well as read from Mac OS resource files and macbinary
+encoded Mac OS resource forks. As of version 0.1.0, it can fully manipulate
+any 128x128 and smaller 32-bit icons, and has partial support for manipulating
+8-bit, 4-bit, and 1-bit icons. It also has read-only support for 256x256 and
+512x512 icons within the icon family.
 
-For bug/wishes regarding icontainer2icns mailto: baghira-style@gmx.net
+Please see DEVNOTES for more information on how to use libicns
 
 ===============================================================================
 Building libicns
@@ -63,6 +65,13 @@ Using icontainer2icns
 This will end up with a couple of icns files identified by the iContainer ID
 and the iContainer name in a (new) folder carrying the icontainer name
 (without any suffix)
+
+===============================================================================
+NOTICE: icontainer2icns is NOT related to www.iconfactory.com - though it
+decodes this library type. They are NOT involved, please don't bother them
+with bug reports.
+
+For bug/wishes regarding icontainer2icns mailto: baghira-style@gmx.net
 
 ===============================================================================
 Understanding the Mac OS X Icons
