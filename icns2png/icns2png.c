@@ -133,7 +133,7 @@ int parse_size(char *size)
 				 "256x256",
 				 "128",
 				 "128x128",
-				 "64",
+				 "48",
 				 "48x48",
 				 "32",
 				 "32x32",
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 		printf("                                                                              \n");
 		printf("Examples:                                                                     \n");
 		printf("icns2png anicon.icns            # Extract 128x128 32-bit icon to anicon.png   \n");
-		printf("icns2png -s 64 anicon.icns      # Extract 48x48 32-bit icon to anicon.png     \n");
+		printf("icns2png -s 48 anicon.icns      # Extract 48x48 32-bit icon to anicon.png     \n");
 		printf("icns2png -s 32 -d 1 anicon.icns # Extract 32x32 1-bit icon to anicon.png      \n");
 		printf("                                                                              \n");
 		printf("Options:                                                                      \n");
@@ -277,8 +277,8 @@ int main(int argc, char *argv[])
 int ConvertIcnsFile(char *filename)
 {
 	int		error = 0;
-	char		*infilename;
-	char		*outfilename;
+	char		*infilename = NULL;
+	char		*outfilename = NULL;
 	unsigned int	filenamelength = 0;
 	unsigned int	infilenamelength = 0;
 	unsigned int	outfilenamelength = 0;
@@ -290,6 +290,9 @@ int ConvertIcnsFile(char *filename)
 	icns_image_t	maskImage;
 	FILE            *inFile = NULL;
 	FILE 		*outfile = NULL;
+	
+	memset ( &iconImage, 0, sizeof(icns_image_t) );
+	memset ( &maskImage, 0, sizeof(icns_image_t) );
 
 	filenamelength = strlen(filename);
 
@@ -447,6 +450,11 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	image_channels = image->imageChannels;
 	image_bit_depth = image->pixel_depth;
 	
+	printf("width: %d\n",width);
+	printf("height: %d\n",height);
+	printf("image_channels: %d\n",image_channels);
+	printf("image_bit_depth: %d\n",image_bit_depth);
+	
 	if(mask != NULL) {
 		mask_channels = mask->imageChannels;
 		mask_bit_depth = mask->pixel_depth;
@@ -527,11 +535,11 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	}
 	
 	png_write_image (png_ptr,row_pointers);
-
+	
 	png_write_end (png_ptr, info_ptr);
 	
 	png_destroy_write_struct (&png_ptr, &info_ptr);
-
+	
 	for (j = 0; j < height; j++)
 		free(row_pointers[j]);
 	free(row_pointers);

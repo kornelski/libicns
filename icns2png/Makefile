@@ -27,7 +27,7 @@ DARWIN := $(shell uname)
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 1.0a
+LIBVERMIN = 1.0b
 
 VERSION = $(LIBVERMAJ).$(LIBVERMIN)
 LIBSTATIC = $(LIBNAME).a

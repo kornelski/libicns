@@ -244,7 +244,7 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 				{
 					if(pixelID % 8 == 0)
 						dataValue = oldData[dataCount++];
-					colorIndex = (dataValue & 0x80) ? 255 : 0;
+					colorIndex = (dataValue & 0x80) ? 0x00 : 0xFF;
 					dataValue = dataValue << 1;
 					newData[pixelID * 4 + 0] = colorIndex;
 					newData[pixelID * 4 + 1] = colorIndex;
@@ -256,7 +256,7 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 				break;
 		}
 		
-		imageOut->pixel_depth = 32;
+		imageOut->pixel_depth = 8;
 		imageOut->imageChannels = 4;
 		imageOut->imageDataSize = newDataSize;
 		imageOut->imageData = newData;
@@ -424,7 +424,13 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	// What's this??? In the 128x128 icons, we need to start 4 bytes
 	// ahead. There see to be a NULL padding here for some reason. If
 	// we don't, the red channel will be off by 2 pixels
-	r = 4;
+	if( *((unsigned int*)dataInPtr) == 0x00000000 )
+	{
+		#ifdef ICNS_DEBUG
+		printf("4 byte null padding found in rle data!\n");
+		#endif
+		r = 4;
+	}
 	
 	for(i = 0; i < destIconLength; i++)
 		destIconData[i] = 0x00000000;
@@ -1444,6 +1450,16 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 	{
 		fprintf(stderr,"libicns: icns_get_element_from_family: icns family is NULL!\n");
 		return -1;
+	}
+	
+	if(iconElementOut == NULL)
+	{
+		fprintf(stderr,"libicns: icns_get_element_in_family: icns element out is NULL!\n");
+		return -1;
+	}
+	else
+	{
+		*iconElementOut = NULL;
 	}
 	
 	if(icnsFamily->resourceType == EndianSwap(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE), 1)) {

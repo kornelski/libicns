@@ -1,4 +1,11 @@
 
+0.1.0b(02/18/2008)
+- Fixed bugs when uncompressing RLE data in sizes < 128
+- Other minor bugfixes
+
+0.1.0a(02/18/2008)
+- Added changelog
+- Added versioning specifications
 
 0.1.0 (02/18/2008)
 - first major release of libicns with write support
