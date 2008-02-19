@@ -1,13 +1,6 @@
 TODO
 
-1) Finish write support to libicns
-1a) Finish function "icns_new_element_from_image"
-1a.1) Create element from 64x64 32-bit icon images
-1a.2) Create element from 128x128 32-bit RLE icon images
-1a.3) Create element from 256x256+ 32-bit JP2 icon images
-1a.4) Create element from 8, 4, and 1 bit (stream compacted) images
-1b) All done; just dump in-memory icns family to a file
-
-2) Fix all the crashes detected by zzuf
-3) Fix all endianness, 64-bit and alignment issues
+1) Finish support for 256x256 and 512x512 in icns_new_element_from_image
+2) Find and fix potential input issues using zzuf
+3) Find and fix any endianness, 64-bit and alignment issues
 

@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.
 /*  Compile-time variables   */
 
 // Enable debugging messages?
-#define	ICNS_DEBUG
+// #define	ICNS_DEBUG
 
 // Enable openjpeg for 256x256 and 512x512 support
 #define	ICNS_OPENPJEG
@@ -165,6 +165,8 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement, icns_bool_t *swapBytes);
 int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes);
 int icns_create_family(icns_family_t **icnsFamilyOut);
+int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn);
+int icns_read_family_from_file(FILE *dataFile,icns_family_t **icnsFamilyOut);
 int icns_family_from_file_data(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
 int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
 int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *data,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,unsigned long *parsedResSizeOut,unsigned char **parsedResDataOut);

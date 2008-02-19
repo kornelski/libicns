@@ -24,7 +24,7 @@ DARWIN := $(shell uname)
 # Version information
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 0.9
+LIBVERMIN = 1.0
 
 VERSION = $(LIBVERMAJ).$(LIBVERMIN)
 LIBSTATIC = $(LIBNAME).a
@@ -80,11 +80,11 @@ TESTUTIL = ./icns2png
 # Macros for testing
 .SECONDEXPANSION:
 .icns.png:
-	$(TESTUTIL) $*.icns	
+	@echo Test: Converting icon in native icns format; $(TESTUTIL) $*.icns	
 .rsrc.png:
-	$(TESTUTIL) $*.rsrc
+	@echo Test: Converting icon in mac resource; $(TESTUTIL) $*.rsrc
 .bin.png:
-	$(TESTUTIL) $*.bin
+	@echo Test: Converting icon in macbinary resource; $(TESTUTIL) $*.bin
 
 all: $(LIBSTATIC) $(LIBSO) $(LIBUTILS)
 

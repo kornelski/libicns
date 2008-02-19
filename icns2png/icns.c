@@ -492,7 +492,6 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	unsigned long 	dataInChanSize = 0;
 	icns_sint8_t	*dataTemp = NULL;
 	unsigned long	dataTempCount = 0;
-	unsigned long	dataTempFinalCount = 0;	
 	icns_sint32_t	dataValue = 0;
 	icns_uint8_t	dataByte = 0;
 	icns_uint8_t	*dataRun = NULL;
@@ -1145,9 +1144,27 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_
 		fprintf(stderr,"libicns: icns_new_element_from_image: element out is NULL!\n");
 		return -1;
 	}
+	else
+	{
+		*iconElementOut = NULL;
+	}
 	
 	switch(icnsType)
 	{
+		// 32-Bit ARGB Image Data Types
+		case ICNS_512x512_32BIT_ARGB_DATA:
+			iconTypeWidth = 512;
+			iconTypeHeight = 512;
+			iconTypeChannels = 4;
+			iconTypeBitDepth = 32;
+			break;
+		case ICNS_256x256_32BIT_ARGB_DATA:
+			iconTypeWidth = 512;
+			iconTypeHeight = 512;
+			iconTypeChannels = 4;
+			iconTypeBitDepth = 32;
+			break;
+
 		// 32-Bit Icon Image Data Types
 		case ICNS_128X128_32BIT_DATA:
 			iconTypeWidth = 128;
@@ -1284,19 +1301,126 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_
 			break;
 	}
 	
+	if(imageIn->imageDataSize == 0)
+	{
+		fprintf(stderr,"libicns: icns_new_element_from_image: invalid input image data size: %d\n",(int)imageIn->imageDataSize);
+		return -1;
+	}
+	
+	if(imageIn->imageData == NULL)
+	{
+		fprintf(stderr,"libicns: icns_new_element_from_image: invalid input image data\n");
+		return -1;
+	}
+	
 	if(imageIn->imageWidth != iconTypeWidth)
 	{
-		fprintf(stderr,"libicns: icns_new_element_from_image: invalid input image width: \n",imageIn->imageWidth);
+		fprintf(stderr,"libicns: icns_new_element_from_image: invalid input image width: %d\n",imageIn->imageWidth);
+		return -1;
+	}
+	
+	if(imageIn->imageWidth != iconTypeWidth)
+	{
+		fprintf(stderr,"libicns: icns_new_element_from_image: invalid input image width: %d\n",imageIn->imageWidth);
 		return -1;
 	}
 	
 	if(imageIn->imageHeight != iconTypeHeight)
 	{
-		fprintf(stderr,"libicns: icns_new_element_from_image: invalid input image height: \n",imageIn->imageHeight);
+		fprintf(stderr,"libicns: icns_new_element_from_image: invalid input image height: %d\n",imageIn->imageHeight);
+		return -1;
+	}
+	
+	if(imageIn->pixel_depth != (iconTypeBitDepth/iconTypeChannels))
+	{
+		fprintf(stderr,"libicns: icns_new_element_from_image: libicns does't support bit depth conversion yet.\n");
 		return -1;
 	}
 	
 	// Finally, done with all the preliminary checks
+	unsigned char	*imageDataPtr = NULL;
+	unsigned long	imageDataSize = 0;
+	
+	// For use to easily track deallocation if we use rle24
+	unsigned char	*rle24DataPtr = NULL;
+	
+	if( (icnsType == ICNS_256x256_32BIT_ARGB_DATA) || (icnsType == ICNS_512x512_32BIT_ARGB_DATA) )
+	{
+		// Future openjpeg routines to go here
+		fprintf(stderr,"libicns: icns_new_element_from_image: libicns does't support importing large icons yet.\n");
+		return -1;
+	}
+	else
+	{
+		if(icnsType == ICNS_128X128_32BIT_DATA)
+		{
+			// Note: icns_encode_rle24_data allocates memory that must be freed later
+			if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)imageIn->imageData,&imageDataSize,(icns_sint32_t**)&imageDataPtr)))
+			{
+				if(imageDataPtr != NULL)
+				{
+					free(imageDataPtr);
+					imageDataPtr = NULL;
+					fprintf(stderr,"libicns: icns_new_element_from_image: error rle encoding image data.\n");
+					return -1;
+				}
+			}
+			
+			rle24DataPtr = imageDataPtr;
+		}
+		else
+		{
+			imageDataSize = imageIn->imageDataSize;
+			imageDataPtr = imageIn->imageData;
+		}
+	}
+	
+	if(imageDataSize == 0)
+	{
+		fprintf(stderr,"libicns: icns_new_element_from_image: Can't work with size 0 image data\n");
+		return -1;
+	}
+	
+	if(imageDataPtr == NULL)
+	{
+		fprintf(stderr,"libicns: icns_new_element_from_image: Can't work with NULL image data\n");
+		return -1;
+	}
+	
+	icns_element_t	*newElement = NULL;
+	icns_size_t	newElementSize = 0;
+	icns_type_t	newElementType = 0x00000000;
+	icns_size_t	newElementOffset = 0;
+	
+	// Set up and create the new element
+	newElementOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	newElementSize = sizeof(icns_type_t) + sizeof(icns_size_t) + imageDataSize;
+	newElementType = icnsType;
+	newElement = (icns_element_t *)malloc(newElementSize);
+	if(newElement == NULL)
+	{
+		fprintf(stderr,"libicns: icns_new_element_from_image: Unable to allocate memory block of size: %d!\n",(int)newElementSize);
+		// We might have allocated new memory earlier...
+		if(rle24DataPtr != NULL)
+		{
+			free(rle24DataPtr);
+			rle24DataPtr = NULL;
+		}
+		return -1;
+	}
+	
+	newElement->elementSize = EndianSwap(newElementSize,sizeof(icns_size_t),swapBytes);
+	newElement->elementType = EndianSwap(newElementType,sizeof(icns_type_t),swapBytes);
+	
+	// Copy in the image data
+	memcpy(newElement+newElementOffset,imageDataPtr,imageDataSize);
+	
+	// We might have allocated new memory earlier...
+	if(rle24DataPtr != NULL)
+	{
+		free(rle24DataPtr);
+		rle24DataPtr = NULL;
+	}
 	
 	return error;
 }
@@ -1657,6 +1781,89 @@ int icns_create_family(icns_family_t **icnsFamilyOut)
 	return 0;
 }
 
+/***************************** icns_write_family_to_file **************************/
+
+int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn)
+{
+	if ( dataFile == NULL )
+	{
+		fprintf(stderr,"libicns: icns_read_family_from_file: NULL file pointer!\n");
+		return -1;
+	}	
+	
+	if ( icnsFamilyIn == NULL )
+	{
+		fprintf(stderr,"libicns: icns_read_family_from_file: NULL icns family!\n");
+		return -1;
+	}
+	
+	return 0;
+}
+
+
+/***************************** icns_read_family_from_file **************************/
+
+int icns_read_family_from_file(FILE *dataFile,icns_family_t **icnsFamilyOut)
+{
+	int	      error = 0;
+	unsigned long dataSize = 0;
+	void          *dataPtr = NULL;
+	
+	if ( dataFile == NULL )
+	{
+		fprintf(stderr,"libicns: icns_read_family_from_file: NULL file pointer!\n");
+		return -1;
+	}
+	
+	if ( icnsFamilyOut == NULL )
+	{
+		fprintf(stderr,"libicns: icns_read_family_from_file: NULL icns family ref!\n");
+		return -1;
+	}
+	
+	if(fseek(dataFile,0,SEEK_END) == 0)
+	{
+		dataSize = ftell(dataFile);
+		rewind(dataFile);
+		
+		dataPtr = (void *)malloc(dataSize);
+
+		if ( (error == 0) && (dataPtr != NULL) )
+		{
+			if(fread( dataPtr, sizeof(char), dataSize, dataFile) != dataSize)
+			{
+				free( dataPtr );
+				dataPtr = NULL;
+				dataSize = 0;
+				error = -1;
+				fprintf(stderr,"libicns: icns_read_family_from_file: Error occured reading file!\n");
+			}
+		}
+		else
+		{
+			error = -1;
+			fprintf(stderr,"libicns: icns_family_from_mac_resource: Unable to allocate memory block of size: %d!\n",(int)dataSize);
+		}
+	}
+	else
+	{
+		error = -1;
+		fprintf(stderr,"libicns: icns_read_family_from_file: Error occured seeking to end of file!\n");
+	}
+	
+	if(error == 0)
+		error = icns_family_from_file_data(dataSize,dataPtr,icnsFamilyOut);
+	
+	if(dataPtr != NULL)
+	{
+		free(dataPtr);
+		dataPtr = NULL;
+	}
+	
+	return error;
+}
+
+
 /***************************** icns_family_from_file_data **************************/
 
 int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **icnsFamilyOut)
@@ -1762,7 +1969,7 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 	{
 		// If not, try reading data as MacBinary file
 		error = icns_parse_macbinary_resource_fork(dataSize,dataPtr,NULL,NULL,&parsedSize,&parsedData);
-		if(!error)
+		if(error == 0)
 		{
 			// Reload Actual Resource Header.
 			resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(parsedData+0)),sizeof(icns_sint32_t),swapBytes);
@@ -1775,7 +1982,7 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 		}
 	}
 	
-	if(!error)
+	if(error == 0)
 	{
 		// Load Resource Map
 		resMapAttributes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+0+22)), sizeof(icns_sint16_t),swapBytes);

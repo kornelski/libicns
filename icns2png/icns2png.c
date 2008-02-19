@@ -27,7 +27,6 @@ Boston, MA 02111-1307, USA.
 #include "icns.h"
 
 int ConvertIcnsFile(char *filename);
-int ReadFile(char *fileName,unsigned long *dataSize,void **dataPtr);
 int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -283,14 +282,13 @@ int ConvertIcnsFile(char *filename)
 	unsigned int	filenamelength = 0;
 	unsigned int	infilenamelength = 0;
 	unsigned int	outfilenamelength = 0;
-	unsigned char	*fileDataPtr = NULL;
-	unsigned long	fileDataSize = 0;
 	icns_bool_t	swapBytes = 0;
 	icns_family_t	*icnsFamily = NULL;
 	icns_element_t	*icon = NULL;
 	icns_element_t	*mask = NULL;
 	icns_image_t	iconImage;
 	icns_image_t	maskImage;
+	FILE            *inFile = NULL;
 	FILE 		*outfile = NULL;
 
 	filenamelength = strlen(filename);
@@ -321,35 +319,29 @@ int ConvertIcnsFile(char *filename)
 	} else {
 		strncpy(outfilename,filename,outfilenamelength+1);
 	}
-
+	
 	// Add the .png extension to the filename
 	outfilename[outfilenamelength-4] = '.';
 	outfilename[outfilenamelength-3] = 'p';
 	outfilename[outfilenamelength-2] = 'n';
 	outfilename[outfilenamelength-1] = 'g';
 	outfilename[outfilenamelength-0] = 0;
-
+	
 	printf("Converting %s...\n",infilename);
-	error = ReadFile(infilename,&fileDataSize,(void **)&fileDataPtr);
 	
-	// Catch errors...
-	if(error)
-	{
-		fprintf(stderr,"Unable to read file %s!\n",infilename);
-		free(infilename);
-		free(outfilename);
-		if(fileDataPtr != NULL) {
-			free(fileDataPtr);
-			fileDataPtr = NULL;
-		}
-		return -1;
+	inFile = fopen( infilename, "r" );
+	
+	if ( inFile == NULL ) {
+		fprintf(stderr,"Unable to open file %s!\n",infilename);
+		goto cleanup;
 	}
-	
-	// ReadXIconFile converts the icns file into an IcnsFamily
-	error = icns_family_from_file_data(fileDataSize,fileDataPtr,&icnsFamily);
-	
+
+	error = icns_read_family_from_file(inFile,&icnsFamily);
+		
+	fclose(inFile);
+		
 	if(error) {
-		fprintf(stderr,"Unable to load icns file into icon family!\n");
+		fprintf(stderr,"Unable to read icns family from file %s!\n",infilename);
 		goto cleanup;
 	}
 	
@@ -363,7 +355,7 @@ int ConvertIcnsFile(char *filename)
 	error = icns_get_image32_from_element(icon, swapBytes, &iconImage);
 
 	if(error) {
-		fprintf(stderr,"Unable to load raw data from icon data!\n");
+		fprintf(stderr,"Unable to load image from icon data!\n");
 		goto cleanup;
 	}
 	
@@ -371,11 +363,16 @@ int ConvertIcnsFile(char *filename)
 		error = icns_get_element_from_family(icnsFamily,maskType,&swapBytes,&mask);
 	
 		if(error) {
-			fprintf(stderr,"Unable to load icon data from icon family!\n");
+			fprintf(stderr,"Unable to load mask data from icon family!\n");
 			goto cleanup;
 		}
 		
 		error = icns_get_image32_from_element(mask, swapBytes, &maskImage);
+
+		if(error) {
+			fprintf(stderr,"Unable to load image from mask data!\n");
+			goto cleanup;
+		}
 	}
 	
 	outfile = fopen(outfilename,"w");
@@ -417,66 +414,9 @@ cleanup:
 	}
 	icns_free_image(&iconImage);
 	icns_free_image(&maskImage);
-	if(fileDataPtr != NULL) {
-		free(fileDataPtr);
-		fileDataPtr = NULL;
-	}
 	free(infilename);
 	free(outfilename);
 	
-	return error;
-}
-
-//***************************** ReadFile **************************//
-// Generic file reading routine
-
-int ReadFile(char *fileName,unsigned long *dataSize,void **dataPtr)
-{
-	int	error = 0;
-	FILE	*dataFile = 0;
-
-	*dataSize = 0;
-	dataFile = fopen( fileName, "r" );
-	
-	if ( dataFile != NULL )
-	{
-		if(fseek(dataFile,0,SEEK_END) == 0)
-		{
-			*dataSize = ftell(dataFile);
-			rewind(dataFile);
-			
-			*dataPtr = (void *)malloc(*dataSize);
-
-			if ( (error == 0) && (*dataPtr != NULL) )
-			{
-				if(fread( *dataPtr, sizeof(char), *dataSize, dataFile) != *dataSize)
-				{
-					free( *dataPtr );
-					*dataPtr = NULL;
-					*dataSize = 0;
-					error = true;
-					fprintf(stderr,"Error occured reading file!\n");
-				}
-			}
-			else
-			{
-				error = true;
-				fprintf(stderr,"Error occured allocating memory!\n");
-			}
-		}
-		else
-		{
-			error = true;
-			fprintf(stderr,"Error occured seeking to end of file!\n");
-		}
-		fclose( dataFile );
-	}
-	else
-	{
-		error = true;
-		fprintf(stderr,"Error occured opening file!\n");
-	}
-
 	return error;
 }
 
