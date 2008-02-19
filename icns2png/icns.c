@@ -30,6 +30,38 @@ Boston, MA 02111-1307, USA.
 
 #include "icns.h"
 
+#ifdef ICNS_DEBUG
+void bin_print_byte(int x)
+{
+   int n;
+   for(n=0; n<8; n++)
+   {
+	if((x & 0x80) !=0)
+	{
+	printf("1");
+	}
+	else
+	{
+   	printf("0");
+   	}
+	if (n==3)
+	{
+	printf(" "); /* insert a space between nybbles */
+	}
+	x = x<<1;
+   }
+}
+
+void bin_print_int(int x)
+{
+   int hi, lo;
+   hi=(x>>8) & 0xff;
+   lo=x&0xff;
+   bin_print_byte(hi);
+   printf(" ");
+   bin_print_byte(lo);
+}
+#endif /* ifdef ICNS_DEBUG */
 
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t icnsType)
 {
@@ -613,6 +645,7 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 	
 	icnsType = EndianSwap(iconElement->elementType,sizeof(icns_type_t),swapBytes);
 	rawDataSize = EndianSwap(iconElement->elementSize,sizeof(icns_size_t),swapBytes);
+	rawDataSize = rawDataSize - sizeof(icns_type_t) - sizeof(icns_size_t);
 	rawDataPtr = (unsigned char*)&(iconElement->elementData[0]);
 	
 	/*
@@ -699,37 +732,6 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 	return error;
 }
 
-//////////////////////////////// TEMPORARY RE FNCTS ///////////////////////////
-void bin_print_byte(int x)
-{
-   int n;
-   for(n=0; n<8; n++)
-   {
-	if((x & 0x80) !=0)
-	{
-	printf("1");
-	}
-	else
-	{
-   	printf("0");
-   	}
-	if (n==3)
-	{
-	printf(" "); /* insert a space between nybbles */
-	}
-	x = x<<1;
-   }
-}
-
-void bin_print_int(int x)
-{
-   int hi, lo;
-   hi=(x>>8) & 0xff;
-   lo=x&0xff;
-   bin_print_byte(hi);
-   printf(" ");
-   bin_print_byte(lo);
-}
 //***************************** icns_decode_rle24_data ****************************//
 // Decode a rgb 24 bit rle encoded data stream into 32 bit argb (alpha is ignored)
 
@@ -747,11 +749,21 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	unsigned int	*destIconData = NULL;	// Decompressed Raw Icon Data
 	unsigned int	*destIconDataBaseAddr = NULL;	// Decompressed Raw Icon Data Base Address
 	
+	if(dataInPtr == NULL)
+	{
+		fprintf(stderr,"libicns: rle decoder data in ptr is NULL!\n");
+		return -1;
+	}
+	
+	if(dataOutPtr == NULL)
+	{
+		fprintf(stderr,"libicns: rle decoder data out ptr is NULL!\n");
+		return -1;
+	}
+	
 	rawDataPtr = (unsigned char *)dataInPtr;
 	destIconData = (unsigned int *)dataOutPtr;
 	destIconDataBaseAddr = (unsigned int *)dataOutPtr;
-	
-	printf("Compressed data size is %d\n",(int)dataInSize);
 	
 	// There's always going to be 4 channels in this
 	// so we want our counter to increment through
@@ -775,6 +787,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	while(myshift > 0)
 	{
 		int	runCount = 0;
+		int	dataSum = 0;
 
 		// Next Color Byte
 		myshift -= 8;
@@ -791,6 +804,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 			{
 				// Top bit is clear - run of various values to follow
 				length = (int)(0xFF & rawDataPtr[r++]) + 1; // 1 <= len <= 128
+				dataSum += length;
 				
 				for(i = 0; i < (int)length; i++)
 					destIconData[y++] |= ( ((int)rawDataPtr[r++]) << myshift) & mymask;
@@ -801,6 +815,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 			{
 				// Top bit is set - run of one value to follow
 				length = (int)(0xFF & rawDataPtr[r++]) - 125; // 3 <= len <= 130
+				dataSum += 2;
 				
 				// Set the value to the color shifted to the correct bit offset
 				value = ( ((int)rawDataPtr[r++]) << myshift) & mymask;
@@ -812,11 +827,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 			}
 		}
 		
-		printf("Total runs: %d\n",runCount);
 	}
-	
-	printf("Testing RLE encoder with data size of %d\n",(int)dataOutSize);
-	icns_encode_rle24_data(dataOutSize,dataOutPtr,0,NULL);
 	
 	destIconDataBaseAddr = NULL;
 	destIconData = NULL;
@@ -827,25 +838,40 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 //***************************** icns_encode_rle24_data *******************************************//
 // Encode an 32 bit argb data stream into a 24 bit rgb rle encoded data stream (alpha is ignored)
 
-int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr)
+int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr)
 {
+	unsigned long	dataInCount = 0;
+	unsigned long 	dataInChanSize = 0;
 	icns_sint8_t	*dataTemp = NULL;
 	unsigned long	dataTempCount = 0;
-	unsigned long	dataTempFinalCount = 0;
-	unsigned long	dataInCount = 0;
-	unsigned long	dataOutCount = 0;
+	unsigned long	dataTempFinalCount = 0;	
 	icns_sint32_t	dataValue = 0;
 	icns_uint8_t	dataByte = 0;
-	
 	icns_uint8_t	*dataRun = NULL;
 	icns_bool_t	runType = 0;
-	icns_uint8_t	runLength = 0; // Runs will never go over 131, one byte is ok
-	
+	icns_uint8_t	runLength = 0; // Runs will never go over 130, one byte is ok
 	int		runCount = 0;
-	
 	unsigned int	myshift = 0;
 	unsigned int	mymask = 0;
 	
+	if(dataInPtr == NULL)
+	{
+		fprintf(stderr,"libicns: rle encoder data in ptr is NULL!\n");
+		return -1;
+	}
+	
+	if(dataOutSize == NULL)
+	{
+		fprintf(stderr,"libicns: rle encoder data out size ref is NULL!\n");
+		return -1;
+	}
+	
+	if(dataOutPtr == NULL)
+	{
+		fprintf(stderr,"libicns: rle encoder data out ptr ref is NULL!\n");
+		return -1;
+	}
+
 	// Assumptions of what icns rle data is all about:
 	// A) Each channel is encoded indepenent of the next.
 	// B) An encoded channel looks like this:
@@ -860,9 +886,13 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	//    1) for same values, RL = RL - 1
 	//    2) different values, RL = RL + 125
 	//    3) both methods will automatically set the high bit appropriately
+	// F) 0xCV byte are set accordingly
+	//    1) for differing values, run of all differing values
+	//    2) for same values, only one byte of that values
 	// Estimations put the absolute worst case scenario as the
 	// final compressed data being slightly LARGER. So we need to be
 	// careful about allocating memory. (Did I miss something?)
+	// tests seem to indicate it will never be larger than the original
 	
 	// This block is for the new RLE encoded data - make it 25% larger
 	dataTemp = (icns_sint8_t *)malloc(dataInSize + (dataInSize / 4));
@@ -886,14 +916,18 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	// There's always going to be 4 channels in this
 	// so we want our counter to increment through
 	// channels, not bytes....
-	dataInSize = dataInSize / 4;
+	dataInChanSize = dataInSize / 4;
 	
 	myshift = 24;
 	mymask = 0xFF000000;
 	
+	// Move forward 4 bytes - who knows why this should be
+	dataTempCount = 4;
+	
 	while(myshift > 0)
 	{
-		dataTempCount = 0;
+		int	dataSum = 0;
+		
 		runCount = 0;
 		
 		// Next Color Byte
@@ -912,7 +946,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 		runType = 0; // 0 for low bit (different), 1 for high bit (same)	
 		
 		// Start one byte ahead
-		for(dataInCount = 1; dataInCount < dataInSize; dataInCount++)
+		for(dataInCount = 1; dataInCount < dataInChanSize; dataInCount++)
 		{
 			dataValue = *(dataInPtr+dataInCount);
 			dataByte = (icns_uint8_t)((dataValue & mymask) >> myshift);	// Red Channel
@@ -950,6 +984,8 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 						dataTempCount = dataTempCount + (runLength - 2);
 						runCount++;
 						
+						dataSum += (runLength - 2);
+						
 						// Set up the new same-type run
 						dataRun[0] = dataRun[runLength-2];
 						dataRun[1] = dataRun[runLength-1];
@@ -962,7 +998,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 						dataRun[runLength++] = dataByte;
 					}
 				}
-				else if(runType == 1 && runLength < 131) // Same type run
+				else if(runType == 1 && runLength < 130) // Same type run
 				{
 					// If the new value matches both of the last two values, we
 					// can safely continue
@@ -975,11 +1011,14 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 						// Set the RL byte
 						*(dataTemp+dataTempCount) = runLength + 125;
 						dataTempCount++;
-						// Copy 0 to runLength bytes to the RLE data here
-						memcpy( dataTemp+dataTempCount , dataRun , runLength );
-						dataTempCount = dataTempCount + runLength;
+						
+						// Only copy the first byte, since all the remaining values are identical
+						*(dataTemp+dataTempCount) = dataRun[0];
+						dataTempCount++;
 						runCount++;
-	
+						
+						dataSum += 2;
+						
 						// Copy 0 to runLength bytes to the RLE data here
 						dataRun[0] = dataByte;
 						runLength = 1;
@@ -988,18 +1027,32 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 				}
 				else // Exceeded run limit, need to start a new one
 				{
-					// Set the RL byte
 					if(runType == 0)
+					{
+						// Set the RL byte low
 						*(dataTemp+dataTempCount) = runLength - 1;
-					if(runType == 1)
+						
+						// Copy 0 to runLength bytes to the RLE data here
+						memcpy( dataTemp+dataTempCount , dataRun , runLength );
+						dataTempCount = dataTempCount + runLength;
+						
+						dataSum += runLength;
+					}
+					else if(runType == 1)
+					{
+						// Set the RL byte high
 						*(dataTemp+dataTempCount) = runLength + 125;
-					dataTempCount++;
-
-					// Copy 0 to runLength bytes to the RLE data here
-					memcpy( dataTemp+dataTempCount , dataRun , runLength );
-					dataTempCount = dataTempCount + runLength;
+						dataTempCount++;
+						
+						// Only copy the first byte, since all the remaining values are identical
+						*(dataTemp+dataTempCount) = dataRun[0];
+						dataTempCount++;
+						
+						dataSum += 2;
+					}
+					
 					runCount++;
-	
+					
 					// Copy 0 to runLength bytes to the RLE data here
 					dataRun[0] = dataByte;
 					runLength = 1;
@@ -1008,26 +1061,41 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 			}
 		}
 		
+		// Copy the end of the last run
 		if(runLength > 0)
 		{
-			// Set the RL byte
 			if(runType == 0)
+			{
+				// Set the RL byte low
 				*(dataTemp+dataTempCount) = runLength - 1;
-			if(runType == 1)
+				
+				// Copy 0 to runLength bytes to the RLE data here
+				memcpy( dataTemp+dataTempCount , dataRun , runLength );
+				dataTempCount = dataTempCount + runLength;
+				
+				dataSum += runLength;
+			}
+			else if(runType == 1)
+			{
+				// Set the RL byte high
 				*(dataTemp+dataTempCount) = runLength + 125;
-			dataTempCount++;
-			// Copy the last part of the run here
-			memcpy( dataTemp+dataTempCount , dataRun , runLength );
-			dataTempCount = dataTempCount + runLength;
+				dataTempCount++;
+				
+				// Only copy the first byte, since all the remaining values are identical
+				*(dataTemp+dataTempCount) = dataRun[0];
+				dataTempCount++;
+				
+				dataSum += 2;
+			}
+			
 			runCount++;
 		}
+		
+		printf("dataSum = %d\n",dataSum);
 		
 		printf("Total runs: %d\n",runCount);
 		
 		printf("Post-Compressed channel size: %d\n",(int)dataTempCount);
-		
-		if(dataTempCount > dataTempFinalCount)
-			dataTempFinalCount = dataTempCount;
 	}
 	
 	printf("Post-Compressed final data size: %d\n",(int)dataTempFinalCount);
@@ -1044,7 +1112,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 int icns_new_element_from_image(icns_element_t **iconElement,icns_type_t icnsType,icns_image_t *imageIn)
 {
 	int		error = 0;
-	icns_bool_t	swapBytes = ES_IS_LITTLE_ENDIAN;
+	//icns_bool_t	swapBytes = ES_IS_LITTLE_ENDIAN;
 	
 	
 	
@@ -1060,11 +1128,11 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 	int		error = 0;
 	int		foundData = 0;
 	icns_bool_t	bigEndian = ES_IS_BIG_ENDIAN;
-	icns_type_t	icnsFamilyDataType = 0x00000000;
-	icns_size_t	icnsFamilyDataSize = 0;
+	icns_type_t	icnsFamilyType = 0x00000000;
+	icns_size_t	icnsFamilySize = 0;
 	icns_element_t	*icnsElement = NULL;
-	icns_type_t	elementDataType = 0x00000000;
-	icns_size_t	elementDataSize = 0;
+	icns_type_t	elementType = 0x00000000;
+	icns_size_t	elementSize = 0;
 	icns_uint32_t	dataOffset = 0;
 	
 	if(icnsFamily == NULL)
@@ -1086,45 +1154,45 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 		printf("Warning: endian not as expected.\n");
 	}
 	
-	icnsFamilyDataType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
-	icnsFamilyDataSize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
+	icnsFamilyType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
+	icnsFamilySize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
 	
-	/*
+	#ifdef ICNS_DEBUG
 	printf("Bytes are swapped in file: %s\n",(*swapBytes ? "yes" : "no"));
-	printf("Resource size: %d\n",icnsFamilyDataSize);
-	printf("Resource type: 0x%8X ('%c%c%c%c')\n",(unsigned int)icnsFamilyDataType);
-	printf("Looking for icon of type: 0x%8X ('%c%c%c%c')\n",(unsigned int)icnsType));
-	*/
+	printf("Resource size: %d\n",icnsFamilySize);
+	printf("Resource type: 0x%8X\n",(unsigned int)icnsFamilyType);
+	printf("Looking for icon of type: 0x%8X\n",(unsigned int)icnsType);
+	#endif
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
-	while ( (foundData == 0) && (dataOffset < icnsFamilyDataSize) )
+	while ( (foundData == 0) && (dataOffset < icnsFamilySize) )
 	{
 		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
-		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
-		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+		elementType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
 		
-		/*
+		#ifdef ICNS_DEBUG
 		printf("Found data...\n");
-		printf("  type: 0x%8X\n",(unsigned int)readDataType);
-		printf("  size: %d\n",(unsigned int)readDataSize);
-		*/
+		printf("  type: 0x%8X\n",(unsigned int)elementType);
+		printf("  size: %d\n",(unsigned int)elementSize);
+		#endif
 
-		if (elementDataType == icnsType)
+		if (elementType == icnsType)
 			foundData = 1;
 		else
-			dataOffset += elementDataSize;
+			dataOffset += elementSize;
 	}
 	
 	if(foundData)
 	{
-		*iconElementOut = malloc(elementDataSize);
+		*iconElementOut = malloc(elementSize);
 		if(*iconElementOut == NULL)
 		{
-			fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",elementDataSize);
+			fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",elementSize);
 			return -1;
 		}
-		memcpy( *iconElementOut, icnsElement, elementDataSize);
+		memcpy( *iconElementOut, icnsElement, elementSize);
 	}
 	else
 	{
@@ -1145,13 +1213,13 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 	int		copiedData = 0;
 	icns_bool_t	bigEndian = ES_IS_BIG_ENDIAN;
 	icns_family_t	*icnsFamily = NULL;
-	icns_type_t	icnsFamilyDataType = 0x00000000;
-	icns_size_t	icnsFamilyDataSize = 0;
+	icns_type_t	icnsFamilyType = 0x00000000;
+	icns_size_t	icnsFamilySize = 0;
 	icns_element_t	*icnsElement = NULL;
-	icns_type_t	newIcnsElementType = 0x00000000;
-	icns_size_t	newIcnsElementSize = 0;
-	icns_type_t	elementDataType = 0x00000000;
-	icns_size_t	elementDataSize = 0;
+	icns_type_t	newElementType = 0x00000000;
+	icns_size_t	newElementSize = 0;
+	icns_type_t	elementType = 0x00000000;
+	icns_size_t	elementSize = 0;
 	icns_uint32_t	dataOffset = 0;
 	icns_size_t	newIcnsFamilySize = 0;
 	icns_family_t	*newIcnsFamily = NULL;
@@ -1184,8 +1252,8 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 		printf("Warning: endian not as expected.\n");
 	}
 	
-	icnsFamilyDataType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
-	icnsFamilyDataSize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
+	icnsFamilyType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
+	icnsFamilySize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
 
 	if(newIcnsElement == NULL)
 	{
@@ -1193,27 +1261,27 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 		return -1;
 	}
 	
-	newIcnsElementType = EndianSwap(newIcnsElement->elementType,sizeof(int),*swapBytes);
-	newIcnsElementSize = EndianSwap(newIcnsElement->elementSize,sizeof(int),*swapBytes);
+	newElementType = EndianSwap(newIcnsElement->elementType,sizeof(int),*swapBytes);
+	newElementSize = EndianSwap(newIcnsElement->elementSize,sizeof(int),*swapBytes);
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
-	while ( (foundData == 0) && (dataOffset < icnsFamilyDataSize) )
+	while ( (foundData == 0) && (dataOffset < icnsFamilySize) )
 	{
 		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
-		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
-		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+		elementType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
 		
-		if (elementDataType == newIcnsElementType)
+		if (elementType == newElementType)
 			foundData = 1;
 		else
-			dataOffset += elementDataSize;
+			dataOffset += elementSize;
 	}
 	
 	if(foundData)
-		newIcnsFamilySize = icnsFamilyDataSize - elementDataSize + newIcnsElementSize;
+		newIcnsFamilySize = icnsFamilySize - elementSize + newElementSize;
 	else
-		newIcnsFamilySize = icnsFamilyDataSize + newIcnsElementSize;
+		newIcnsFamilySize = icnsFamilySize + newElementSize;
 
 	newIcnsFamily = malloc(newIcnsFamilySize);
 	
@@ -1231,31 +1299,31 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 	
 	copiedData = 0;
 	
-	while ( dataOffset < icnsFamilyDataSize )
+	while ( dataOffset < icnsFamilySize )
 	{
 		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
-		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
-		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+		elementType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
 		
-		if (elementDataType != newIcnsElementType)
+		if (elementType != newElementType)
 		{
-			memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementDataSize);
-			newDataOffset += elementDataSize;
+			memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementSize);
+			newDataOffset += elementSize;
 		}
 		else
 		{
-			memcpy( ((char *)(newIcnsFamily))+newDataOffset , (char *)newIcnsElement, newIcnsElementSize);
-			newDataOffset += newIcnsElementSize;
+			memcpy( ((char *)(newIcnsFamily))+newDataOffset , (char *)newIcnsElement, newElementSize);
+			newDataOffset += newElementSize;
 			copiedData = 1;
 		}
 
-		dataOffset += elementDataSize;
+		dataOffset += elementSize;
 	}
 	
 	if(!copiedData)
 	{
-		memcpy( ((char *)(newIcnsFamily))+newDataOffset , (char *)newIcnsElement, newIcnsElementSize);
-		newDataOffset += newIcnsElementSize;
+		memcpy( ((char *)(newIcnsFamily))+newDataOffset , (char *)newIcnsElement, newElementSize);
+		newDataOffset += newElementSize;
 	}
 	
 	*icnsFamilyRef = newIcnsFamily;
@@ -1274,11 +1342,11 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 	int		foundData = 0;
 	icns_bool_t	bigEndian = ES_IS_BIG_ENDIAN;
 	icns_family_t	*icnsFamily = NULL;
-	icns_type_t	icnsFamilyDataType = 0x00000000;
-	icns_size_t	icnsFamilyDataSize = 0;
+	icns_type_t	icnsFamilyType = 0x00000000;
+	icns_size_t	icnsFamilySize = 0;
 	icns_element_t	*icnsElement = NULL;
-	icns_type_t	elementDataType = 0x00000000;
-	icns_size_t	elementDataSize = 0;
+	icns_type_t	elementType = 0x00000000;
+	icns_size_t	elementSize = 0;
 	icns_uint32_t	dataOffset = 0;
 	
 	if(icnsFamilyRef == NULL)
@@ -1308,21 +1376,21 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 		printf("Warning: endian not as expected.\n");
 	}
 	
-	icnsFamilyDataType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
-	icnsFamilyDataSize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
+	icnsFamilyType = EndianSwap(icnsFamily->resourceType,sizeof(int),*swapBytes);
+	icnsFamilySize = EndianSwap(icnsFamily->resourceSize,sizeof(int),*swapBytes);
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
-	while ( (foundData == 0) && (dataOffset < icnsFamilyDataSize) )
+	while ( (foundData == 0) && (dataOffset < icnsFamilySize) )
 	{
 		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
-		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
-		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+		elementType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
 		
-		if (elementDataType == icnsElementType)
+		if (elementType == icnsElementType)
 			foundData = 1;
 		else
-			dataOffset += elementDataSize;
+			dataOffset += elementSize;
 	}
 	
 	if(!foundData)
@@ -1335,7 +1403,7 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 	icns_family_t	*newIcnsFamily = NULL;
 	icns_uint32_t	newDataOffset = 0;
 	
-	newIcnsFamilySize = icnsFamilyDataSize - elementDataSize;
+	newIcnsFamilySize = icnsFamilySize - elementSize;
 	newIcnsFamily = malloc(newIcnsFamilySize);
 	
 	if(newIcnsFamily == NULL)
@@ -1350,19 +1418,19 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 	newDataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
-	while ( dataOffset < icnsFamilyDataSize )
+	while ( dataOffset < icnsFamilySize )
 	{
 		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
-		elementDataType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
-		elementDataSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+		elementType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
+		elementSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
 		
-		if (elementDataType != icnsElementType)
+		if (elementType != icnsElementType)
 		{
-			memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementDataSize);
-			newDataOffset += elementDataSize;
+			memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementSize);
+			newDataOffset += elementSize;
 		}
 		
-		dataOffset += elementDataSize;
+		dataOffset += elementSize;
 	}
 	
 	*icnsFamilyRef = newIcnsFamily;
