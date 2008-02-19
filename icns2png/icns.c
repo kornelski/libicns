@@ -1785,17 +1785,47 @@ int icns_create_family(icns_family_t **icnsFamilyOut)
 
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn)
 {
+	icns_bool_t	swapBytes = ES_IS_LITTLE_ENDIAN;
+	icns_size_t	resourceSize = 0;
+	icns_size_t	blockSize = 0;
+	icns_uint32_t	dataOutTotal = 0;
+	icns_uint32_t	dataOutBlock = 0;
+	
 	if ( dataFile == NULL )
 	{
-		fprintf(stderr,"libicns: icns_read_family_from_file: NULL file pointer!\n");
+		fprintf(stderr,"libicns: icns_write_family_to_file: NULL file pointer!\n");
 		return -1;
 	}	
 	
 	if ( icnsFamilyIn == NULL )
 	{
-		fprintf(stderr,"libicns: icns_read_family_from_file: NULL icns family!\n");
+		fprintf(stderr,"libicns: icns_write_family_to_file: NULL icns family!\n");
 		return -1;
 	}
+	
+	resourceSize = EndianSwap(icnsFamilyIn->resourceSize,sizeof(icns_size_t),swapBytes);
+	blockSize = 1024;
+	
+	while( (resourceSize-dataOutTotal) > blockSize)
+	{
+		dataOutBlock = fwrite ( ((char *)icnsFamilyIn) + dataOutTotal , blockSize , 1 , dataFile );
+		if(dataOutBlock != blockSize)
+		{
+			fprintf(stderr,"libicns: icns_write_family_to_file: Error writing icns to file!\n");
+			return -1;
+		}
+		dataOutTotal += dataOutBlock;
+	}
+	
+	blockSize = (resourceSize-dataOutTotal);
+	
+	dataOutBlock = fwrite ( ((char *)icnsFamilyIn) + dataOutTotal , blockSize , 1 , dataFile );
+	if(dataOutBlock != blockSize)
+	{
+		fprintf(stderr,"libicns: icns_write_family_to_file: Error writing icns to file!\n");
+		return -1;
+	}
+	dataOutTotal += dataOutBlock;
 	
 	return 0;
 }
