@@ -152,7 +152,8 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
 int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut);
 int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut);
-#ifdef ICNS_OPENJPEG
+int icns_free_image(icns_image_t *imageIn);
+#ifdef ICNS_OPENPJEG
 void icns_opj_error_callback(const char *msg, void *client_data);
 void icns_opj_warning_callback(const char *msg, void *client_data);
 void icns_opj_info_callback(const char *msg, void *client_data);

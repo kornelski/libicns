@@ -155,7 +155,10 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 		newData = (unsigned char *)malloc(newDataSize);
 		
 		if(newData == NULL)
+		{
+			fprintf(stderr,"libicns: Unable to allocate memory block of size: %d!\n",(int)newDataSize);
 			return -1;
+		}
 		
 		dataCount = 0;
 		
@@ -263,359 +266,6 @@ int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapB
 	return 0;
 }
 
-//***************************** icns_init_image_for_type **************************//
-// Initialize a new image structure for holding the data
-// using the information for the specified type
-
-int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut)
-{
-	unsigned int	iconWidth = 0;
-	unsigned int	iconHeight = 0;
-	unsigned int	iconChannels = 0;
-	unsigned int	iconBitDepth = 0;
-	
-	if(imageOut == NULL)
-	{
-		fprintf(stderr,"libicns: Icon image structure is NULL!\n");
-		return -1;
-	}
-	
-	switch(icnsType)
-	{
-		// 32-Bit Icon Image Data Types
-		case ICNS_128X128_32BIT_DATA:
-			iconWidth = 128;
-			iconHeight = 128;
-			iconChannels = 4;
-			iconBitDepth = 32;
-			break;
-		case ICNS_48x48_32BIT_DATA:
-			iconWidth = 48;
-			iconHeight = 48;
-			iconChannels = 4;
-			iconBitDepth = 32;
-			break;
-		case ICNS_32x32_32BIT_DATA:
-			iconWidth = 32;
-			iconHeight = 32;
-			iconChannels = 4;
-			iconBitDepth = 32;
-			break;
-		case ICNS_16x16_32BIT_DATA:
-			iconWidth = 16;
-			iconHeight = 16;
-			iconChannels = 4;
-			iconBitDepth = 32;
-			break;
-			
-		// 8-Bit Icon Mask Data Types
-		case ICNS_128X128_8BIT_MASK:
-			iconWidth = 128;
-			iconHeight = 128;
-			iconChannels = 1;
-			iconBitDepth = 8;
-			break;
-		case ICNS_48x48_8BIT_MASK:
-			iconWidth = 48;
-			iconHeight = 48;
-			iconChannels = 1;
-			iconBitDepth = 8;
-			break;
-		case ICNS_32x32_8BIT_MASK:
-			iconWidth = 32;
-			iconHeight = 32;
-			iconChannels = 1;
-			iconBitDepth = 8;
-			break;
-		case ICNS_16x16_8BIT_MASK:
-			iconWidth = 16;
-			iconHeight = 16;
-			iconChannels = 1;
-			iconBitDepth = 8;
-			break;
-			
-		// 8-Bit Icon Image Data Types
-		case ICNS_48x48_8BIT_DATA:
-			iconWidth = 48;
-			iconHeight = 48;
-			iconChannels = 1;
-			iconBitDepth = 8;
-			break;
-		case ICNS_32x32_8BIT_DATA:
-			iconWidth = 32;
-			iconHeight = 32;
-			iconChannels = 1;
-			iconBitDepth = 8;
-			break;
-		case ICNS_16x16_8BIT_DATA:
-			iconWidth = 16;
-			iconHeight = 16;
-			iconChannels = 1;
-			iconBitDepth = 8;
-			break;
-		case ICNS_16x12_8BIT_DATA:
-			iconWidth = 16;
-			iconHeight = 12;
-			iconChannels = 1;
-			iconBitDepth = 8;
-			break;
-
-		// 4-Bit Icon Image Data Types
-		case ICNS_48x48_4BIT_DATA:
-			iconWidth = 48;
-			iconHeight = 48;
-			iconChannels = 1;
-			iconBitDepth = 4;
-			break;
-		case ICNS_32x32_4BIT_DATA:
-			iconWidth = 32;
-			iconHeight = 32;
-			iconChannels = 1;
-			iconBitDepth = 4;
-			break;
-		case ICNS_16x16_4BIT_DATA:
-			iconWidth = 16;
-			iconHeight = 16;
-			iconChannels = 1;
-			iconBitDepth = 4;
-			break;
-		case ICNS_16x12_4BIT_DATA:
-			iconWidth = 16;
-			iconHeight = 12;
-			iconChannels = 1;
-			iconBitDepth = 4;
-			break;
-
-		// 1-Bit Icon Image/Mask Data Types (Data is the same)
-		case ICNS_48x48_1BIT_DATA:  // Also ICNS_48x48_1BIT_MASK
-			iconWidth = 48;
-			iconHeight = 48;
-			iconChannels = 1;
-			iconBitDepth = 1;
-			break;
-		case ICNS_32x32_1BIT_DATA: // Also ICNS_32x32_1BIT_MASK
-			iconWidth = 32;
-			iconHeight = 32;
-			iconChannels = 1;
-			iconBitDepth = 1;
-			break;
-		case ICNS_16x16_1BIT_DATA: // Also ICNS_16x16_1BIT_MASK
-			iconWidth = 16;
-			iconHeight = 16;
-			iconChannels = 1;
-			iconBitDepth = 1;
-			break;
-		case ICNS_16x12_1BIT_DATA: // Also ICNS_16x12_1BIT_MASK
-			iconWidth = 16;
-			iconHeight = 12;
-			iconChannels = 1;
-			iconBitDepth = 1;
-			break;
-			
-		default:
-			fprintf(stderr,"libicns: Unable to parse icon type 0x%8X\n",icnsType);
-			return -1;
-			break;
-	}
-	
-	return icns_init_image(iconWidth,iconHeight,iconChannels,(iconBitDepth / iconChannels),imageOut);
-
-}
-
-//***************************** icns_init_image **************************//
-// Initialize a new image structure for holding the data
-
-int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut)
-{
-	unsigned int	iconBitDepth = 0;
-	unsigned long	iconDataSize = 0;
-	unsigned long	iconDataRowSize = 0;
-
-	iconBitDepth = iconPixelDepth * iconChannels;
-	iconDataRowSize = iconWidth * iconBitDepth / icns_byte_bits;
-	iconDataSize = iconHeight * iconDataRowSize;
-	
-	#ifdef ICNS_DEBUG
-	printf("Initializing new image...\n");
-	printf("Icon image width is: %d\n",iconWidth);
-	printf("Icon image height is: %d\n",iconHeight);
-	printf("Icon image channels are: %d\n",iconChannels);
-	printf("Icon image bit depth is: %d\n",iconBitDepth);
-	printf("Icon image data size is: %d\n",(int)iconDataSize);
-	#endif
-	
-	imageOut->imageWidth = iconWidth;
-	imageOut->imageHeight = iconHeight;
-	imageOut->imageChannels = iconChannels;
-	imageOut->pixel_depth = (iconBitDepth / iconChannels);
-	imageOut->imageDataSize = iconDataSize;
-	imageOut->imageData = (unsigned char *)malloc(iconDataSize);
-	if(!imageOut->imageData)
-	{
-		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d ($s:%m)!\n",(int)iconDataSize);
-		return -1;
-	}
-	memset(imageOut->imageData,0,iconDataSize);
-	
-	return 0;
-}
-
-// Only compile the openjpeg routines if we have support for it
-#ifdef ICNS_OPENPJEG
-
-/**
-sample error callback expecting a FILE* client object
-*/
-void icns_opj_error_callback(const char *msg, void *client_data) {
-	//FILE *stream = (FILE*)client_data;
-	//fprintf(stream, "[ERROR] %s", msg);
-}
-/**
-sample warning callback expecting a FILE* client object
-*/
-void icns_opj_warning_callback(const char *msg, void *client_data) {
-	//FILE *stream = (FILE*)client_data;
-	//fprintf(stream, "[WARNING] %s", msg);
-}
-/**
-sample debug callback expecting no client object
-*/
-void icns_opj_info_callback(const char *msg, void *client_data) {
-	//(void)client_data;
-	//fprintf(stdout, "[INFO] %s", msg);
-}
-
-// Convert from uncompressed opj data to ICNS_ImageData
-int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
-{
-	int		error = 0;
-	unsigned int	iconWidth = 0;
-	unsigned int	iconHeight = 0;
-	unsigned int	iconPixelDepth = 0;
-	unsigned int	iconChannels = 0;
-	unsigned long	iconDataSize = 0;
-	unsigned long	blockSize = 0;
-	int adjustR, adjustG, adjustB, adjustA;
-	unsigned char	*dataPtr = NULL;
-	int i,j;
-	
-	if(image == NULL) {
-		return -1;
-	}
-	
-	iconWidth = image->comps[0].w;
-	iconHeight = image->comps[0].h;
-	iconChannels = image->numcomps;
-	iconPixelDepth = image->comps[0].prec;
-	
-	blockSize = iconWidth * iconPixelDepth; // * iconChannels ?
-	iconDataSize = iconHeight * blockSize;
-	outIcon->imageWidth = iconWidth;
-	outIcon->imageHeight = iconHeight;
-	outIcon->imageChannels = iconChannels;
-	outIcon->pixel_depth = iconPixelDepth;
-	outIcon->imageDataSize = iconDataSize;
-	outIcon->imageData = (unsigned char *)malloc(iconDataSize);
-	if(!outIcon->imageData) {
-		printf("Failed alloc iconData\n");
-		return 0;
-	}
-	memset(outIcon->imageData,0,iconDataSize);
-	dataPtr = outIcon->imageData;
-	
-	if (image->comps[3].prec > 8) {
-		adjustR = image->comps[3].prec - 8;
-		printf("BMP CONVERSION: Truncating component 3 from %d bits to 8 bits\n",image->comps[3].prec);
-	} else 
-		adjustA = 0;
-	if (image->comps[0].prec > 8) {
-		adjustR = image->comps[0].prec - 8;
-		printf("BMP CONVERSION: Truncating component 0 from %d bits to 8 bits\n",image->comps[0].prec);
-	} else 
-		adjustR = 0;
-	if (image->comps[1].prec > 8) {
-		adjustG = image->comps[1].prec - 8;
-		printf("BMP CONVERSION: Truncating component 1 from %d bits to 8 bits\n",image->comps[1].prec);
-	} else 
-		adjustG = 0;
-	if (image->comps[2].prec > 8) {
-		adjustB = image->comps[2].prec - 8;
-		printf("BMP CONVERSION: Truncating component 2 from %d bits to 8 bits\n",image->comps[2].prec);
-	} else 
-		adjustB = 0;
-	
-	for (i = 0; i < iconHeight; i++) {
-		for(j = 0; j < iconWidth; j++) {
-			icns_pixel32_t *dst_pixel;
-			int r, g, b, a;
-						
-			a = image->comps[3].data[i*iconWidth+j];
-			a += (image->comps[3].sgnd ? 1 << (image->comps[3].prec - 1) : 0);
-			r = image->comps[0].data[i*iconWidth+j];
-			r += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
-			g = image->comps[1].data[i*iconWidth+j];
-			g += (image->comps[1].sgnd ? 1 << (image->comps[1].prec - 1) : 0);
-			b = image->comps[2].data[i*iconWidth+j];
-			b += (image->comps[2].sgnd ? 1 << (image->comps[2].prec - 1) : 0);
-
-			dst_pixel = (icns_pixel32_t *)&(dataPtr[i*iconWidth*iconChannels+j*iconChannels]);
-
-			dst_pixel->alpha = (unsigned char) ((a >> adjustA)+((a >> (adjustA-1))%2));
-			dst_pixel->red = (unsigned char) ((r >> adjustR)+((r >> (adjustR-1))%2));
-			dst_pixel->green = (unsigned char) ((g >> adjustG)+((g >> (adjustG-1))%2));
-			dst_pixel->blue = (unsigned char) ((b >> adjustB)+((b >> (adjustB-1))%2));
-		}
-	}
-	
-	return error;
-}
-
-// Decompress jp2
-opj_image_t * jp2dec(unsigned char *bufin, int len)
-{
-	opj_dparameters_t parameters;	/* decompression parameters */
-	opj_dinfo_t* dinfo = NULL;
-	opj_event_mgr_t event_mgr;		/* event manager */
-	opj_cio_t *cio = NULL;
-	opj_image_t *image = NULL;
-
-	/* configure the event callbacks (not required) */
-	memset(&event_mgr, 0, sizeof(opj_event_mgr_t));
-	event_mgr.error_handler = icns_opj_error_callback;
-	event_mgr.warning_handler = icns_opj_warning_callback;
-	event_mgr.info_handler = icns_opj_info_callback;
-
-	/* get a decoder handle */
-	dinfo = opj_create_decompress(CODEC_JP2);
-	
-	/* set decoding parameters to default values */
-	opj_set_default_decoder_parameters(&parameters);
-
-	/* catch events using our callbacks and give a local context */
-	opj_set_event_mgr((opj_common_ptr)dinfo, &event_mgr, stderr);
-
-	opj_setup_decoder(dinfo, &parameters);
-
-	/* open a byte stream */
-	cio = opj_cio_open((opj_common_ptr)dinfo, bufin, len);
-
-	image = opj_decode(dinfo, cio);
-	if(!image) {
-		fprintf(stderr, "ERROR -> j2k_to_image: failed to decode image!\n");
-		opj_destroy_decompress(dinfo);
-		opj_cio_close(cio);
-		return image;
-	}
-
-	/* close the byte stream */
-	opj_cio_close(cio);
-	opj_destroy_decompress(dinfo);
-
-	return image;
-}
-
-#endif /* ifdef ICNS_OPENPJEG */
-
 
 //***************************** icns_get_image_from_element **************************//
 // Actual conversion of the icon data into uncompressed raw pixels
@@ -659,7 +309,7 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 		#ifdef ICNS_OPENPJEG
 		
 		opj_image_t* image = NULL;
-
+		
 		image = jp2dec((unsigned char *)rawDataPtr, (int)rawDataSize);
 		if(!image)
 			return -1;
@@ -1107,6 +757,381 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 }
 
 
+//***************************** icns_init_image_for_type **************************//
+// Initialize a new image structure for holding the data
+// using the information for the specified type
+
+int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut)
+{
+	unsigned int	iconWidth = 0;
+	unsigned int	iconHeight = 0;
+	unsigned int	iconChannels = 0;
+	unsigned int	iconBitDepth = 0;
+	
+	if(imageOut == NULL)
+	{
+		fprintf(stderr,"libicns: Icon image structure is NULL!\n");
+		return -1;
+	}
+	
+	switch(icnsType)
+	{
+		// 32-Bit Icon Image Data Types
+		case ICNS_128X128_32BIT_DATA:
+			iconWidth = 128;
+			iconHeight = 128;
+			iconChannels = 4;
+			iconBitDepth = 32;
+			break;
+		case ICNS_48x48_32BIT_DATA:
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 4;
+			iconBitDepth = 32;
+			break;
+		case ICNS_32x32_32BIT_DATA:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 4;
+			iconBitDepth = 32;
+			break;
+		case ICNS_16x16_32BIT_DATA:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 4;
+			iconBitDepth = 32;
+			break;
+			
+		// 8-Bit Icon Mask Data Types
+		case ICNS_128X128_8BIT_MASK:
+			iconWidth = 128;
+			iconHeight = 128;
+			iconChannels = 1;
+			iconBitDepth = 8;
+			break;
+		case ICNS_48x48_8BIT_MASK:
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 1;
+			iconBitDepth = 8;
+			break;
+		case ICNS_32x32_8BIT_MASK:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 1;
+			iconBitDepth = 8;
+			break;
+		case ICNS_16x16_8BIT_MASK:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 1;
+			iconBitDepth = 8;
+			break;
+			
+		// 8-Bit Icon Image Data Types
+		case ICNS_48x48_8BIT_DATA:
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 1;
+			iconBitDepth = 8;
+			break;
+		case ICNS_32x32_8BIT_DATA:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 1;
+			iconBitDepth = 8;
+			break;
+		case ICNS_16x16_8BIT_DATA:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 1;
+			iconBitDepth = 8;
+			break;
+		case ICNS_16x12_8BIT_DATA:
+			iconWidth = 16;
+			iconHeight = 12;
+			iconChannels = 1;
+			iconBitDepth = 8;
+			break;
+
+		// 4-Bit Icon Image Data Types
+		case ICNS_48x48_4BIT_DATA:
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 1;
+			iconBitDepth = 4;
+			break;
+		case ICNS_32x32_4BIT_DATA:
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 1;
+			iconBitDepth = 4;
+			break;
+		case ICNS_16x16_4BIT_DATA:
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 1;
+			iconBitDepth = 4;
+			break;
+		case ICNS_16x12_4BIT_DATA:
+			iconWidth = 16;
+			iconHeight = 12;
+			iconChannels = 1;
+			iconBitDepth = 4;
+			break;
+
+		// 1-Bit Icon Image/Mask Data Types (Data is the same)
+		case ICNS_48x48_1BIT_DATA:  // Also ICNS_48x48_1BIT_MASK
+			iconWidth = 48;
+			iconHeight = 48;
+			iconChannels = 1;
+			iconBitDepth = 1;
+			break;
+		case ICNS_32x32_1BIT_DATA: // Also ICNS_32x32_1BIT_MASK
+			iconWidth = 32;
+			iconHeight = 32;
+			iconChannels = 1;
+			iconBitDepth = 1;
+			break;
+		case ICNS_16x16_1BIT_DATA: // Also ICNS_16x16_1BIT_MASK
+			iconWidth = 16;
+			iconHeight = 16;
+			iconChannels = 1;
+			iconBitDepth = 1;
+			break;
+		case ICNS_16x12_1BIT_DATA: // Also ICNS_16x12_1BIT_MASK
+			iconWidth = 16;
+			iconHeight = 12;
+			iconChannels = 1;
+			iconBitDepth = 1;
+			break;
+			
+		default:
+			fprintf(stderr,"libicns: Unable to parse icon type 0x%8X\n",icnsType);
+			return -1;
+			break;
+	}
+	
+	return icns_init_image(iconWidth,iconHeight,iconChannels,(iconBitDepth / iconChannels),imageOut);
+
+}
+
+//***************************** icns_init_image **************************//
+// Initialize a new image structure for holding the data
+
+int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut)
+{
+	unsigned int	iconBitDepth = 0;
+	unsigned long	iconDataSize = 0;
+	unsigned long	iconDataRowSize = 0;
+
+	iconBitDepth = iconPixelDepth * iconChannels;
+	iconDataRowSize = iconWidth * iconBitDepth / icns_byte_bits;
+	iconDataSize = iconHeight * iconDataRowSize;
+	
+	#ifdef ICNS_DEBUG
+	printf("Initializing new image...\n");
+	printf("Icon image width is: %d\n",iconWidth);
+	printf("Icon image height is: %d\n",iconHeight);
+	printf("Icon image channels are: %d\n",iconChannels);
+	printf("Icon image bit depth is: %d\n",iconBitDepth);
+	printf("Icon image data size is: %d\n",(int)iconDataSize);
+	#endif
+	
+	imageOut->imageWidth = iconWidth;
+	imageOut->imageHeight = iconHeight;
+	imageOut->imageChannels = iconChannels;
+	imageOut->pixel_depth = (iconBitDepth / iconChannels);
+	imageOut->imageDataSize = iconDataSize;
+	imageOut->imageData = (unsigned char *)malloc(iconDataSize);
+	if(!imageOut->imageData)
+	{
+		fprintf(stderr,"libicns: Unable to allocate memory block of size: %d ($s:%m)!\n",(int)iconDataSize);
+		return -1;
+	}
+	memset(imageOut->imageData,0,iconDataSize);
+	
+	return 0;
+}
+
+//***************************** icns_free_image **************************//
+// Deallocate data in an image structure
+
+int icns_free_image(icns_image_t *imageIn)
+{
+	imageIn->imageWidth = 0;
+	imageIn->imageHeight = 0;
+	imageIn->imageChannels = 0;
+	imageIn->pixel_depth = 0;
+	imageIn->imageDataSize = 0;
+	
+	if(imageIn->imageData != NULL)
+	{
+		free(imageIn->imageData);
+		imageIn->imageData = NULL;
+	}
+	
+	return 0;
+}
+
+// Only compile the openjpeg routines if we have support for it
+#ifdef ICNS_OPENPJEG
+
+/**
+sample error callback expecting a FILE* client object
+*/
+void icns_opj_error_callback(const char *msg, void *client_data) {
+	//FILE *stream = (FILE*)client_data;
+	//fprintf(stream, "[ERROR] %s", msg);
+}
+/**
+sample warning callback expecting a FILE* client object
+*/
+void icns_opj_warning_callback(const char *msg, void *client_data) {
+	//FILE *stream = (FILE*)client_data;
+	//fprintf(stream, "[WARNING] %s", msg);
+}
+/**
+sample debug callback expecting no client object
+*/
+void icns_opj_info_callback(const char *msg, void *client_data) {
+	//(void)client_data;
+	//fprintf(stdout, "[INFO] %s", msg);
+}
+
+// Convert from uncompressed opj data to ICNS_ImageData
+int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
+{
+	int		error = 0;
+	unsigned int	iconWidth = 0;
+	unsigned int	iconHeight = 0;
+	unsigned int	iconPixelDepth = 0;
+	unsigned int	iconChannels = 0;
+	unsigned long	iconDataSize = 0;
+	unsigned long	blockSize = 0;
+	int adjustR, adjustG, adjustB, adjustA;
+	unsigned char	*dataPtr = NULL;
+	int i,j;
+	
+	if(image == NULL) {
+		return -1;
+	}
+	
+	iconWidth = image->comps[0].w;
+	iconHeight = image->comps[0].h;
+	iconChannels = image->numcomps;
+	iconPixelDepth = image->comps[0].prec;
+	
+	blockSize = iconWidth * iconPixelDepth; // * iconChannels ?
+	iconDataSize = iconHeight * blockSize;
+	outIcon->imageWidth = iconWidth;
+	outIcon->imageHeight = iconHeight;
+	outIcon->imageChannels = iconChannels;
+	outIcon->pixel_depth = iconPixelDepth;
+	outIcon->imageDataSize = iconDataSize;
+	outIcon->imageData = (unsigned char *)malloc(iconDataSize);
+	if(!outIcon->imageData) {
+		printf("Failed alloc iconData\n");
+		return 0;
+	}
+	memset(outIcon->imageData,0,iconDataSize);
+	dataPtr = outIcon->imageData;
+	
+	if (image->comps[3].prec > 8) {
+		adjustR = image->comps[3].prec - 8;
+		printf("BMP CONVERSION: Truncating component 3 from %d bits to 8 bits\n",image->comps[3].prec);
+	} else 
+		adjustA = 0;
+	if (image->comps[0].prec > 8) {
+		adjustR = image->comps[0].prec - 8;
+		printf("BMP CONVERSION: Truncating component 0 from %d bits to 8 bits\n",image->comps[0].prec);
+	} else 
+		adjustR = 0;
+	if (image->comps[1].prec > 8) {
+		adjustG = image->comps[1].prec - 8;
+		printf("BMP CONVERSION: Truncating component 1 from %d bits to 8 bits\n",image->comps[1].prec);
+	} else 
+		adjustG = 0;
+	if (image->comps[2].prec > 8) {
+		adjustB = image->comps[2].prec - 8;
+		printf("BMP CONVERSION: Truncating component 2 from %d bits to 8 bits\n",image->comps[2].prec);
+	} else 
+		adjustB = 0;
+	
+	for (i = 0; i < iconHeight; i++) {
+		for(j = 0; j < iconWidth; j++) {
+			icns_pixel32_t *dst_pixel;
+			int r, g, b, a;
+						
+			a = image->comps[3].data[i*iconWidth+j];
+			a += (image->comps[3].sgnd ? 1 << (image->comps[3].prec - 1) : 0);
+			r = image->comps[0].data[i*iconWidth+j];
+			r += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
+			g = image->comps[1].data[i*iconWidth+j];
+			g += (image->comps[1].sgnd ? 1 << (image->comps[1].prec - 1) : 0);
+			b = image->comps[2].data[i*iconWidth+j];
+			b += (image->comps[2].sgnd ? 1 << (image->comps[2].prec - 1) : 0);
+
+			dst_pixel = (icns_pixel32_t *)&(dataPtr[i*iconWidth*iconChannels+j*iconChannels]);
+
+			dst_pixel->alpha = (unsigned char) ((a >> adjustA)+((a >> (adjustA-1))%2));
+			dst_pixel->red = (unsigned char) ((r >> adjustR)+((r >> (adjustR-1))%2));
+			dst_pixel->green = (unsigned char) ((g >> adjustG)+((g >> (adjustG-1))%2));
+			dst_pixel->blue = (unsigned char) ((b >> adjustB)+((b >> (adjustB-1))%2));
+		}
+	}
+	
+	return error;
+}
+
+// Decompress jp2
+opj_image_t * jp2dec(unsigned char *bufin, int len)
+{
+	opj_dparameters_t parameters;	/* decompression parameters */
+	opj_dinfo_t* dinfo = NULL;
+	opj_event_mgr_t event_mgr;		/* event manager */
+	opj_cio_t *cio = NULL;
+	opj_image_t *image = NULL;
+
+	/* configure the event callbacks (not required) */
+	memset(&event_mgr, 0, sizeof(opj_event_mgr_t));
+	event_mgr.error_handler = icns_opj_error_callback;
+	event_mgr.warning_handler = icns_opj_warning_callback;
+	event_mgr.info_handler = icns_opj_info_callback;
+
+	/* get a decoder handle */
+	dinfo = opj_create_decompress(CODEC_JP2);
+	
+	/* set decoding parameters to default values */
+	opj_set_default_decoder_parameters(&parameters);
+
+	/* catch events using our callbacks and give a local context */
+	opj_set_event_mgr((opj_common_ptr)dinfo, &event_mgr, stderr);
+
+	opj_setup_decoder(dinfo, &parameters);
+
+	/* open a byte stream */
+	cio = opj_cio_open((opj_common_ptr)dinfo, bufin, len);
+
+	image = opj_decode(dinfo, cio);
+	if(!image) {
+		fprintf(stderr, "ERROR -> j2k_to_image: failed to decode image!\n");
+		opj_destroy_decompress(dinfo);
+		opj_cio_close(cio);
+		return image;
+	}
+
+	/* close the byte stream */
+	opj_cio_close(cio);
+	opj_destroy_decompress(dinfo);
+
+	return image;
+}
+
+#endif /* ifdef ICNS_OPENPJEG */
+
+
+
 //***************************** icns_new_element_from_image **************************//
 // Creates a new icns element from an image
 int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_element_t **iconElementOut)
@@ -1515,6 +1540,7 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 	if((dataSize-dataOffset) > 0) {
 		iconDataPtr = (unsigned char *)malloc(dataSize-dataOffset);
 		memcpy (iconDataPtr,dataPtr+dataOffset,dataSize-dataOffset);
+		dataSize = dataSize-dataOffset;
 	} else {
 		iconDataPtr = (unsigned char *)malloc(dataSize);
 		memcpy (iconDataPtr,dataPtr,dataSize);
@@ -1526,6 +1552,7 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 		if((error = icns_family_from_mac_resource(dataSize,iconDataPtr,icnsFamilyOut)))
 		{
 			fprintf(stderr,"libicns: Error parsing X Icon resource!\n");
+			free(iconDataPtr);
 			*icnsFamilyOut = NULL;
 		}
 	}
@@ -1542,7 +1569,7 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 
 int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **icnsFamilyOut)
 {
-	icns_bool_t	swapBytesped = ES_IS_LITTLE_ENDIAN;
+	icns_bool_t	swapBytes = ES_IS_LITTLE_ENDIAN;
 	icns_bool_t	error = 0;
 	
 	icns_bool_t	found = 0;
@@ -1563,16 +1590,16 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 	
 	if(dataSize < 16)
 	{
-		// rsrc header is 128 bytes - We cannot have a file of a smaller size.
+		// rsrc header is 16 bytes - We cannot have a file of a smaller size.
 		fprintf(stderr,"libicns: Unable to decode rsrc data! - Data size too small.\n");
 		return -1;
 	}
 
 	// Load Resource Header to if we are dealing with a raw resource fork.
-	resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+0)),sizeof(icns_sint32_t),swapBytesped);
-	resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+4)),sizeof(icns_sint32_t),swapBytesped);
-	resHeadDataSize = EndianSwap(*((icns_sint32_t*)(dataPtr+8)),sizeof(icns_sint32_t),swapBytesped);
-	resHeadMapLength = EndianSwap(*((icns_sint32_t*)(dataPtr+12)),sizeof(icns_sint32_t),swapBytesped);
+	resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+0)),sizeof(icns_sint32_t),swapBytes);
+	resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+4)),sizeof(icns_sint32_t),swapBytes);
+	resHeadDataSize = EndianSwap(*((icns_sint32_t*)(dataPtr+8)),sizeof(icns_sint32_t),swapBytes);
+	resHeadMapLength = EndianSwap(*((icns_sint32_t*)(dataPtr+12)),sizeof(icns_sint32_t),swapBytes);
 	
 	// Check to see if file is not a raw resource file
 	if( (resHeadMapOffset+resHeadMapLength != dataSize) || (resHeadDataOffset+resHeadDataSize != resHeadMapOffset) )
@@ -1582,10 +1609,10 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 		if(!error)
 		{
 			// Reload Actual Resource Header.
-			resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(parsedData+0)),sizeof(icns_sint32_t),swapBytesped);
-			resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(parsedData+4)),sizeof(icns_sint32_t),swapBytesped);
-			resHeadDataSize = EndianSwap(*((icns_sint32_t*)(parsedData+8)),sizeof(icns_sint32_t),swapBytesped);
-			resHeadMapLength = EndianSwap(*((icns_sint32_t*)(parsedData+12)),sizeof(icns_sint32_t),swapBytesped);
+			resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(parsedData+0)),sizeof(icns_sint32_t),swapBytes);
+			resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(parsedData+4)),sizeof(icns_sint32_t),swapBytes);
+			resHeadDataSize = EndianSwap(*((icns_sint32_t*)(parsedData+8)),sizeof(icns_sint32_t),swapBytes);
+			resHeadMapLength = EndianSwap(*((icns_sint32_t*)(parsedData+12)),sizeof(icns_sint32_t),swapBytes);
 			
 			dataSize = parsedSize;
 			dataPtr = parsedData;
@@ -1595,10 +1622,10 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 	if(!error)
 	{
 		// Load Resource Map
-		resMapAttributes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+0+22)), sizeof(icns_sint16_t),swapBytesped);
-		resMapTypeOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+2+22)), sizeof(icns_sint16_t),swapBytesped);
-		resMapNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+4+22)), sizeof(icns_sint16_t),swapBytesped);
-		resMapNumTypes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+6+22)), sizeof(icns_sint16_t),swapBytesped)+1;
+		resMapAttributes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+0+22)), sizeof(icns_sint16_t),swapBytes);
+		resMapTypeOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+2+22)), sizeof(icns_sint16_t),swapBytes);
+		resMapNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+4+22)), sizeof(icns_sint16_t),swapBytes);
+		resMapNumTypes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+6+22)), sizeof(icns_sint16_t),swapBytes)+1;
 		
 		for(count = 0; count < resMapNumTypes && found == 0; count++)
 		{
@@ -1606,9 +1633,9 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 			short	resNumItems = 0;
 			short	resOffset = 0;
 			
-			resType = EndianSwap(*((icns_type_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8))),sizeof(icns_type_t),swapBytesped);
-			resNumItems = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(icns_sint16_t),swapBytesped);
-			resOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(icns_sint16_t),swapBytesped);
+			resType = EndianSwap(*((icns_type_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8))),sizeof(icns_type_t),swapBytes);
+			resNumItems = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(icns_sint16_t),swapBytes);
+			resOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(icns_sint16_t),swapBytes);
 			
 			if(resType == 0x69636E73) /* 'icns' */
 			{
@@ -1621,16 +1648,16 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 				char	resName[256] = {0};
 				unsigned char	*resData = NULL;
 				
-				resID = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset)),sizeof(icns_sint16_t),swapBytesped);
-				resNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2)),sizeof(icns_sint16_t),swapBytesped);
+				resID = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset)),sizeof(icns_sint16_t),swapBytes);
+				resNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2)),sizeof(icns_sint16_t),swapBytes);
 				resAttributes = *((icns_sint8_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4));
 
 				// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
 				// Load as long, and then cut off extra inital byte.
-				resDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(icns_sint32_t),swapBytesped);
+				resDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(icns_sint32_t),swapBytes);
 				resDataOffset &= 0x00FFFFFF;
 
-				resDataSize = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(icns_sint32_t),swapBytesped);
+				resDataSize = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(icns_sint32_t),swapBytes);
 
 				if(resNameOffset != -1)
 				{
@@ -1694,7 +1721,7 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	
 	int		error = 0;
 	int		isValid = 0;
-	int		swapBytesped = ES_IS_LITTLE_ENDIAN;
+	int		swapBytes = ES_IS_LITTLE_ENDIAN;
 	short		secondHeaderLength = 0;
 	long		fileDataPadding = 0;
 	long		resourceDataPadding = 0;
@@ -1704,12 +1731,37 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	long		resourceDataStart = 0;
 	unsigned char	*resourceDataPtr = NULL;
 	
-	*dataTypeOut = 0x00000000;
-	*dataCreatorOut = 0x00000000;
-	*parsedResSizeOut = 0;
-	*parsedResDataOut = NULL;
+	if(dataPtr == NULL)
+	{
+		fprintf(stderr,"libicns: macbinary data is NULL!\n");
+		return -1;
+	}
 	
-	// Begin by checking for valid MacBinary data
+	if(dataTypeOut != NULL)
+		*dataTypeOut = 0x00000000;
+	
+	if(dataCreatorOut != NULL)
+		*dataCreatorOut = 0x00000000;
+	
+	if(parsedResSizeOut == NULL)
+	{
+		fprintf(stderr,"libicns: parsedResSizeOut is NULL!\n");
+		return -1;
+	}
+	else
+	{
+		*parsedResSizeOut = 0;
+	}
+
+	if(parsedResDataOut == NULL)
+	{
+		fprintf(stderr,"libicns: parsedResSizeOut is NULL!\n");
+		return -1;
+	}
+	else
+	{
+		*parsedResDataOut = NULL;
+	}
 	
 	if(dataSize < 128)
 	{
@@ -1718,8 +1770,10 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 		return -1;
 	}
 	
+	// Begin by checking for valid MacBinary data
+	
 	                                         /* 'mBIN' */
-	if(*((icns_type_t*)(dataPtr+65)) == EndianSwap(0x6D42494E,4,swapBytesped))
+	if(*((icns_type_t*)(dataPtr+65)) == EndianSwap(0x6D42494E,4,swapBytes))
 	{
 		// Valid MacBinary III file
 		isValid = 1;
@@ -1743,16 +1797,16 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	
 	// If mac file type is requested, pass it up
 	if(dataTypeOut != NULL)
-		*dataTypeOut = EndianSwap( *((icns_type_t*)(dataPtr+65)), sizeof(icns_type_t), swapBytesped );
+		*dataTypeOut = EndianSwap( *((icns_type_t*)(dataPtr+65)), sizeof(icns_type_t), swapBytes );
 
 	// If mac file creator is requested, pass it up
 	if(dataCreatorOut != NULL)
-		*dataCreatorOut = EndianSwap( *((icns_type_t*)(dataPtr+69)), sizeof(icns_type_t), swapBytesped );
+		*dataCreatorOut = EndianSwap( *((icns_type_t*)(dataPtr+69)), sizeof(icns_type_t), swapBytes );
 	
 	// Load up the data lengths
-	secondHeaderLength = EndianSwap( *((icns_sint16_t *)(dataPtr+120)), sizeof(icns_sint16_t), swapBytesped );
-	fileDataSize = EndianSwap( *((icns_sint32_t *)(dataPtr+83)), sizeof(icns_sint32_t), swapBytesped );
-	resourceDataSize = EndianSwap( *((icns_sint32_t *)(dataPtr+87)), sizeof(icns_sint32_t), swapBytesped );
+	secondHeaderLength = EndianSwap( *((icns_sint16_t *)(dataPtr+120)), sizeof(icns_sint16_t), swapBytes );
+	fileDataSize = EndianSwap( *((icns_sint32_t *)(dataPtr+83)), sizeof(icns_sint32_t), swapBytes );
+	resourceDataSize = EndianSwap( *((icns_sint32_t *)(dataPtr+87)), sizeof(icns_sint32_t), swapBytes );
 
 	// Calculate extra padding length for forks
 	fileDataPadding = (((fileDataSize + 127) >> 7) << 7) - fileDataSize;
@@ -1766,7 +1820,7 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	if( resourceDataStart < 0 ) return -1;
 	if( resourceDataSize < 0 ) return -1;
 	if( resourceDataStart < dataSize ) return -1;
-	if( resourceDataSize < dataSize ) return -1;
+	if( resourceDataSize < dataSize ) return -1;	// Hmm? Shouldn't this be okay?
 	if( resourceDataStart+resourceDataSize < 0 ) return -1;
 	if( resourceDataStart+resourceDataSize < dataSize ) return -1;
 	

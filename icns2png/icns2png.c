@@ -338,8 +338,10 @@ int ConvertIcnsFile(char *filename)
 		fprintf(stderr,"Unable to read file %s!\n",infilename);
 		free(infilename);
 		free(outfilename);
-		if(fileDataPtr != NULL)
+		if(fileDataPtr != NULL) {
 			free(fileDataPtr);
+			fileDataPtr = NULL;
+		}
 		return -1;
 	}
 	
@@ -412,6 +414,12 @@ cleanup:
 	if(mask != NULL) {
 		free(mask);
 		mask = NULL;
+	}
+	icns_free_image(&iconImage);
+	icns_free_image(&maskImage);
+	if(fileDataPtr != NULL) {
+		free(fileDataPtr);
+		fileDataPtr = NULL;
 	}
 	free(infilename);
 	free(outfilename);
