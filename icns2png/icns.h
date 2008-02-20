@@ -29,25 +29,26 @@ Boston, MA 02111-1307, USA.
 #define	_ICNS_H_
 
 /*  Compile-time variables   */
-
+/*  These should really be set from the Makefile */
 // Enable debugging messages?
 // #define	ICNS_DEBUG
 
 // Enable openjpeg for 256x256 and 512x512 support
-#define	ICNS_OPENPJEG
+// #define	ICNS_OPENJPEG
 
+
+/*  OpenJPEG headers   */
+#ifdef ICNS_OPENJPEG
+#include <openjpeg.h>
+#endif
 
 /*  OpenJPEG version check   */
-#ifdef ICNS_OPENPJEG
-#include <openjpeg.h>
-
 // OPENJPEG_VERSION seems to be a reliable test for having
 // the proper openjpeg header files.
 #ifndef OPENJPEG_VERSION
 	#warning "libicns: Can't determine OpenJPEG version."
 	#warning "libicns: 256x256 and 512x512 support will not be available."
-	#undef	ICNS_OPENPJEG
-#endif
+	#undef	ICNS_OPENJPEG
 #endif
 
 
@@ -153,7 +154,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut);
 int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut);
 int icns_free_image(icns_image_t *imageIn);
-#ifdef ICNS_OPENPJEG
+#ifdef ICNS_OPENJPEG
 void icns_opj_error_callback(const char *msg, void *client_data);
 void icns_opj_warning_callback(const char *msg, void *client_data);
 void icns_opj_info_callback(const char *msg, void *client_data);

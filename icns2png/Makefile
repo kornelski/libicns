@@ -17,9 +17,8 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 #
-
-# Grad operating system name
-UNAME := $(shell uname)
+#######################################################
+# Update this section:
 
 # Version information
 # Note, versions are in the format of the following
@@ -27,7 +26,17 @@ UNAME := $(shell uname)
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 1.1a
+LIBVERMIN = 1.1b
+
+# Compile with debug flags and icns debug messages
+DEBUG = false
+
+# Compile with openjpeg support for icons >= 256x256
+OPENJPEG = true
+
+######################################################
+# Operating system name
+UNAME := $(shell uname)
 
 VERSION = $(LIBVERMAJ).$(LIBVERMIN)
 LIBSTATIC = $(LIBNAME).a
@@ -41,6 +50,7 @@ else
  LIBSOVER = $(LIBSO).$(VERSION)
 endif
 
+# Development headers
 LIBHDR = icns.h
 
 # Utilities
@@ -56,15 +66,26 @@ BINPATH=$(PREFIX)/bin
 INCPATH=$(PREFIX)/include
 
 # Compiler flags
-CFLAGS+=-Wall -g -I$(INCPATH)
+CFLAGS+=-Wall -I$(INCPATH)
+ifeq "$(DEBUG)" "true"
+CFLAGS+=-g -DICNS_DEBUG
+endif
+ifeq "$(OPENJPEG)" "true"
+CFLAGS+=-DICNS_OPENJPEG
+endif
 
 # Linker flags
-LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12 -lopenjpeg
+LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12
+ifeq "$(OPENJPEG)" "true"
+ LDFLAGS+=-lopenjpeg
+endif
+
 LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
+
 ifeq "$(UNAME)" "Darwin"
-LDFLAGS_SO+=-licns $(LDFLAGS)
+ LDFLAGS_SO+=-licns $(LDFLAGS)
 else
-LDFLAGS_SO+=-Wl,-rpath,. -licns $(LDFLAGS)
+ LDFLAGS_SO+=-Wl,-rpath,. -licns $(LDFLAGS)
 endif
 
 # Library object files

@@ -306,7 +306,7 @@ int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapByt
 	// We use the jp2 processor for these two
 	if((icnsType == ICNS_512x512_32BIT_ARGB_DATA) || (icnsType == ICNS_256x256_32BIT_ARGB_DATA))
 	{
-		#ifdef ICNS_OPENPJEG
+		#ifdef ICNS_OPENJPEG
 		
 		opj_image_t* image = NULL;
 		
@@ -971,7 +971,7 @@ int icns_free_image(icns_image_t *imageIn)
 }
 
 // Only compile the openjpeg routines if we have support for it
-#ifdef ICNS_OPENPJEG
+#ifdef ICNS_OPENJPEG
 
 /**
 sample error callback expecting a FILE* client object
@@ -1124,7 +1124,7 @@ opj_image_t * jp2dec(unsigned char *bufin, int len)
 	return image;
 }
 
-#endif /* ifdef ICNS_OPENPJEG */
+#endif /* ifdef ICNS_OPENJPEG */
 
 
 
