@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.
 // #define	ICNS_DEBUG
 
 // Enable openjpeg for 256x256 and 512x512 support
-// #define	ICNS_OPENPJEG
+#define	ICNS_OPENPJEG
 
 
 /*  OpenJPEG version check   */

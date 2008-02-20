@@ -142,12 +142,18 @@ Version information
 versions are in the format of: 0.0.0a (MAJOR.MINOR.RELEASE[dev])
 
 Development changes should increment the letter with each commit
-Releases should increment the last number
+Releases should increment the middle number and remove the letter
 Milestone releases should increment the middle number and remove the letter
   -- beta relases should be odd numbered
   -- stable releases should be even numbered
 Major number should increment only for file format changes causing breakage
 to a previously stable version, or on the decision of two or more developers
+Examples, in descending order:
+0.1.1  - beta version 0 milestone 1 release 1 official
+0.1.1a - beta version 0 milestone 1 release candidate 1 dev a 
+0.1.1  - beta version 0 milestone 1 release candidate 1 dev b
+0.1.2  - beta version 0 milestone 1 release 2 official
+0.2.0  - stable version 0 milestone 1 release 0 official
 
 ===============================================================================
 Naming conventions

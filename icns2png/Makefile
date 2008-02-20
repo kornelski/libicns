@@ -27,7 +27,7 @@ UNAME := $(shell uname)
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 1.0c
+LIBVERMIN = 1.1
 
 VERSION = $(LIBVERMAJ).$(LIBVERMIN)
 LIBSTATIC = $(LIBNAME).a
@@ -59,7 +59,7 @@ INCPATH=$(PREFIX)/include
 CFLAGS+=-Wall -g -I$(INCPATH)
 
 # Linker flags
-LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12 
+LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12 -lopenjpeg
 LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
 ifeq "$(UNAME)" "Darwin"
 LDFLAGS_SO+=-licns $(LDFLAGS)
@@ -147,6 +147,6 @@ install: install-static install-shared install-utils
 	
 clean:
 	rm -f $(LIBSTATIC) $(LIBSO) $(LIBSOMAJ) $(LIBSOVER) \
-		*.o $(LIBUTILS) $(TESTFILES)
+		*.o $(LIBUTILS) *.png
 
 
