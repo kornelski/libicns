@@ -18,8 +18,8 @@
 # Boston, MA 02111-1307, USA.
 #
 
-# Check for Mac OS X
-DARWIN := $(shell uname)
+# Grad operating system name
+UNAME := $(shell uname)
 
 # Version information
 # Note, versions are in the format of the following
@@ -27,13 +27,19 @@ DARWIN := $(shell uname)
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 1.0b
+LIBVERMIN = 1.0c
 
 VERSION = $(LIBVERMAJ).$(LIBVERMIN)
 LIBSTATIC = $(LIBNAME).a
-LIBSO = $(LIBNAME).so
-LIBSOMAJ = $(LIBSO).$(LIBVERMAJ)
-LIBSOVER = $(LIBSO).$(VERSION)
+ifeq "$(UNAME)" "Darwin"
+ LIBSO = $(LIBNAME).dylib
+ LIBSOMAJ = $(LIBNAME).$(LIBVERMAJ).dylib
+ LIBSOVER = $(LIBNAME).$(VERSION).dylib
+else
+ LIBSO = $(LIBNAME).so
+ LIBSOMAJ = $(LIBSO).$(LIBVERMAJ)
+ LIBSOVER = $(LIBSO).$(VERSION)
+endif
 
 LIBHDR = icns.h
 
@@ -53,9 +59,13 @@ INCPATH=$(PREFIX)/include
 CFLAGS+=-Wall -g -I$(INCPATH)
 
 # Linker flags
-LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12 -lopenjpeg
+LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12 
 LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
+ifeq "$(UNAME)" "Darwin"
+LDFLAGS_SO+=-licns $(LDFLAGS)
+else
 LDFLAGS_SO+=-Wl,-rpath,. -licns $(LDFLAGS)
+endif
 
 # Library object files
 LIBOBJS = icns.o 
@@ -71,23 +81,10 @@ UTILOBJS = icns2png.o
 SUBDIRS = $(TESTDIR)
 
 # Macros for makefile
-.SUFFIXES:	.c .o .pic.o .icns .rsrc .bin .png
+.SUFFIXES:	.c .o .pic.o
 
 .c.pic.o:
 	$(CC) -c $(CFLAGS) -fPIC -o $@ $*.c
-
-# test files
-TESTFILES = test1.png test2.png test3.png
-TESTUTIL = ./icns2png
-
-# Macros for testing
-.SECONDEXPANSION:
-.icns.png:
-	@echo Test: Converting icon in native icns format; $(TESTUTIL) $*.icns	
-.rsrc.png:
-	@echo Test: Converting icon in mac resource; $(TESTUTIL) $*.rsrc
-.bin.png:
-	@echo Test: Converting icon in macbinary resource; $(TESTUTIL) $*.bin
 
 all: $(LIBSTATIC) $(LIBSO) $(LIBUTILS)
 
@@ -102,8 +99,8 @@ $(LIBSOMAJ): $(LIBSOVER)
 	ln -sf $(LIBSOVER) $(LIBSOMAJ)
 
 $(LIBSOVER): $(LIBOBJSDLL)
-ifeq "$(DARWIN)" "Darwin"
-	$(CC) -dynamiclib -W1,-soname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL) $(CFLAGS) $(LDFLAGS_SO)
+ifeq "$(UNAME)" "Darwin"
+	$(CC) -dynamiclib -install_name $(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
 else
 	$(CC) -shared -W1,-soname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
 endif
@@ -114,7 +111,13 @@ icns2png: $(UTILOBJS) $(LIBSO)
 icontainer2icns:
 	$(CC) -o icontainer2icns icontainer2icns.c
 
-test: $(LIBUTILS) $$(TESTFILES)
+test: $(LIBUTILS)
+	+@echo 'Test: Converting icon in native icns format...'; \
+	./icns2png test1.icns; \
+	echo 'Test: Converting icon in mac resource...'; \
+	./icns2png test2.rsrc; \
+	echo 'Test: Converting icon in macbinary resource...'; \
+	./icns2png test3.bin
 
 install-headers: $(LIBHDR)
 	cp $(LIBHDR) $(INCPATH)/
@@ -127,6 +130,7 @@ install-static: install-headers $(LIBSTATIC)
 
 install-shared: install-headers $(LIBSO)
 	-@if [ ! -d $(LIBPATH) ]; then mkdir -p $(LIBPATH); fi	
+	if [ "$(UNAME)" = "Darwin" ]; then install_name_tool -id $(LIBPATH)/$(LIBSOMAJ) $(LIBSOVER); fi
 	cp $(LIBSOVER) $(LIBPATH)/
 	chmod 755 $(LIBPATH)/$(LIBSOVER)
 	(cd $(LIBPATH); \
@@ -135,6 +139,7 @@ install-shared: install-headers $(LIBSO)
 
 install-utils: $(LIBUTILS)
 	-@if [ ! -d $(BINPATH) ]; then mkdir -p $(BINPATH); fi
+	install_name_tool -change $(LIBSOMAJ) $(LIBPATH)/$(LIBSOMAJ) icns2png
 	install -m 755 icns2png $(BINPATH)
 	install -m 755 icontainer2icns $(BINPATH)
 

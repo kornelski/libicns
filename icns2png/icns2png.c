@@ -450,10 +450,10 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	image_channels = image->imageChannels;
 	image_bit_depth = image->pixel_depth;
 	
-	printf("width: %d\n",width);
-	printf("height: %d\n",height);
-	printf("image_channels: %d\n",image_channels);
-	printf("image_bit_depth: %d\n",image_bit_depth);
+	//printf("width: %d\n",width);
+	//printf("height: %d\n",height);
+	//printf("image_channels: %d\n",image_channels);
+	//printf("image_bit_depth: %d\n",image_bit_depth);
 	
 	if(mask != NULL) {
 		mask_channels = mask->imageChannels;
