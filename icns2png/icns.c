@@ -452,7 +452,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 		// Start with mask 0x00FFFFFF, then 0x0000FFFF, then 0x0000FF
 		
 		y = 0;
-		while(y < destIconLength)
+		while((y < destIconLength) && (r < dataInSize))
 		{
 			if( (rawDataPtr[r] & 0x80) == 0)
 			{
@@ -460,7 +460,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 				length = (int)(0xFF & rawDataPtr[r++]) + 1; // 1 <= len <= 128
 				dataSum += length;
 				
-				for(i = 0; i < (int)length; i++)
+				for(i = 0; (i < (int)length) && (y < destIconLength) ; i++)
 					destIconData[y++] |= ( ((int)rawDataPtr[r++]) << myshift) & mymask;
 				
 				runCount++;
@@ -474,7 +474,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 				// Set the value to the color shifted to the correct bit offset
 				value = ( ((int)rawDataPtr[r++]) << myshift) & mymask;
 				
-				for(i = 0; i < (int)length; i++)
+				for(i = 0; (i < (int)length) && (y < destIconLength); i++)
 					destIconData[y++] |= value;
 				
 				runCount++;
@@ -1468,7 +1468,7 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 		*swapBytes = 0;
 	} else {
 		fprintf(stderr,"libicns: icns_get_element_from_family: Invalid icns family!\n");
-		error = -1;
+		return -1;
 	}
 	
 	if(*swapBytes == bigEndian) {
@@ -1490,8 +1490,21 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 	while ( (foundData == 0) && (dataOffset < icnsFamilySize) )
 	{
 		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		
+		if( icnsFamilySize < (dataOffset+sizeof(icns_type_t)+sizeof(icns_size_t)) )
+		{
+			fprintf(stderr,"libicns: icns_get_element_from_family: Corrupted icns family!\n");
+			return -1;		
+		}
+		
 		elementType = EndianSwap(icnsElement->elementType,sizeof(icns_type_t),*swapBytes);
 		elementSize = EndianSwap(icnsElement->elementSize,sizeof(icns_size_t),*swapBytes);
+	
+		if( (elementSize == 0) || ((dataOffset+elementSize) > icnsFamilySize) )
+		{
+			fprintf(stderr,"libicns: icns_get_element_from_family: Invalid element size!\n");
+			return -1;
+		}
 		
 		#ifdef ICNS_DEBUG
 		printf("Found data...\n");
@@ -1936,14 +1949,14 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 	swapBytes = ES_IS_LITTLE_ENDIAN;
 
 	// search for icns entry, NG icns haf various offsets!
-	// Note by Mathew 02/13/2008
-	// IMHO, this is hackish and should be fixed
+	// Note by Mathew 02/18/2008
+	// Baghira hack disabled for security reasons
 	// Are there not specs for the NG format??
-	iconDataPtr = dataPtr;
-	while ( (dataOffset < dataSize-sizeof(icns_type_t)) && (*((icns_type_t*)(iconDataPtr)) != EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),swapBytes)) ) {
-		++dataOffset;
-		++iconDataPtr;
-	}
+	//iconDataPtr = dataPtr;
+	//while ( (dataOffset < dataSize-sizeof(icns_type_t)) && (*((icns_type_t*)(iconDataPtr)) != EndianSwap(ICNS_FAMILY_TYPE,sizeof(icns_type_t),swapBytes)) ) {
+	//	++dataOffset;
+	//	++iconDataPtr;
+	//}
 	
 	// Copy the data to a new block of memory
 	if((dataSize-dataOffset) > 0) {
@@ -1969,8 +1982,14 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 	{
 		// Data is an X Icon file - no parsing needed at this point
 		*icnsFamilyOut = (icns_family_t*)iconDataPtr;
+		if( dataSize != EndianSwap( ((*icnsFamilyOut)->resourceSize) ,sizeof(icns_size_t),swapBytes) )
+		{
+			fprintf(stderr,"libicns: icns_family_from_file_data: Invalid icns resource size!\n");
+			return -1;
+		}
+
 	}
-	
+
 	return error;
 }
 
@@ -2015,17 +2034,35 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 	{
 		// If not, try reading data as MacBinary file
 		error = icns_parse_macbinary_resource_fork(dataSize,dataPtr,NULL,NULL,&parsedSize,&parsedData);
-		if(error == 0)
+
+		if(error != 0)
 		{
-			// Reload Actual Resource Header.
-			resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(parsedData+0)),sizeof(icns_sint32_t),swapBytes);
-			resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(parsedData+4)),sizeof(icns_sint32_t),swapBytes);
-			resHeadDataSize = EndianSwap(*((icns_sint32_t*)(parsedData+8)),sizeof(icns_sint32_t),swapBytes);
-			resHeadMapLength = EndianSwap(*((icns_sint32_t*)(parsedData+12)),sizeof(icns_sint32_t),swapBytes);
-			
-			dataSize = parsedSize;
-			dataPtr = parsedData;
+			fprintf(stderr,"libicns: icns_family_from_mac_resource: Unable to to decode macbinary data.\n");
+			return -1;
+					
 		}
+		
+		// Reload Actual Resource Header.
+		resHeadDataOffset = EndianSwap(*((icns_sint32_t*)(parsedData+0)),sizeof(icns_sint32_t),swapBytes);
+		resHeadMapOffset = EndianSwap(*((icns_sint32_t*)(parsedData+4)),sizeof(icns_sint32_t),swapBytes);
+		resHeadDataSize = EndianSwap(*((icns_sint32_t*)(parsedData+8)),sizeof(icns_sint32_t),swapBytes);
+		resHeadMapLength = EndianSwap(*((icns_sint32_t*)(parsedData+12)),sizeof(icns_sint32_t),swapBytes);
+				
+		dataSize = parsedSize;
+		dataPtr = parsedData;
+
+		if( (resHeadMapOffset+resHeadMapLength != dataSize) || (resHeadDataOffset+resHeadDataSize != resHeadMapOffset) )
+		{
+			fprintf(stderr,"libicns: icns_family_from_mac_resource: Invalid macbinary resource data.\n");
+			goto cleanup;
+		}
+	}
+
+	if(resHeadMapOffset+28 > dataSize)
+	{
+		fprintf(stderr,"libicns: icns_family_from_mac_resource: Invalid resource header.\n");
+		error = -1;
+		goto cleanup;
 	}
 	
 	if(error == 0)
@@ -2036,17 +2073,24 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 		resMapNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+4+22)), sizeof(icns_sint16_t),swapBytes);
 		resMapNumTypes = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+6+22)), sizeof(icns_sint16_t),swapBytes)+1;
 		
+		if( (resHeadMapOffset+resMapTypeOffset+2+(count*8)) > dataSize)
+		{
+			fprintf(stderr,"libicns: icns_family_from_mac_resource: Invalid resource map.\n");
+			error = -1;
+			goto cleanup;
+		}
+		
 		for(count = 0; count < resMapNumTypes && found == 0; count++)
 		{
 			icns_type_t	resType;
-			short	resNumItems = 0;
-			short	resOffset = 0;
+			short		resNumItems = 0;
+			short		resOffset = 0;
 			
 			resType = EndianSwap(*((icns_type_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8))),sizeof(icns_type_t),swapBytes);
 			resNumItems = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(icns_sint16_t),swapBytes);
 			resOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(icns_sint16_t),swapBytes);
 			
-			if(resType == 0x69636E73) /* 'icns' */
+			if(resType == ICNS_FAMILY_TYPE)
 			{
 				icns_sint16_t	resID = 0;
 				icns_sint8_t	resAttributes = 0;
@@ -2060,14 +2104,8 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 				resID = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset)),sizeof(icns_sint16_t),swapBytes);
 				resNameOffset = EndianSwap(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2)),sizeof(icns_sint16_t),swapBytes);
 				resAttributes = *((icns_sint8_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4));
-
-				// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
-				// Load as long, and then cut off extra inital byte.
-				resDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(icns_sint32_t),swapBytes);
-				resDataOffset &= 0x00FFFFFF;
-
-				resDataSize = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(icns_sint32_t),swapBytes);
-
+				
+				// Read in the resource name, if it exists (-1 indicates it doesn't)
 				if(resNameOffset != -1)
 				{
 					resNameLength = *((icns_sint8_t*)(dataPtr+resHeadMapOffset+resMapNameOffset+resNameOffset));
@@ -2077,33 +2115,60 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 						memcpy(&resName[0],(dataPtr+resHeadMapOffset+resMapNameOffset+resNameOffset+1),resNameLength);
 					}
 				}
-				
-				if(resDataSize > 0)
-				{
-					resData = (unsigned char*)malloc(resDataSize);
 
-					if(resData != NULL)
+				// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
+				// Load as long, and then cut off extra inital byte.
+				resDataOffset = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(icns_sint32_t),swapBytes);
+				resDataOffset &= 0x00FFFFFF;
+				
+				resDataSize = EndianSwap(*((icns_sint32_t*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(icns_sint32_t),swapBytes);
+
+				if( (resHeadDataOffset+resDataOffset) > dataSize )
+				{
+					fprintf(stderr,"libicns: icns_family_from_mac_resource: Resource icns id# %d has invalid data offset!\n",resID);
+					error = -1;
+					goto cleanup;
+				}
+				
+				
+					
+				if( (resDataSize <= 0) || (resDataSize > (dataSize-(resHeadDataOffset+resDataOffset+4))) )
+				{
+					fprintf(stderr,"libicns: icns_family_from_mac_resource: Resource icns id# %d has invalid size %ld!\n",resID,dataSize);
+					error = -1;
+					goto cleanup;
+				}
+				
+				resData = (unsigned char*)malloc(resDataSize);
+				
+				if(resData != NULL)
+				{
+					memcpy( resData ,(dataPtr+resHeadDataOffset+resDataOffset+4),resDataSize);
+					*icnsFamilyOut = (icns_family_t*)resData;
+					// Check the data... this needs to be accurate, but we might be able to repair it for now
+					if(ICNS_FAMILY_TYPE != EndianSwap( (*icnsFamilyOut)->resourceType ,sizeof(icns_sint32_t),swapBytes))
 					{
-						memcpy(resData,(dataPtr+resHeadDataOffset+resDataOffset+4),resDataSize);
-						*icnsFamilyOut = (icns_family_t*)resData;
-						found = 1;
+						fprintf(stderr,"libicns: icns_family_from_mac_resource: warning: family type is incorrect - attempting repair!\n");
+						(*icnsFamilyOut)->resourceType = EndianSwap( ICNS_FAMILY_TYPE ,sizeof(icns_sint32_t),swapBytes);
 					}
-					else
+					if(resDataSize != EndianSwap( (*icnsFamilyOut)->resourceSize ,sizeof(icns_sint32_t),swapBytes))
 					{
-						fprintf(stderr,"libicns: icns_family_from_mac_resource: Unable to allocate memory block of size: %d!\n",resDataSize);
-						*icnsFamilyOut = NULL;
-						error = -1;
+						fprintf(stderr,"libicns: icns_family_from_mac_resource: warning: family size is incorrect - attempting repair!\n");
+						(*icnsFamilyOut)->resourceSize = EndianSwap( resDataSize ,sizeof(icns_sint32_t),swapBytes);
 					}
+					found = 1;
 				}
 				else
 				{
-					fprintf(stderr,"libicns: icns_family_from_mac_resource: Resource icns id# %d of size 0!\n",resID);
+					fprintf(stderr,"libicns: icns_family_from_mac_resource: Unable to allocate memory block of size: %d!\n",resDataSize);
+					*icnsFamilyOut = NULL;
 					error = -1;
 				}
 			}
 		}
 	}
 	
+cleanup:
 	if(parsedData != NULL)
 	{
 		free(parsedData);
@@ -2200,7 +2265,11 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 		// a match on a non MacBinary file are pretty low...
 	}
 	
-	if( !isValid ) return -1;
+	if( !isValid )
+	{
+		fprintf(stderr,"libicns: icns_parse_macbinary_resource_fork: Invalid MacBinary file!\n");
+		return -1;
+	}
 	
 	// Start MacBinary Parsing routines
 	
@@ -2226,13 +2295,19 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	resourceDataStart = fileDataSize + fileDataPadding + 128;
 
 	// Check that we are not reading invalid memory
-	if( resourceDataStart < 0 ) return -1;
-	if( resourceDataSize < 0 ) return -1;
-	if( resourceDataStart < dataSize ) return -1;
-	if( resourceDataSize < dataSize ) return -1;	// Hmm? Shouldn't this be okay?
-	if( resourceDataStart+resourceDataSize < 0 ) return -1;
-	if( resourceDataStart+resourceDataSize < dataSize ) return -1;
-	
+	if( (resourceDataStart < 128) || (resourceDataStart > dataSize) ) {
+		fprintf(stderr,"libicns: icns_parse_macbinary_resource_fork: Invalid resource data start!\n");
+	       	return -1;
+	}
+	if( (resourceDataSize < 16) || (resourceDataSize > (dataSize-128))  ) {
+		fprintf(stderr,"libicns: icns_parse_macbinary_resource_fork: Invalid resource data size!\n");
+		return -1;
+	}
+	if( (resourceDataStart+resourceDataSize > dataSize) ) {
+		fprintf(stderr,"libicns: icns_parse_macbinary_resource_fork: Invalid resource data location!\n");
+		return -1;
+	}
+
 	resourceDataPtr = (unsigned char *)malloc(resourceDataSize);
 	
 	if(resourceDataPtr == NULL)

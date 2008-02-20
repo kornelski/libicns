@@ -27,7 +27,7 @@ UNAME := $(shell uname)
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 1.1
+LIBVERMIN = 1.1a
 
 VERSION = $(LIBVERMAJ).$(LIBVERMIN)
 LIBSTATIC = $(LIBNAME).a
