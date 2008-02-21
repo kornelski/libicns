@@ -282,7 +282,6 @@ int ConvertIcnsFile(char *filename)
 	unsigned int	filenamelength = 0;
 	unsigned int	infilenamelength = 0;
 	unsigned int	outfilenamelength = 0;
-	icns_bool_t	swapBytes = 0;
 	icns_family_t	*icnsFamily = NULL;
 	icns_element_t	*icon = NULL;
 	icns_element_t	*mask = NULL;
@@ -348,14 +347,14 @@ int ConvertIcnsFile(char *filename)
 		goto cleanup;
 	}
 	
-	error = icns_get_element_from_family(icnsFamily,icnsType,&swapBytes,&icon);
+	error = icns_get_element_from_family(icnsFamily,icnsType,&icon);
 	
 	if(error) {
 		fprintf(stderr,"Unable to load icon data from icon family!\n");
 		goto cleanup;
 	}
 
-	error = icns_get_image32_from_element(icon, swapBytes, &iconImage);
+	error = icns_get_image32_from_element(icon, &iconImage);
 
 	if(error) {
 		fprintf(stderr,"Unable to load image from icon data!\n");
@@ -363,14 +362,14 @@ int ConvertIcnsFile(char *filename)
 	}
 	
 	if(maskType != ICNS_INVALID_MASK) {
-		error = icns_get_element_from_family(icnsFamily,maskType,&swapBytes,&mask);
+		error = icns_get_element_from_family(icnsFamily,maskType,&mask);
 	
 		if(error) {
 			fprintf(stderr,"Unable to load mask data from icon family!\n");
 			goto cleanup;
 		}
 		
-		error = icns_get_image32_from_element(mask, swapBytes, &maskImage);
+		error = icns_get_image32_from_element(mask, &maskImage);
 
 		if(error) {
 			fprintf(stderr,"Unable to load image from mask data!\n");

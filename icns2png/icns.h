@@ -23,7 +23,6 @@ Boston, MA 02111-1307, USA.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <png.h>
 
 #ifndef _ICNS_H_
 #define	_ICNS_H_
@@ -109,14 +108,14 @@ typedef icns_uint32_t   icns_size_t;
 typedef icns_uint32_t   icns_type_t;
 
 typedef struct icns_element_t {
-  icns_type_t           elementType;    /* 'ICN#', 'icl8', etc...*/
-  icns_size_t           elementSize;    /* Size of this element*/
+  icns_type_t           elementType;    /* 'ICN#', 'icl8', etc...- BIG ENDIAN! */
+  icns_size_t           elementSize;    /* Total size of element - BIG ENDIAN! */
   unsigned char         elementData[1];
 } icns_element_t;
 
 typedef struct icns_family_t {
-  icns_type_t           resourceType;	/* Always seems to be 'icns' */
-  icns_size_t           resourceSize;	/* Total size of this resource*/
+  icns_type_t           resourceType;	/* Always should be 'icns'- BIG ENDIAN! */
+  icns_size_t           resourceSize;	/* Total size of resource - BIG ENDIAN! */
   icns_element_t        elements[1];
 } icns_family_t;
 
@@ -138,6 +137,14 @@ typedef struct icns_pixel32_t
 	unsigned char	 blue;
 } icns_pixel32_t;
 
+typedef struct icns_pixel32_swap_t
+{
+	unsigned char	 blue;
+	unsigned char	 green;
+	unsigned char	 red;
+	unsigned char	 alpha;
+} icns_pixel32_swap_t;
+
 
 /* icns constants */
 
@@ -146,14 +153,23 @@ typedef struct icns_pixel32_t
 
 /* icns function prototypes */
 
+// icns_debug.c
+void bin_print_byte(int x);
+void bin_print_int(int x);
+
+// icns_image.c
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
-int icns_get_image32_from_element(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
-int icns_get_image_from_element(icns_element_t *iconElement, icns_bool_t swapBytes,icns_image_t *imageOut);
-int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
-int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
+int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
+int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
 int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut);
 int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut);
 int icns_free_image(icns_image_t *imageIn);
+
+// icns_rle24.c
+int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
+int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
+
+// icns_jp2.c
 #ifdef ICNS_OPENJPEG
 void icns_opj_error_callback(const char *msg, void *client_data);
 void icns_opj_warning_callback(const char *msg, void *client_data);
@@ -161,11 +177,17 @@ void icns_opj_info_callback(const char *msg, void *client_data);
 int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
 opj_image_t * jp2dec(unsigned char *bufin, int len);
 #endif
+
+// icns_element.c
 int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_element_t **iconElementOut);
-int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType, icns_bool_t *swapBytes,icns_element_t **iconElementOut);
-int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement, icns_bool_t *swapBytes);
-int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icnsType, icns_bool_t *swapBytes);
+int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,icns_element_t **iconElementOut);
+int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement);
+int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icnsType);
+
+// icns_family.c
 int icns_create_family(icns_family_t **icnsFamilyOut);
+
+// icns_io.c
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn);
 int icns_read_family_from_file(FILE *dataFile,icns_family_t **icnsFamilyOut);
 int icns_family_from_file_data(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);

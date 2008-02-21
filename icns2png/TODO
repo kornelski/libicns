@@ -3,4 +3,4 @@ TODO
 1) Finish support for 256x256 and 512x512 in icns_new_element_from_image
 2) Find and fix potential input issues using zzuf
 3) Find and fix any endianness, 64-bit and alignment issues
-
+4) Fix Makefile to use -compatibility_version and -current_version for Darwin

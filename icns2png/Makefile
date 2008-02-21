@@ -26,7 +26,7 @@
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 1.1b
+LIBVERMIN = 3.0a
 
 # Compile with debug flags and icns debug messages
 DEBUG = false
@@ -75,13 +75,13 @@ CFLAGS+=-DICNS_OPENJPEG
 endif
 
 # Linker flags
-LDFLAGS+=-L. -L$(LIBPATH) -lz -lm -lpng12
+LDFLAGS+=-L. -L$(LIBPATH)
 ifeq "$(OPENJPEG)" "true"
  LDFLAGS+=-lopenjpeg
 endif
 
 LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
-
+LDFLAGS_SO+=-lz -lm -lpng12
 ifeq "$(UNAME)" "Darwin"
  LDFLAGS_SO+=-licns $(LDFLAGS)
 else
@@ -89,7 +89,7 @@ else
 endif
 
 # Library object files
-LIBOBJS = icns.o 
+LIBOBJS = endianswap.o icns_debug.o icns_element.o icns_family.o icns_image.o icns_io.o icns_jp2.o icns_rle24.o 
 LIBOBJSDLL = $(LIBOBJS:.o=.pic.o)
 
 # Utility programs included in library

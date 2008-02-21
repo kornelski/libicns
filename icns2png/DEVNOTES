@@ -1,5 +1,5 @@
 ===============================================================================
-Developers notes for libicns 0.0.9 - February 15th, 2008
+Developers notes for libicns 0.3.0a - February 15th, 2008
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
 
 ===============================================================================
@@ -168,12 +168,6 @@ Endianness issues
 The 'icns' icon family type has been in existence since the Mac 68k. The data
 stored within the files is, therefore, big-endian native. From experience, it
 seems unclear whether we are guaranteed this to be the case.
-There are currently two algorithms in place to handle and detect endianess:
-1) We check the file header, which ought to be 'icns'. If the header is
-   found to contain the bytes 'snci', we assume we need to swap bytes.
-2) We use a run-time check against known constants to determine the
-   endianess of the current system. The result of the routines are used
-   to parse the MacBinary format.
 The current definitive documentation on the issue seems to be found in the
 Apple Developer Connection document "Guidelines for Swapping Bytes" from
 "Universal Binary Programming Guidelines Second Edition" - see as follows:
@@ -191,6 +185,11 @@ Network-Related Data.
 -------------------------------------------------------------------------------
 Source: http://developer.apple.com/documentation/MacOSX/Conceptual/
 universal_binary/universal_binary_byte_swap/chapter_4_section_3.html
+
+Since Apple's own Developer Documentation indicates icns is ALWAYS big-endian
+libicns assumes that all data will be in the big endian format, and therefore
+assumes any data that is not big endian to be corrupt. Perhaps at some point
+in the future it could add support for recovering an improperly written file.
 
 ===============================================================================
 icns data format is basically an 8-byte header, followed by icns elements
