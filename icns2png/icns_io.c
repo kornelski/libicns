@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.
 
 /***************************** icns_write_family_to_file **************************/
 
-int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn)
+int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 {
 	icns_size_t	resourceSize = 0;
 	icns_size_t	blockSize = 0;
@@ -44,18 +44,18 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn)
 		return -1;
 	}	
 	
-	if ( icnsFamilyIn == NULL )
+	if ( iconFamilyIn == NULL )
 	{
 		fprintf(stderr,"libicns: icns_write_family_to_file: NULL icns family!\n");
 		return -1;
 	}
 	
-	resourceSize = EndianSwapBtoN(icnsFamilyIn->resourceSize,sizeof(icns_size_t));
+	resourceSize = EndianSwapBtoN(iconFamilyIn->resourceSize,sizeof(icns_size_t));
 	blockSize = 1024;
 	
 	while( (resourceSize-dataOutTotal) > blockSize)
 	{
-		dataOutBlock = fwrite ( ((char *)icnsFamilyIn) + dataOutTotal , blockSize , 1 , dataFile );
+		dataOutBlock = fwrite ( ((char *)iconFamilyIn) + dataOutTotal , blockSize , 1 , dataFile );
 		if(dataOutBlock != blockSize)
 		{
 			fprintf(stderr,"libicns: icns_write_family_to_file: Error writing icns to file!\n");
@@ -66,7 +66,7 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn)
 	
 	blockSize = (resourceSize-dataOutTotal);
 	
-	dataOutBlock = fwrite ( ((char *)icnsFamilyIn) + dataOutTotal , blockSize , 1 , dataFile );
+	dataOutBlock = fwrite ( ((char *)iconFamilyIn) + dataOutTotal , blockSize , 1 , dataFile );
 	if(dataOutBlock != blockSize)
 	{
 		fprintf(stderr,"libicns: icns_write_family_to_file: Error writing icns to file!\n");
@@ -80,7 +80,7 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn)
 
 /***************************** icns_read_family_from_file **************************/
 
-int icns_read_family_from_file(FILE *dataFile,icns_family_t **icnsFamilyOut)
+int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 {
 	int	      error = 0;
 	unsigned long dataSize = 0;
@@ -92,7 +92,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **icnsFamilyOut)
 		return -1;
 	}
 	
-	if ( icnsFamilyOut == NULL )
+	if ( iconFamilyOut == NULL )
 	{
 		fprintf(stderr,"libicns: icns_read_family_from_file: NULL icns family ref!\n");
 		return -1;
@@ -129,7 +129,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **icnsFamilyOut)
 	}
 	
 	if(error == 0)
-		error = icns_family_from_file_data(dataSize,dataPtr,icnsFamilyOut);
+		error = icns_family_from_file_data(dataSize,dataPtr,iconFamilyOut);
 	
 	if(dataPtr != NULL)
 	{
@@ -143,7 +143,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **icnsFamilyOut)
 
 /***************************** icns_family_from_file_data **************************/
 
-int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **icnsFamilyOut)
+int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int		error = 0;
 	unsigned char	*iconDataPtr = NULL;
@@ -155,9 +155,9 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 		return -1;
 	}
 	
-	if(icnsFamilyOut == NULL)
+	if(iconFamilyOut == NULL)
 	{
-		fprintf(stderr,"libicns: icns_family_from_file_data: icnsFamilyOut is NULL!\n");
+		fprintf(stderr,"libicns: icns_family_from_file_data: iconFamilyOut is NULL!\n");
 		return -1;
 	}
 	
@@ -184,18 +184,18 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 	if(*((icns_type_t*)(iconDataPtr)) != EndianSwapBtoN(ICNS_FAMILY_TYPE,sizeof(icns_type_t)))
 	{
 		// Might be embedded in an rsrc file
-		if((error = icns_family_from_mac_resource(dataSize,iconDataPtr,icnsFamilyOut)))
+		if((error = icns_family_from_mac_resource(dataSize,iconDataPtr,iconFamilyOut)))
 		{
 			fprintf(stderr,"libicns: icns_family_from_file_data: Error parsing X Icon resource!\n");
 			free(iconDataPtr);
-			*icnsFamilyOut = NULL;
+			*iconFamilyOut = NULL;
 		}
 	}
 	else
 	{
 		// Data is an X Icon file - no parsing needed at this point
-		*icnsFamilyOut = (icns_family_t*)iconDataPtr;
-		if( dataSize != EndianSwapBtoN( ((*icnsFamilyOut)->resourceSize) ,sizeof(icns_size_t)) )
+		*iconFamilyOut = (icns_family_t*)iconDataPtr;
+		if( dataSize != EndianSwapBtoN( ((*iconFamilyOut)->resourceSize) ,sizeof(icns_size_t)) )
 		{
 			fprintf(stderr,"libicns: icns_family_from_file_data: Invalid icns resource size!\n");
 			return -1;
@@ -208,7 +208,7 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 
 /***************************** icns_family_from_mac_resourceFork **************************/
 
-int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **icnsFamilyOut)
+int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **iconFamilyOut)
 {
 	icns_bool_t	error = 0;
 	
@@ -356,24 +356,24 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 				if(resData != NULL)
 				{
 					memcpy( resData ,(dataPtr+resHeadDataOffset+resDataOffset+4),resDataSize);
-					*icnsFamilyOut = (icns_family_t*)resData;
+					*iconFamilyOut = (icns_family_t*)resData;
 					// Check the data... this needs to be accurate, but we might be able to repair it for now
-					if(ICNS_FAMILY_TYPE != EndianSwapBtoN( (*icnsFamilyOut)->resourceType ,sizeof(icns_sint32_t)))
+					if(ICNS_FAMILY_TYPE != EndianSwapBtoN( (*iconFamilyOut)->resourceType ,sizeof(icns_sint32_t)))
 					{
 						fprintf(stderr,"libicns: icns_family_from_mac_resource: warning: family type is incorrect - attempting repair!\n");
-						(*icnsFamilyOut)->resourceType = EndianSwapBtoN( ICNS_FAMILY_TYPE ,sizeof(icns_sint32_t));
+						(*iconFamilyOut)->resourceType = EndianSwapBtoN( ICNS_FAMILY_TYPE ,sizeof(icns_sint32_t));
 					}
-					if(resDataSize != EndianSwapBtoN( (*icnsFamilyOut)->resourceSize ,sizeof(icns_sint32_t)))
+					if(resDataSize != EndianSwapBtoN( (*iconFamilyOut)->resourceSize ,sizeof(icns_sint32_t)))
 					{
 						fprintf(stderr,"libicns: icns_family_from_mac_resource: warning: family size is incorrect - attempting repair!\n");
-						(*icnsFamilyOut)->resourceSize = EndianSwapBtoN( resDataSize ,sizeof(icns_sint32_t));
+						(*iconFamilyOut)->resourceSize = EndianSwapBtoN( resDataSize ,sizeof(icns_sint32_t));
 					}
 					found = 1;
 				}
 				else
 				{
 					fprintf(stderr,"libicns: icns_family_from_mac_resource: Unable to allocate memory block of size: %d!\n",resDataSize);
-					*icnsFamilyOut = NULL;
+					*iconFamilyOut = NULL;
 					error = -1;
 				}
 			}

@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.
 
 //***************************** icns_new_element_from_image **************************//
 // Creates a new icns element from an image
-int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_element_t **iconElementOut)
+int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut)
 {
 	int		error = 0;
 	unsigned int	iconTypeWidth = 0;
@@ -56,7 +56,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_
 		*iconElementOut = NULL;
 	}
 	
-	switch(icnsType)
+	switch(iconType)
 	{
 		// 32-Bit ARGB Image Data Types
 		case ICNS_512x512_32BIT_ARGB_DATA:
@@ -203,7 +203,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_
 			break;
 			
 		default:
-			fprintf(stderr,"libicns: icns_new_element_from_image: Unable to parse icon type 0x%8X\n",icnsType);
+			fprintf(stderr,"libicns: icns_new_element_from_image: Unable to parse icon type 0x%8X\n",iconType);
 			return -1;
 			break;
 	}
@@ -251,7 +251,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_
 	// For use to easily track deallocation if we use rle24
 	unsigned char	*rle24DataPtr = NULL;
 	
-	if( (icnsType == ICNS_256x256_32BIT_ARGB_DATA) || (icnsType == ICNS_512x512_32BIT_ARGB_DATA) )
+	if( (iconType == ICNS_256x256_32BIT_ARGB_DATA) || (iconType == ICNS_512x512_32BIT_ARGB_DATA) )
 	{
 		// Future openjpeg routines to go here
 		fprintf(stderr,"libicns: icns_new_element_from_image: libicns does't support importing large icons yet.\n");
@@ -259,7 +259,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_
 	}
 	else
 	{
-		if(icnsType == ICNS_128X128_32BIT_DATA)
+		if(iconType == ICNS_128X128_32BIT_DATA)
 		{
 			// Note: icns_encode_rle24_data allocates memory that must be freed later
 			if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)imageIn->imageData,&imageDataSize,(icns_sint32_t**)&imageDataPtr)))
@@ -302,7 +302,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_
 	// Set up and create the new element
 	newElementOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	newElementSize = sizeof(icns_type_t) + sizeof(icns_size_t) + imageDataSize;
-	newElementType = icnsType;
+	newElementType = iconType;
 	newElement = (icns_element_t *)malloc(newElementSize);
 	if(newElement == NULL)
 	{
@@ -332,21 +332,21 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_
 	return error;
 }
 
-//***************************** GetIconDataFromIcnsFamily **************************//
+//***************************** GetIconDataFromIconFamily **************************//
 // Parses requested data from an icon family - puts it into a icns element
 
-int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,icns_element_t **iconElementOut)
+int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,icns_element_t **iconElementOut)
 {
 	int		error = 0;
 	int		foundData = 0;
-	icns_type_t	icnsFamilyType = 0x00000000;
-	icns_size_t	icnsFamilySize = 0;
+	icns_type_t	iconFamilyType = 0x00000000;
+	icns_size_t	iconFamilySize = 0;
 	icns_element_t	*icnsElement = NULL;
 	icns_type_t	elementType = 0x00000000;
 	icns_size_t	elementSize = 0;
 	icns_uint32_t	dataOffset = 0;
 	
-	if(icnsFamily == NULL)
+	if(iconFamily == NULL)
 	{
 		fprintf(stderr,"libicns: icns_get_element_from_family: icns family is NULL!\n");
 		return -1;
@@ -362,27 +362,27 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 		*iconElementOut = NULL;
 	}
 	
-	if(icnsFamily->resourceType != EndianSwapBtoN(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE)) ){
+	if(iconFamily->resourceType != EndianSwapBtoN(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE)) ){
 		fprintf(stderr,"libicns: icns_get_element_from_family: Invalid icns family!\n");
 		return -1;
 	}
 	
-	icnsFamilyType = EndianSwapBtoN(icnsFamily->resourceType,sizeof(int));
-	icnsFamilySize = EndianSwapBtoN(icnsFamily->resourceSize,sizeof(int));
+	iconFamilyType = EndianSwapBtoN(iconFamily->resourceType,sizeof(int));
+	iconFamilySize = EndianSwapBtoN(iconFamily->resourceSize,sizeof(int));
 	
 	#ifdef ICNS_DEBUG
-	printf("Resource size: %d\n",icnsFamilySize);
-	printf("Resource type: 0x%8X\n",(unsigned int)icnsFamilyType);
-	printf("Looking for icon of type: 0x%8X\n",(unsigned int)icnsType);
+	printf("Resource size: %d\n",iconFamilySize);
+	printf("Resource type: 0x%8X\n",(unsigned int)iconFamilyType);
+	printf("Looking for icon of type: 0x%8X\n",(unsigned int)iconType);
 	#endif
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
-	while ( (foundData == 0) && (dataOffset < icnsFamilySize) )
+	while ( (foundData == 0) && (dataOffset < iconFamilySize) )
 	{
-		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
 		
-		if( icnsFamilySize < (dataOffset+sizeof(icns_type_t)+sizeof(icns_size_t)) )
+		if( iconFamilySize < (dataOffset+sizeof(icns_type_t)+sizeof(icns_size_t)) )
 		{
 			fprintf(stderr,"libicns: icns_get_element_from_family: Corrupted icns family!\n");
 			return -1;		
@@ -391,7 +391,7 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 		elementType = EndianSwapBtoN(icnsElement->elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(icnsElement->elementSize,sizeof(icns_size_t));
 	
-		if( (elementSize == 0) || ((dataOffset+elementSize) > icnsFamilySize) )
+		if( (elementSize == 0) || ((dataOffset+elementSize) > iconFamilySize) )
 		{
 			fprintf(stderr,"libicns: icns_get_element_from_family: Invalid element size!\n");
 			return -1;
@@ -403,7 +403,7 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 		printf("  size: %d\n",(unsigned int)elementSize);
 		#endif
 
-		if (elementType == icnsType)
+		if (elementType == iconType)
 			foundData = 1;
 		else
 			dataOffset += elementSize;
@@ -431,60 +431,60 @@ int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,
 //***************************** icns_set_element_in_family **************************//
 // Adds/updates the icns element of it's type in the icon family
 
-int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement)
+int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *newIconElement)
 {
 	int		error = 0;
 	int		foundData = 0;
 	int		copiedData = 0;
-	icns_family_t	*icnsFamily = NULL;
-	icns_type_t	icnsFamilyType = 0x00000000;
-	icns_size_t	icnsFamilySize = 0;
+	icns_family_t	*iconFamily = NULL;
+	icns_type_t	iconFamilyType = 0x00000000;
+	icns_size_t	iconFamilySize = 0;
 	icns_element_t	*icnsElement = NULL;
 	icns_type_t	newElementType = 0x00000000;
 	icns_size_t	newElementSize = 0;
 	icns_type_t	elementType = 0x00000000;
 	icns_size_t	elementSize = 0;
 	icns_uint32_t	dataOffset = 0;
-	icns_size_t	newIcnsFamilySize = 0;
-	icns_family_t	*newIcnsFamily = NULL;
+	icns_size_t	newIconFamilySize = 0;
+	icns_family_t	*newIconFamily = NULL;
 	icns_uint32_t	newDataOffset = 0;
 	
-	if(icnsFamilyRef == NULL)
+	if(iconFamilyRef == NULL)
 	{
 		fprintf(stderr,"libicns:icns_set_element_in_family: icns family reference is NULL!\n");
 		return -1;
 	}
 	
-	icnsFamily = *icnsFamilyRef;
+	iconFamily = *iconFamilyRef;
 	
-	if(icnsFamily == NULL)
+	if(iconFamily == NULL)
 	{
 		fprintf(stderr,"libicns: icns_set_element_in_family: icns family is NULL!\n");
 		return -1;
 	}
 	
-	if(icnsFamily->resourceType != EndianSwapBtoN(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE)) ) {
+	if(iconFamily->resourceType != EndianSwapBtoN(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE)) ) {
 		fprintf(stderr,"libicns: icns_set_element_in_family: Invalid icns family!\n");
 		error = -1;
 	}
 	
-	icnsFamilyType = EndianSwapBtoN(icnsFamily->resourceType,sizeof(icns_type_t));
-	icnsFamilySize = EndianSwapBtoN(icnsFamily->resourceSize,sizeof(icns_size_t));
+	iconFamilyType = EndianSwapBtoN(iconFamily->resourceType,sizeof(icns_type_t));
+	iconFamilySize = EndianSwapBtoN(iconFamily->resourceSize,sizeof(icns_size_t));
 
-	if(newIcnsElement == NULL)
+	if(newIconElement == NULL)
 	{
 		fprintf(stderr,"libicns: icns_set_element_in_family: icns element is NULL!\n");
 		return -1;
 	}
 	
-	newElementType = EndianSwapNtoB(newIcnsElement->elementType,sizeof(icns_type_t));
-	newElementSize = EndianSwapNtoB(newIcnsElement->elementSize,sizeof(icns_size_t));
+	newElementType = EndianSwapNtoB(newIconElement->elementType,sizeof(icns_type_t));
+	newElementSize = EndianSwapNtoB(newIconElement->elementSize,sizeof(icns_size_t));
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
-	while ( (foundData == 0) && (dataOffset < icnsFamilySize) )
+	while ( (foundData == 0) && (dataOffset < iconFamilySize) )
 	{
-		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
 		elementType = EndianSwapBtoN(icnsElement->elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(icnsElement->elementSize,sizeof(icns_size_t));
 		
@@ -495,40 +495,40 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 	}
 	
 	if(foundData)
-		newIcnsFamilySize = icnsFamilySize - elementSize + newElementSize;
+		newIconFamilySize = iconFamilySize - elementSize + newElementSize;
 	else
-		newIcnsFamilySize = icnsFamilySize + newElementSize;
+		newIconFamilySize = iconFamilySize + newElementSize;
 
-	newIcnsFamily = malloc(newIcnsFamilySize);
+	newIconFamily = malloc(newIconFamilySize);
 	
-	if(newIcnsFamily == NULL)
+	if(newIconFamily == NULL)
 	{
-		fprintf(stderr,"libicns: icns_set_element_in_family: Unable to allocate memory block of size: %d!\n",newIcnsFamilySize);
+		fprintf(stderr,"libicns: icns_set_element_in_family: Unable to allocate memory block of size: %d!\n",newIconFamilySize);
 		return -1;
 	}
 
-	newIcnsFamily->resourceType = EndianSwapNtoB(ICNS_FAMILY_TYPE,sizeof(icns_type_t));
-	newIcnsFamily->resourceSize = EndianSwapNtoB(newIcnsFamilySize,sizeof(icns_size_t));
+	newIconFamily->resourceType = EndianSwapNtoB(ICNS_FAMILY_TYPE,sizeof(icns_type_t));
+	newIconFamily->resourceSize = EndianSwapNtoB(newIconFamilySize,sizeof(icns_size_t));
 	
 	newDataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
 	copiedData = 0;
 	
-	while ( dataOffset < icnsFamilySize )
+	while ( dataOffset < iconFamilySize )
 	{
-		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
 		elementType = EndianSwapBtoN(icnsElement->elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(icnsElement->elementSize,sizeof(icns_size_t));
 		
 		if (elementType != newElementType)
 		{
-			memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementSize);
+			memcpy( ((char *)(newIconFamily))+newDataOffset , ((char *)(iconFamily))+dataOffset, elementSize);
 			newDataOffset += elementSize;
 		}
 		else
 		{
-			memcpy( ((char *)(newIcnsFamily))+newDataOffset , (char *)newIcnsElement, newElementSize);
+			memcpy( ((char *)(newIconFamily))+newDataOffset , (char *)newIconElement, newElementSize);
 			newDataOffset += newElementSize;
 			copiedData = 1;
 		}
@@ -538,13 +538,13 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 	
 	if(!copiedData)
 	{
-		memcpy( ((char *)(newIcnsFamily))+newDataOffset , (char *)newIcnsElement, newElementSize);
+		memcpy( ((char *)(newIconFamily))+newDataOffset , (char *)newIconElement, newElementSize);
 		newDataOffset += newElementSize;
 	}
 	
-	*icnsFamilyRef = newIcnsFamily;
+	*iconFamilyRef = newIconFamily;
 	
-	free(icnsFamily);
+	free(iconFamily);
 	
 	return error;
 }
@@ -552,45 +552,45 @@ int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *new
 //***************************** icns_remove_element_in_family **************************//
 // Parses requested data from an icon family - puts it into a "raw" image format
 
-int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icnsElementType)
+int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icnsElementType)
 {
 	int		error = 0;
 	int		foundData = 0;
-	icns_family_t	*icnsFamily = NULL;
-	icns_type_t	icnsFamilyType = 0x00000000;
-	icns_size_t	icnsFamilySize = 0;
+	icns_family_t	*iconFamily = NULL;
+	icns_type_t	iconFamilyType = 0x00000000;
+	icns_size_t	iconFamilySize = 0;
 	icns_element_t	*icnsElement = NULL;
 	icns_type_t	elementType = 0x00000000;
 	icns_size_t	elementSize = 0;
 	icns_uint32_t	dataOffset = 0;
 	
-	if(icnsFamilyRef == NULL)
+	if(iconFamilyRef == NULL)
 	{
 		fprintf(stderr,"libicns: icns_remove_element_in_family: icns family reference is NULL!\n");
 		return -1;
 	}
 	
-	icnsFamily = *icnsFamilyRef;
+	iconFamily = *iconFamilyRef;
 	
-	if(icnsFamily == NULL)
+	if(iconFamily == NULL)
 	{
 		fprintf(stderr,"libicns: icns_remove_element_in_family: icns family is NULL!\n");
 		return -1;
 	}
 	
-	if(icnsFamily->resourceType != EndianSwapBtoN(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE)) ) {
+	if(iconFamily->resourceType != EndianSwapBtoN(ICNS_FAMILY_TYPE, sizeof(ICNS_FAMILY_TYPE)) ) {
 		fprintf(stderr,"libicns: icns_remove_element_in_family: Invalid icns family!\n");
 		error = -1;
 	}
 	
-	icnsFamilyType = EndianSwapBtoN(icnsFamily->resourceType,sizeof(int));
-	icnsFamilySize = EndianSwapBtoN(icnsFamily->resourceSize,sizeof(int));
+	iconFamilyType = EndianSwapBtoN(iconFamily->resourceType,sizeof(int));
+	iconFamilySize = EndianSwapBtoN(iconFamily->resourceSize,sizeof(int));
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
-	while ( (foundData == 0) && (dataOffset < icnsFamilySize) )
+	while ( (foundData == 0) && (dataOffset < iconFamilySize) )
 	{
-		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
 		elementType = EndianSwapBtoN(icnsElement->elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(icnsElement->elementSize,sizeof(icns_size_t));
 		
@@ -606,43 +606,43 @@ int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icns
 		return -1;
 	}
 	
-	icns_size_t	newIcnsFamilySize = 0;
-	icns_family_t	*newIcnsFamily = NULL;
+	icns_size_t	newIconFamilySize = 0;
+	icns_family_t	*newIconFamily = NULL;
 	icns_uint32_t	newDataOffset = 0;
 	
-	newIcnsFamilySize = icnsFamilySize - elementSize;
-	newIcnsFamily = malloc(newIcnsFamilySize);
+	newIconFamilySize = iconFamilySize - elementSize;
+	newIconFamily = malloc(newIconFamilySize);
 	
-	if(newIcnsFamily == NULL)
+	if(newIconFamily == NULL)
 	{
-		fprintf(stderr,"libicns: icns_remove_element_in_family: Unable to allocate memory block of size: %d!\n",newIcnsFamilySize);
+		fprintf(stderr,"libicns: icns_remove_element_in_family: Unable to allocate memory block of size: %d!\n",newIconFamilySize);
 		return -1;
 	}
 	
-	newIcnsFamily->resourceType = EndianSwapNtoB(ICNS_FAMILY_TYPE,sizeof(icns_type_t));
-	newIcnsFamily->resourceSize = EndianSwapNtoB(newIcnsFamilySize,sizeof(icns_size_t));
+	newIconFamily->resourceType = EndianSwapNtoB(ICNS_FAMILY_TYPE,sizeof(icns_type_t));
+	newIconFamily->resourceSize = EndianSwapNtoB(newIconFamilySize,sizeof(icns_size_t));
 	
 	newDataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
-	while ( dataOffset < icnsFamilySize )
+	while ( dataOffset < iconFamilySize )
 	{
-		icnsElement = ((icns_element_t*)(((char*)icnsFamily)+dataOffset));
+		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
 		elementType = EndianSwapBtoN(icnsElement->elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(icnsElement->elementSize,sizeof(icns_size_t));
 		
 		if (elementType != icnsElementType)
 		{
-			memcpy( ((char *)(newIcnsFamily))+newDataOffset , ((char *)(icnsFamily))+dataOffset, elementSize);
+			memcpy( ((char *)(newIconFamily))+newDataOffset , ((char *)(iconFamily))+dataOffset, elementSize);
 			newDataOffset += elementSize;
 		}
 		
 		dataOffset += elementSize;
 	}
 	
-	*icnsFamilyRef = newIcnsFamily;
+	*iconFamilyRef = newIconFamily;
 
-	free(icnsFamily);
+	free(iconFamily);
 	
 	return error;
 }

@@ -40,6 +40,12 @@ requires it to be changed.
 icns_get_mask_type_for_icon_type *external*
 - Retreives the mask type that should be associated with a given icon type
 
+icns_get_image32_with_mask_from_family *external*
+- Retreives an icon image from an icns family. Additionally retrieves the mask
+- and loads it to the alpha channel. This function would be slightly faster than
+- loading the icon and mask as seperate 32-bit images. Data is returned by
+- reference in an icns image object with 32-bit raw, decoded, uncompressed data
+
 -------------------------------------------------------------------------------
 icns_get_image32_from_element *external*
 - Retreives an icon image from an icns element. Data is returned by
@@ -48,7 +54,9 @@ icns_get_image32_from_element *external*
 -------------------------------------------------------------------------------
 icns_get_image_from_element *external*
 - Retreives an icon image from an icns element. Data is returned by
-- reference in an icns image object with raw, decoded, uncompressed data
+- reference in an icns image object with raw, decoded, uncompressed data.
+- However, if the bytes are packed, they will stay that way. The 'image32'
+- functions above will both unpack the bytes first.
 
 -------------------------------------------------------------------------------
 icns_decode_rle24_data *internal*

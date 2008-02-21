@@ -30,9 +30,9 @@ Boston, MA 02111-1307, USA.
 #include "endianswap.h"
 #include "colormaps.h"
 
-icns_type_t icns_get_mask_type_for_icon_type(icns_type_t icnsType)
+icns_type_t icns_get_mask_type_for_icon_type(icns_type_t iconType)
 {
-	switch(icnsType)
+	switch(iconType)
 	{
 		// Mask is already in ARGB 32-Bit icons
 		case ICNS_512x512_32BIT_ARGB_DATA:
@@ -71,10 +71,307 @@ icns_type_t icns_get_mask_type_for_icon_type(icns_type_t icnsType)
 }
 
 
+int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t sourceType,icns_image_t *imageOut)
+{
+	int		error = 0;
+	icns_type_t	iconType = 0x00000000;
+	icns_type_t	maskType = 0x00000000;
+	icns_element_t	*iconElement = NULL;
+	icns_element_t	*maskElement = NULL;
+	icns_image_t	iconImage;
+	icns_image_t	maskImage;
+	unsigned long	dataCount = 0;
+	unsigned char	dataValue = 0;
+	unsigned long	pixelCount = 0;
+	unsigned long	pixelID = 0;
+	unsigned char	colorIndex = 0;	
+	
+	memset ( &iconImage, 0, sizeof(icns_image_t) );
+	memset ( &maskImage, 0, sizeof(icns_image_t) );
+	
+	if(iconFamily == NULL)
+	{
+		fprintf(stderr,"libicns: icns_get_image32_from_family: Icon element is NULL!\n");
+		return -1;
+	}
+	
+	if(imageOut == NULL)
+	{
+		fprintf(stderr,"libicns: icns_get_image32_from_family: Icon image structure is NULL!\n");
+		return -1;
+	}
+	else
+	{
+		memset ( &imageOut, 0, sizeof(icns_image_t) );
+	}
+	
+	if( (sourceType == ICNS_128X128_8BIT_MASK) || (sourceType == ICNS_48x48_8BIT_MASK) || (sourceType == ICNS_32x32_8BIT_MASK) || (sourceType == ICNS_16x16_8BIT_MASK) )
+	{
+		fprintf(stderr,"libicns: icns_get_image32_from_family: Can't make an image with mask from a mask\n");
+		return -1;
+	}
+
+	// We use the jp2 processor for these two
+	if((sourceType == ICNS_512x512_32BIT_ARGB_DATA) || (sourceType == ICNS_256x256_32BIT_ARGB_DATA))
+	{
+		#ifdef ICNS_OPENJPEG
+		
+		opj_image_t* image = NULL;
+		
+		image = jp2dec((unsigned char *)&(iconElement->elementData[0]), EndianSwapBtoN(iconElement->elementSize,sizeof(icns_size_t)) );
+		if(image == NULL)
+			return -1;
+		
+		error = icns_opj_to_image(image,imageOut);
+		
+		opj_image_destroy(image);
+		
+		return error;
+		
+		#else
+		
+		fprintf(stderr,"libicns: icns_get_image_from_element: libicns requires openjpeg for this data type!\n");
+		return -1;
+		
+		#endif /* ifdef ICNS_OPENJPEG */
+	}
+	
+	iconType = sourceType;
+	maskType = icns_get_mask_type_for_icon_type(iconType);
+	
+	if( maskType == ICNS_INVALID_MASK )
+	{
+		fprintf(stderr,"libicns: icns_get_image32_from_family: Can't find mask for type 0x%08X\n",(unsigned int)iconType);
+		return -1;
+	}
+	
+	// Preliminaries checked - carry on with the icon/mask merge
+	
+	// Load icon element then image
+	error = icns_get_element_from_family(iconFamily,iconType,&iconElement);
+	
+	if(error) {
+		fprintf(stderr,"Unable to load icon element from icon family!\n");
+		goto cleanup;
+	}
+	
+	error = icns_get_image_from_element(iconElement,&iconImage);
+	
+	if(error) {
+		fprintf(stderr,"Unable to load icon image data from icon element!\n");
+		goto cleanup;
+	}
+	
+	// Load mask element then image
+	error = icns_get_element_from_family(iconFamily,maskType,&maskElement);
+
+	if(error) {
+		fprintf(stderr,"Unable to load mask element from icon family!\n");
+		goto cleanup;
+	}
+	
+	error = icns_get_image_from_element(maskElement,&maskImage);
+	
+	if(error) {
+		fprintf(stderr,"Unable to load mask image data from icon element!\n");
+		goto cleanup;
+	}
+	
+	// Unpack image pixels if depth is < 32
+	if((iconImage.pixel_depth * iconImage.imageChannels) < 32)
+	{
+		unsigned char	*oldData = NULL;
+		unsigned char	*newData = NULL;
+		unsigned int	oldBitDepth = 0;
+		unsigned int	oldDataSize = 0;
+		unsigned long	newBlockSize = 0;
+		unsigned long	newDataSize = 0;
+		icns_colormap_rgb_t	colorRGB;
+		
+		oldBitDepth = (iconImage.pixel_depth * iconImage.imageChannels);
+		oldDataSize = iconImage.imageDataSize;
+		
+		pixelCount = iconImage.imageWidth * iconImage.imageHeight;
+		
+		newBlockSize = iconImage.imageWidth * 32;
+		newDataSize = newBlockSize * iconImage.imageHeight;
+		
+		oldData = iconImage.imageData;
+		newData = (unsigned char *)malloc(newDataSize);
+		
+		if(newData == NULL)
+		{
+			fprintf(stderr,"libicns: icns_get_image32_from_family: Unable to allocate memory block of size: %d!\n",(int)newDataSize);
+			return -1;
+		}
+		
+		dataCount = 0;
+		
+		switch(iconType)
+		{
+			// 8-Bit Icon Image Data Types
+			case ICNS_48x48_8BIT_DATA:
+			case ICNS_32x32_8BIT_DATA:
+			case ICNS_16x16_8BIT_DATA:
+			case ICNS_16x12_8BIT_DATA:
+				if(oldBitDepth != 8)
+				{
+					fprintf(stderr,"libicns: icns_get_image32_from_family: Icon bit depth type mismatch!\n");
+					free(newData);
+					error = -1;
+					goto cleanup;
+				}
+				for(pixelID = 0; pixelID < pixelCount; pixelID++)
+				{
+					colorIndex = oldData[dataCount++];
+					colorRGB = icns_colormap_8[colorIndex];
+					newData[pixelID * 4 + 0] = 0xff;
+					newData[pixelID * 4 + 1] = colorRGB.r;
+					newData[pixelID * 4 + 2] = colorRGB.g;
+					newData[pixelID * 4 + 3] = colorRGB.b;
+				}
+				break;
+			// 4-Bit Icon Image Data Types
+			case ICNS_48x48_4BIT_DATA:
+			case ICNS_32x32_4BIT_DATA:
+			case ICNS_16x16_4BIT_DATA:
+			case ICNS_16x12_4BIT_DATA:
+				if(oldBitDepth != 4)
+				{
+					fprintf(stderr,"libicns: icns_get_image32_from_family: Icon bit depth type mismatch!\n");
+					free(newData);
+					error = -1;
+					goto cleanup;
+				}
+				for(pixelID = 0; pixelID < pixelCount; pixelID++)
+				{
+					if(pixelID % 2 == 0)
+						dataValue = oldData[dataCount++];
+					colorIndex = (dataValue & 0xF0) >> 4;
+					dataValue = dataValue << 4;
+					colorRGB = icns_colormap_4[colorIndex];
+					newData[pixelID * 4 + 0] = 0xFF;
+					newData[pixelID * 4 + 1] = colorRGB.r;
+					newData[pixelID * 4 + 2] = colorRGB.g;
+					newData[pixelID * 4 + 3] = colorRGB.b;
+				}
+				break;
+			// 1-Bit Icon Image Data Types (Data is the same)
+			case ICNS_48x48_1BIT_DATA:
+			case ICNS_32x32_1BIT_DATA:
+			case ICNS_16x16_1BIT_DATA:
+			case ICNS_16x12_1BIT_DATA:
+				if(oldBitDepth != 1)
+				{
+					fprintf(stderr,"libicns: icns_get_image32_from_family: Icon bit depth type mismatch!\n");
+					free(newData);
+					error = -1;
+					goto cleanup;
+				}
+				for(pixelID = 0; pixelID < pixelCount; pixelID++)
+				{
+					if(pixelID % 8 == 0)
+						dataValue = oldData[dataCount++];
+					colorIndex = (dataValue & 0x80) ? 0x00 : 0xFF;
+					dataValue = dataValue << 1;
+					newData[pixelID * 4 + 0] = colorIndex;
+					newData[pixelID * 4 + 1] = colorIndex;
+					newData[pixelID * 4 + 2] = colorIndex;
+					newData[pixelID * 4 + 3] = colorIndex;
+				}
+				break;
+			default:
+				fprintf(stderr,"libicns: icns_get_image32_from_family: Unpack error - unknown icon type!\n");
+				free(newData);
+				error = -1;
+				goto cleanup;
+				break;
+		}
+		
+		iconImage.pixel_depth = 8;
+		iconImage.imageChannels = 4;
+		iconImage.imageDataSize = newDataSize;
+		iconImage.imageData = newData;
+		
+		free(oldData);
+	}
+	
+	// Copy in the mask, unpacking it if we need to
+	switch(maskType)
+	{
+		// 8-Bit Icon Mask Data Types
+		case ICNS_128X128_8BIT_MASK:
+		case ICNS_48x48_8BIT_MASK:
+		case ICNS_32x32_8BIT_MASK:
+		case ICNS_16x16_8BIT_MASK:
+			if((maskImage.pixel_depth * maskImage.imageChannels) != 8)
+			{
+				fprintf(stderr,"libicns: icns_get_image32_from_family: Mask bit depth type mismatch!\n");
+				error = -1;
+				goto cleanup;
+			}
+			for(pixelID = 0; pixelID < pixelCount; pixelID++)
+			{
+				iconImage.imageData[pixelID * 4 + 0] = maskImage.imageData[dataCount++];
+			}
+			break;
+		// 1-Bit Icon Mask Data Types
+		case ICNS_48x48_1BIT_MASK:
+		case ICNS_32x32_1BIT_MASK:
+		case ICNS_16x16_1BIT_MASK:
+		case ICNS_16x12_1BIT_MASK:
+			if((maskImage.pixel_depth * maskImage.imageChannels) != 1)
+			{
+				fprintf(stderr,"libicns: icns_get_image32_from_family: Mask bit depth type mismatch!\n");
+				error = -1;
+				goto cleanup;
+			}
+			for(pixelID = 0; pixelID < pixelCount; pixelID++)
+			{
+				if(pixelID % 8 == 0)
+					dataValue = maskImage.imageData[dataCount++];
+				colorIndex = (dataValue & 0x80) ? 0x00 : 0xFF;
+				dataValue = dataValue << 1;
+				iconImage.imageData[pixelID * 4 + 0] = colorIndex;
+			}
+			break;
+		default:
+			fprintf(stderr,"libicns: icns_get_image32_from_family: Unpack error - unknown mask type!\n");
+			error = -1;
+			goto cleanup;
+			break;
+	}
+
+	
+cleanup:
+	
+	if(maskElement != NULL) {
+		free(maskElement);
+		maskElement = NULL;
+	}
+	icns_free_image(&maskImage);
+	
+	if(iconElement != NULL) {
+		free(iconElement);
+		iconElement = NULL;
+	}
+	
+	// We only free the icon image if there was an error. Otherwise, we
+	// pass the data onto the outgoing image
+	if(error) {
+		icns_free_image(&iconImage);
+	} else {
+		memcpy(imageOut,&iconImage,sizeof(icns_image_t));
+	}
+	
+	return error;
+}
+
+
 int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imageOut)
 {
 	int	error = 0;
-	icns_type_t	icnsType = 0x00000000;
+	icns_type_t	iconType = 0x00000000;
 	
 	if(iconElement == NULL)
 	{
@@ -93,7 +390,7 @@ int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imag
 	if(error)
 		return -1;
 	
-	icnsType = EndianSwapBtoN(iconElement->elementType,sizeof(icns_type_t));
+	iconType = EndianSwapBtoN(iconElement->elementType,sizeof(icns_type_t));
 	
 	if((imageOut->pixel_depth * imageOut->imageChannels) < 32)
 	{
@@ -129,7 +426,7 @@ int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imag
 		
 		dataCount = 0;
 		
-		switch(icnsType)
+		switch(iconType)
 		{
 			// 8-Bit Icon Mask Data Types
 			case ICNS_128X128_8BIT_MASK:
@@ -220,6 +517,9 @@ int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imag
 				}
 				break;
 			default:
+				fprintf(stderr,"libicns: icns_get_image32_from_element: Unpack error - unknown icon type!\n");
+				free(newData);
+				return -1;
 				break;
 		}
 		
@@ -241,7 +541,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 {
 	int		error = 0;
 	unsigned long	dataCount = 0;	
-	icns_type_t	icnsType = 0x00000000;
+	icns_type_t	iconType = 0x00000000;
 	unsigned long	rawDataSize = 0;
 	unsigned char	*rawDataPtr = NULL;
 	unsigned int	iconBitDepth = 0;
@@ -264,18 +564,18 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 		return -1;
 	}
 	
-	icnsType = EndianSwapBtoN(iconElement->elementType,sizeof(icns_type_t));
+	iconType = EndianSwapBtoN(iconElement->elementType,sizeof(icns_type_t));
 	rawDataSize = EndianSwapBtoN(iconElement->elementSize,sizeof(icns_size_t));
 	rawDataSize = rawDataSize - sizeof(icns_type_t) - sizeof(icns_size_t);
 	rawDataPtr = (unsigned char*)&(iconElement->elementData[0]);
 	
 	#if ICNS_DEBUG
-	printf("Icon element type is: 0x%8X\n",(unsigned int)icnsType);
+	printf("Icon element type is: 0x%8X\n",(unsigned int)iconType);
 	printf("Icon element size is: %d\n",(int)rawDataSize);	
 	#endif
 	
 	// We use the jp2 processor for these two
-	if((icnsType == ICNS_512x512_32BIT_ARGB_DATA) || (icnsType == ICNS_256x256_32BIT_ARGB_DATA))
+	if((iconType == ICNS_512x512_32BIT_ARGB_DATA) || (iconType == ICNS_256x256_32BIT_ARGB_DATA))
 	{
 		#ifdef ICNS_OPENJPEG
 		
@@ -299,7 +599,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 		#endif
 	}
 	
-	error = icns_init_image_for_type(icnsType,imageOut);
+	error = icns_init_image_for_type(iconType,imageOut);
 	
 	if(error)
 	{
@@ -316,7 +616,11 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	case 32:
 		if(rawDataSize < imageOut->imageDataSize)
 		{
-			icns_decode_rle24_data(rawDataSize,(icns_sint32_t*)rawDataPtr,iconDataSize,(icns_sint32_t*)(imageOut->imageData));
+			unsigned long	rleDataSize = 0;
+			icns_sint32_t	*rleDataPtr = NULL;
+			rleDataSize = iconDataSize;
+			rleDataPtr = (icns_sint32_t*)(imageOut->imageData);
+			icns_decode_rle24_data(rawDataSize,(icns_sint32_t*)rawDataPtr,&rleDataSize,&rleDataPtr);
 		}
 		else
 		{
@@ -354,7 +658,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 // Initialize a new image structure for holding the data
 // using the information for the specified type
 
-int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut)
+int icns_init_image_for_type(icns_type_t iconType,icns_image_t *imageOut)
 {
 	unsigned int	iconWidth = 0;
 	unsigned int	iconHeight = 0;
@@ -367,7 +671,7 @@ int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut)
 		return -1;
 	}
 	
-	switch(icnsType)
+	switch(iconType)
 	{
 		// 32-Bit Icon Image Data Types
 		case ICNS_128X128_32BIT_DATA:
@@ -500,7 +804,7 @@ int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut)
 			break;
 			
 		default:
-			fprintf(stderr,"libicns: icns_init_image_for_type: Unable to parse icon type 0x%8X\n",icnsType);
+			fprintf(stderr,"libicns: icns_init_image_for_type: Unable to parse icon type 0x%8X\n",iconType);
 			return -1;
 			break;
 	}

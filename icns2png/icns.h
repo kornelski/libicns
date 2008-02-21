@@ -159,14 +159,15 @@ void bin_print_int(int x);
 
 // icns_image.c
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
+int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t sourceType,icns_image_t *imageOut);
 int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
 int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
-int icns_init_image_for_type(icns_type_t icnsType,icns_image_t *imageOut);
+int icns_init_image_for_type(icns_type_t iconType,icns_image_t *imageOut);
 int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut);
 int icns_free_image(icns_image_t *imageIn);
 
 // icns_rle24.c
-int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr);
+int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
 int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
 
 // icns_jp2.c
@@ -179,19 +180,19 @@ opj_image_t * jp2dec(unsigned char *bufin, int len);
 #endif
 
 // icns_element.c
-int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t icnsType,icns_element_t **iconElementOut);
-int icns_get_element_from_family(icns_family_t *icnsFamily,icns_type_t icnsType,icns_element_t **iconElementOut);
-int icns_set_element_in_family(icns_family_t **icnsFamilyRef,icns_element_t *newIcnsElement);
-int icns_remove_element_in_family(icns_family_t **icnsFamilyRef,icns_type_t icnsType);
+int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
+int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,icns_element_t **iconElementOut);
+int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *newIconElement);
+int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t iconType);
 
 // icns_family.c
-int icns_create_family(icns_family_t **icnsFamilyOut);
+int icns_create_family(icns_family_t **iconFamilyOut);
 
 // icns_io.c
-int icns_write_family_to_file(FILE *dataFile,icns_family_t *icnsFamilyIn);
-int icns_read_family_from_file(FILE *dataFile,icns_family_t **icnsFamilyOut);
-int icns_family_from_file_data(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
-int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *data,icns_family_t **icnsFamilyOut);
+int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn);
+int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut);
+int icns_family_from_file_data(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
+int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
 int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *data,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,unsigned long *parsedResSizeOut,unsigned char **parsedResDataOut);
 
 #endif

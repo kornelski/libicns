@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.
 //***************************** icns_decode_rle24_data ****************************//
 // Decode a rgb 24 bit rle encoded data stream into 32 bit argb (alpha is ignored)
 
-int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long dataOutSize, icns_sint32_t *dataOutPtr)
+int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr)
 {
 	unsigned int	myshift = 0;
 	unsigned int	mymask = 0;
@@ -56,14 +56,20 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 		return -1;
 	}
 	
+	if(*dataOutPtr == NULL)
+	{
+		fprintf(stderr,"libicns: icns_decode_rle24_data: rle decoder data out ptr ref is NULL!\n");
+		return -1;
+	}
+	
 	rawDataPtr = (unsigned char *)dataInPtr;
-	destIconData = (unsigned int *)dataOutPtr;
-	destIconDataBaseAddr = (unsigned int *)dataOutPtr;
+	destIconData = (unsigned int *)(*dataOutPtr);
+	destIconDataBaseAddr = (unsigned int *)(*dataOutPtr);
 	
 	// There's always going to be 4 channels in this
 	// so we want our counter to increment through
 	// channels, not bytes....
-	destIconLength = dataOutSize / 4;
+	destIconLength = (*dataOutSize) / 4;
 	
 	myshift = 24;
 	mymask = 0xFFFFFFFF;

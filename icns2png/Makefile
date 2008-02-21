@@ -26,7 +26,7 @@
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 3.0a
+LIBVERMIN = 3.0b
 
 # Compile with debug flags and icns debug messages
 DEBUG = false
@@ -160,7 +160,7 @@ install-shared: install-headers $(LIBSO)
 
 install-utils: $(LIBUTILS)
 	-@if [ ! -d $(BINPATH) ]; then mkdir -p $(BINPATH); fi
-	install_name_tool -change $(LIBSOMAJ) $(LIBPATH)/$(LIBSOMAJ) icns2png
+	if [ "$(UNAME)" = "Darwin" ]; then install_name_tool -change $(LIBSOMAJ) $(LIBPATH)/$(LIBSOMAJ) icns2png; fi
 	install -m 755 icns2png $(BINPATH)
 	install -m 755 icontainer2icns $(BINPATH)
 

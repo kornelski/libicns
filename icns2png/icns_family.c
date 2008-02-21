@@ -31,33 +31,33 @@ Boston, MA 02111-1307, USA.
 
 /***************************** icns_create_family **************************/
 
-int icns_create_family(icns_family_t **icnsFamilyOut)
+int icns_create_family(icns_family_t **iconFamilyOut)
 {
-	icns_family_t	*newIcnsFamily = NULL;
-	icns_size_t	newIcnsFamilySize = 0;
+	icns_family_t	*newIconFamily = NULL;
+	icns_size_t	newIconFamilySize = 0;
 
-	if(icnsFamilyOut == NULL)
+	if(iconFamilyOut == NULL)
 	{
 		fprintf(stderr,"libicns: icns_create_family: icns family reference is NULL!\n");
 		return -1;
 	}
 	
-	*icnsFamilyOut = NULL;
+	*iconFamilyOut = NULL;
 	
-	newIcnsFamilySize = sizeof(icns_type_t) + sizeof(icns_size_t);
+	newIconFamilySize = sizeof(icns_type_t) + sizeof(icns_size_t);
 
-	newIcnsFamily = malloc(newIcnsFamilySize);
+	newIconFamily = malloc(newIconFamilySize);
 		
-	if(newIcnsFamily == NULL)
+	if(newIconFamily == NULL)
 	{
-		fprintf(stderr,"libicns: icns_create_family: Unable to allocate memory block of size: %d!\n",newIcnsFamilySize);
+		fprintf(stderr,"libicns: icns_create_family: Unable to allocate memory block of size: %d!\n",newIconFamilySize);
 		return -1;
 	}
 	
-	newIcnsFamily->resourceType = EndianSwapNtoB(ICNS_FAMILY_TYPE,sizeof(icns_type_t));
-	newIcnsFamily->resourceSize = EndianSwapNtoB(newIcnsFamilySize,sizeof(icns_size_t));
+	newIconFamily->resourceType = EndianSwapNtoB(ICNS_FAMILY_TYPE,sizeof(icns_type_t));
+	newIconFamily->resourceSize = EndianSwapNtoB(newIconFamilySize,sizeof(icns_size_t));
 	
-	*icnsFamilyOut = newIcnsFamily;
+	*iconFamilyOut = newIconFamily;
 	
 	return 0;
 }
