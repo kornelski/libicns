@@ -19,11 +19,22 @@ Boston, MA 02111-1307, USA.
 */
 
 // Add any other +CROSS-PLATFORM+ headers here that might define
-// __BYTE_ORDER, __BIG_ENDIAN, __LITTLE_ENDIAN, __PDP_ENDIAN
+// ES_ARCH_BYTE_ORDER, ES_BIG_ENDIAN, ES_LITTLE_ENDIAN, ES_PDP_ENDIAN
+#ifdef __APPLE__
+ #include <machine/endian.h>
+#endif
+
+#ifdef __WIN32__
+ #include <sys/param.h>
+#endif
+
 #include <stdlib.h>
 
 #ifndef __ENDIANSWAP__
 #define __ENDIANSWAP__
+
+// This should be defined in the makefile
+#define ES_DEBUG
 
 // Notes on endianess. Endianess has to the with the order of significant
 // bytes in a numerical data type. Significant meaning the part that will
@@ -92,9 +103,56 @@ Boston, MA 02111-1307, USA.
 #define		EndianSwapPtoL32(x)       ( (( (x) & 0xFF000000 ) >> 16) | (( (x) & 0x00FF0000 ) >> 16) | (( (x) & 0x0000FF00 ) << 16) | (( (x) & 0x000000FF ) << 16) )
 
 // Try hard to determine endianess at compile time. __BYTE_ORDER is defined
-// on most distributions, along with __BIG_ENDIAN and __LITTLE_ENDIAN
+// on most distributions, along with __BIG_ENDIAN and __LITTLE_ENDIAN, but
+// on other platforms some others are defined We work together to establish
+// something consistent
+
 #ifdef __BYTE_ORDER
-	#if __BYTE_ORDER==__BIG_ENDIAN
+	#define ES_ARCH_BYTE_ORDER                   __BYTE_ORDER
+
+	#ifdef __LITTLE_ENDIAN
+		#define ES_ARCH_LITTLE_ENDIAN        __LITTLE_ENDIAN
+	#endif
+	#ifdef __BIG_ENDIAN
+		#define ES_ARCH_BIG_ENDIAN           __BIG_ENDIAN
+	#endif
+	#ifdef __PDP_ENDIAN
+		#define ES_ARCH_PDP_ENDIAN           __PDP_ENDIAN
+	#endif
+#endif
+
+#ifdef __BYTE_ORDER__
+        #define ES_ARCH_BYTE_ORDER                   __BYTE_ORDER__
+
+	#ifdef __LITTLE_ENDIAN__
+		#define ES_ARCH_LITTLE_ENDIAN        __LITTLE_ENDIAN__
+	#endif
+	#ifdef __BIG_ENDIAN__
+		#define ES_ARCH_BIG_ENDIAN           __BIG_ENDIAN__
+	#endif
+	#ifdef __PDP_ENDIAN__
+		#define ES_ARCH_PDP_ENDIAN           __PDP_ENDIAN__
+	#endif
+#endif
+
+#ifdef BYTE_ORDER
+	#define ES_ARCH_BYTE_ORDER                   BYTE_ORDER
+
+	#ifdef LITTLE_ENDIAN
+		#define ES_ARCH_LITTLE_ENDIAN        LITTLE_ENDIAN
+	#endif
+	#ifdef BIG_ENDIAN
+		#define ES_ARCH_BIG_ENDIAN           BIG_ENDIAN
+	#endif
+	#ifdef PDP_ENDIAN
+		#define ES_ARCH_PDP_ENDIAN           PDP_ENDIAN
+	#endif
+#endif
+
+// If we were able to resolve the byte order in some way, then
+// Go ahead and use the compile-time macros for endian swaps
+#ifdef ES_ARCH_BYTE_ORDER
+	#if ES_ARCH_BYTE_ORDER==ES_ARCH_BIG_ENDIAN
 		#define ES_IS_BIG_ENDIAN      (1)
 		#define ES_IS_LITTLE_ENDIAN   (0)
 		#define ES_IS_PDP_ENDIAN      (0)
@@ -116,7 +174,7 @@ Boston, MA 02111-1307, USA.
 		#define	EndianSwapPtoN08(x)   EndianSwapBtoP08(x)
 		#define	EndianSwapPtoN16(x)   EndianSwapBtoP16(x)
 		#define	EndianSwapPtoN32(x)   EndianSwapBtoP32(x)
-	#elif __BYTE_ORDER==__LITTLE_ENDIAN
+	#elif ES_ARCH_BYTE_ORDER==ES_ARCH_LITTLE_ENDIAN
 		#define ES_IS_BIG_ENDIAN      (0)
 		#define ES_IS_LITTLE_ENDIAN   (1)
 		#define ES_IS_PDP_ENDIAN      (0)
@@ -138,7 +196,8 @@ Boston, MA 02111-1307, USA.
 		#define	EndianSwapPtoN08(x)   EndianSwapLtoP08(x)
 		#define	EndianSwapPtoN16(x)   EndianSwapLtoP16(x)
 		#define	EndianSwapPtoN32(x)   EndianSwapLtoP32(x)
-	#elif __BYTE_ORDER==__PDP_ENDIAN
+	#elif ES_ARCH_BYTE_ORDER==ES_ARCH_PDP_ENDIAN
+		#define "order is pdp"
 		#define ES_IS_BIG_ENDIAN      (0)
 		#define ES_IS_LITTLE_ENDIAN   (0)
 		#define ES_IS_PDP_ENDIAN      (1)
@@ -165,7 +224,7 @@ Boston, MA 02111-1307, USA.
 	#endif
 #else
 	#define ES_UNDETERMINED_ENDIAN
-#endif /* ifdef __BYTE_ORDER */
+#endif /* ifdef ES_ARCH_BYTE_ORDER */
 
 #ifdef ES_UNDETERMINED_ENDIAN
 	#warning "Unable to determine endianess at compile time. Forced to use runtime checks!"

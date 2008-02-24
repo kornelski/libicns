@@ -26,7 +26,7 @@
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 3.0b
+LIBVERMIN = 3.0c
 
 # Compile with debug flags and icns debug messages
 DEBUG = false

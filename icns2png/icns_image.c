@@ -115,10 +115,11 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	if((sourceType == ICNS_512x512_32BIT_ARGB_DATA) || (sourceType == ICNS_256x256_32BIT_ARGB_DATA))
 	{
 		#ifdef ICNS_OPENJPEG
+		icns_size_t	elementSize;
+		opj_image_t	*image = NULL;
 		
-		opj_image_t* image = NULL;
-		
-		image = jp2dec((unsigned char *)&(iconElement->elementData[0]), EndianSwapBtoN(iconElement->elementSize,sizeof(icns_size_t)) );
+		elementSize = EndianSwapBtoN(iconElement->elementSize,sizeof(icns_size_t));
+		image = jp2dec((unsigned char *)&(iconElement->elementData[0]), elementSize);
 		if(image == NULL)
 			return -1;
 		
@@ -389,8 +390,9 @@ int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imag
 	
 	if(error)
 		return -1;
-	
-	iconType = EndianSwapBtoN(iconElement->elementType,sizeof(icns_type_t));
+
+	iconType = iconElement->elementType;	
+	iconType = EndianSwapBtoN(iconType,sizeof(icns_type_t));
 	
 	if((imageOut->pixel_depth * imageOut->imageChannels) < 32)
 	{
@@ -540,7 +542,9 @@ int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imag
 int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageOut)
 {
 	int		error = 0;
-	unsigned long	dataCount = 0;	
+	unsigned long	dataCount = 0;
+	icns_type_t	elementType = 0x00000000;
+	icns_size_t	elementSize = 0;
 	icns_type_t	iconType = 0x00000000;
 	unsigned long	rawDataSize = 0;
 	unsigned char	*rawDataPtr = NULL;
@@ -564,9 +568,13 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 		return -1;
 	}
 	
-	iconType = EndianSwapBtoN(iconElement->elementType,sizeof(icns_type_t));
-	rawDataSize = EndianSwapBtoN(iconElement->elementSize,sizeof(icns_size_t));
-	rawDataSize = rawDataSize - sizeof(icns_type_t) - sizeof(icns_size_t);
+	elementType = iconElement->elementType;
+	elementSize = iconElement->elementSize;
+	elementType = EndianSwapBtoN(elementType,sizeof(icns_type_t));
+	elementSize = EndianSwapBtoN(elementSize,sizeof(icns_size_t));
+
+	iconType = elementType;
+	rawDataSize = elementSize - sizeof(icns_type_t) - sizeof(icns_size_t);
 	rawDataPtr = (unsigned char*)&(iconElement->elementData[0]);
 	
 	#if ICNS_DEBUG

@@ -49,8 +49,9 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 		fprintf(stderr,"libicns: icns_write_family_to_file: NULL icns family!\n");
 		return -1;
 	}
-	
-	resourceSize = EndianSwapBtoN(iconFamilyIn->resourceSize,sizeof(icns_size_t));
+
+	resourceSize = iconFamilyIn->resourceSize;	
+	resourceSize = EndianSwapBtoN(resourceSize,sizeof(icns_size_t));
 	blockSize = 1024;
 	
 	while( (resourceSize-dataOutTotal) > blockSize)
@@ -146,6 +147,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int		error = 0;
+	icns_size_t	resourceSize = 0;
 	unsigned char	*iconDataPtr = NULL;
 	unsigned long	dataOffset = 0;
 	
@@ -195,7 +197,8 @@ int icns_family_from_file_data(unsigned long dataSize,unsigned char *dataPtr,icn
 	{
 		// Data is an X Icon file - no parsing needed at this point
 		*iconFamilyOut = (icns_family_t*)iconDataPtr;
-		if( dataSize != EndianSwapBtoN( ((*iconFamilyOut)->resourceSize) ,sizeof(icns_size_t)) )
+		resourceSize = ((*iconFamilyOut)->resourceSize);
+		if( dataSize != EndianSwapBtoN( resourceSize, sizeof(icns_size_t)) )
 		{
 			fprintf(stderr,"libicns: icns_family_from_file_data: Invalid icns resource size!\n");
 			return -1;
@@ -236,10 +239,14 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 	}
 
 	// Load Resource Header to if we are dealing with a raw resource fork.
-	resHeadDataOffset = EndianSwapBtoN(*((icns_sint32_t*)(dataPtr+0)),sizeof(icns_sint32_t));
-	resHeadMapOffset = EndianSwapBtoN(*((icns_sint32_t*)(dataPtr+4)),sizeof(icns_sint32_t));
-	resHeadDataSize = EndianSwapBtoN(*((icns_sint32_t*)(dataPtr+8)),sizeof(icns_sint32_t));
-	resHeadMapLength = EndianSwapBtoN(*((icns_sint32_t*)(dataPtr+12)),sizeof(icns_sint32_t));
+	resHeadDataOffset = *((icns_sint32_t*)(dataPtr+0));
+	resHeadMapOffset = *((icns_sint32_t*)(dataPtr+4));
+	resHeadDataSize = *((icns_sint32_t*)(dataPtr+8));
+	resHeadMapLength = *((icns_sint32_t*)(dataPtr+12));
+	resHeadDataOffset = EndianSwapBtoN(resHeadDataOffset,sizeof(icns_sint32_t));
+	resHeadMapOffset = EndianSwapBtoN(resHeadMapOffset,sizeof(icns_sint32_t));
+	resHeadDataSize = EndianSwapBtoN(resHeadDataSize,sizeof(icns_sint32_t));
+	resHeadMapLength = EndianSwapBtoN(resHeadMapLength,sizeof(icns_sint32_t));
 	
 	// Check to see if file is not a raw resource file
 	if( (resHeadMapOffset+resHeadMapLength != dataSize) || (resHeadDataOffset+resHeadDataSize != resHeadMapOffset) )
@@ -255,10 +262,14 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 		}
 		
 		// Reload Actual Resource Header.
-		resHeadDataOffset = EndianSwapBtoN(*((icns_sint32_t*)(parsedData+0)),sizeof(icns_sint32_t));
-		resHeadMapOffset = EndianSwapBtoN(*((icns_sint32_t*)(parsedData+4)),sizeof(icns_sint32_t));
-		resHeadDataSize = EndianSwapBtoN(*((icns_sint32_t*)(parsedData+8)),sizeof(icns_sint32_t));
-		resHeadMapLength = EndianSwapBtoN(*((icns_sint32_t*)(parsedData+12)),sizeof(icns_sint32_t));
+		resHeadDataOffset = *((icns_sint32_t*)(parsedData+0));
+		resHeadMapOffset = *((icns_sint32_t*)(parsedData+4));
+		resHeadDataSize = *((icns_sint32_t*)(parsedData+8));
+		resHeadMapLength = *((icns_sint32_t*)(parsedData+12));
+		resHeadDataOffset = EndianSwapBtoN(resHeadDataOffset,sizeof(icns_sint32_t));
+		resHeadMapOffset = EndianSwapBtoN(resHeadMapOffset,sizeof(icns_sint32_t));
+		resHeadDataSize = EndianSwapBtoN(resHeadDataSize,sizeof(icns_sint32_t));
+		resHeadMapLength = EndianSwapBtoN(resHeadMapLength,sizeof(icns_sint32_t));
 				
 		dataSize = parsedSize;
 		dataPtr = parsedData;
@@ -280,11 +291,17 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 	if(error == 0)
 	{
 		// Load Resource Map
-		resMapAttributes = EndianSwapBtoN(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+0+22)), sizeof(icns_sint16_t));
-		resMapTypeOffset = EndianSwapBtoN(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+2+22)), sizeof(icns_sint16_t));
-		resMapNameOffset = EndianSwapBtoN(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+4+22)), sizeof(icns_sint16_t));
-		resMapNumTypes = EndianSwapBtoN(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+6+22)), sizeof(icns_sint16_t))+1;
-		
+		resMapAttributes = *((icns_sint16_t*)(dataPtr+resHeadMapOffset+0+22));
+		resMapTypeOffset = *((icns_sint16_t*)(dataPtr+resHeadMapOffset+2+22));
+		resMapNameOffset = *((icns_sint16_t*)(dataPtr+resHeadMapOffset+4+22));
+		resMapNumTypes = *((icns_sint16_t*)(dataPtr+resHeadMapOffset+6+22));
+		resMapAttributes = EndianSwapBtoN(resMapAttributes, sizeof(icns_sint16_t));
+		resMapTypeOffset = EndianSwapBtoN(resMapTypeOffset, sizeof(icns_sint16_t));
+		resMapNameOffset = EndianSwapBtoN(resMapNameOffset, sizeof(icns_sint16_t));
+		resMapNumTypes = EndianSwapBtoN(resMapNumTypes, sizeof(icns_sint16_t));
+		// 0 == 1 here, so fix that
+		resMapNumTypes = resMapNumTypes + 1;
+
 		if( (resHeadMapOffset+resMapTypeOffset+2+(count*8)) > dataSize)
 		{
 			fprintf(stderr,"libicns: icns_family_from_mac_resource: Invalid resource map.\n");
@@ -298,9 +315,12 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 			short		resNumItems = 0;
 			short		resOffset = 0;
 			
-			resType = EndianSwapBtoN(*((icns_type_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8))),sizeof(icns_type_t));
-			resNumItems = EndianSwapBtoN(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8))),sizeof(icns_sint16_t));
-			resOffset = EndianSwapBtoN(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8))),sizeof(icns_sint16_t));
+			resType = *((icns_type_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+2+(count*8)));
+			resNumItems = *((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+6+(count*8)));
+			resOffset = *((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+8+(count*8)));
+			resType = EndianSwapBtoN(resType,sizeof(icns_type_t));
+			resNumItems = EndianSwapBtoN(resNumItems,sizeof(icns_sint16_t));
+			resOffset = EndianSwapBtoN(resOffset,sizeof(icns_sint16_t));
 			
 			if(resType == ICNS_FAMILY_TYPE)
 			{
@@ -313,8 +333,12 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 				char	resName[256] = {0};
 				unsigned char	*resData = NULL;
 				
-				resID = EndianSwapBtoN(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset)),sizeof(icns_sint16_t));
-				resNameOffset = EndianSwapBtoN(*((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2)),sizeof(icns_sint16_t));
+				resID = *((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset));
+				resNameOffset = *((icns_sint16_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+2));
+				
+				resID = EndianSwapBtoN(resID,sizeof(icns_sint16_t));
+				resNameOffset = EndianSwapBtoN(resNameOffset,sizeof(icns_sint16_t));
+				
 				resAttributes = *((icns_sint8_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4));
 				
 				// Read in the resource name, if it exists (-1 indicates it doesn't)
@@ -330,10 +354,12 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 
 				// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
 				// Load as long, and then cut off extra inital byte.
-				resDataOffset = EndianSwapBtoN(*((icns_sint32_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4)),sizeof(icns_sint32_t));
+				resDataOffset = *((icns_sint32_t*)(dataPtr+resHeadMapOffset+resMapTypeOffset+resOffset+4));
+				resDataOffset = EndianSwapBtoN(resDataOffset,sizeof(icns_sint32_t));
 				resDataOffset &= 0x00FFFFFF;
 				
-				resDataSize = EndianSwapBtoN(*((icns_sint32_t*)(dataPtr+resHeadDataOffset+resDataOffset)),sizeof(icns_sint32_t));
+				resDataSize = *((icns_sint32_t*)(dataPtr+resHeadDataOffset+resDataOffset));
+				resDataSize = EndianSwapBtoN(resDataSize,sizeof(icns_sint32_t));
 
 				if( (resHeadDataOffset+resDataOffset) > dataSize )
 				{
@@ -355,15 +381,20 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 				
 				if(resData != NULL)
 				{
+					icns_type_t	resourceType = 0x00000000;
+					icns_size_t	resourceSize = 0;
+
 					memcpy( resData ,(dataPtr+resHeadDataOffset+resDataOffset+4),resDataSize);
 					*iconFamilyOut = (icns_family_t*)resData;
 					// Check the data... this needs to be accurate, but we might be able to repair it for now
-					if(ICNS_FAMILY_TYPE != EndianSwapBtoN( (*iconFamilyOut)->resourceType ,sizeof(icns_sint32_t)))
+					resourceType = (*iconFamilyOut)->resourceType;
+					resourceSize = (*iconFamilyOut)->resourceSize;
+					if(ICNS_FAMILY_TYPE != EndianSwapBtoN( resourceType ,sizeof(icns_sint32_t)))
 					{
 						fprintf(stderr,"libicns: icns_family_from_mac_resource: warning: family type is incorrect - attempting repair!\n");
 						(*iconFamilyOut)->resourceType = EndianSwapBtoN( ICNS_FAMILY_TYPE ,sizeof(icns_sint32_t));
 					}
-					if(resDataSize != EndianSwapBtoN( (*iconFamilyOut)->resourceSize ,sizeof(icns_sint32_t)))
+					if(resDataSize != EndianSwapBtoN( resourceSize ,sizeof(icns_sint32_t)))
 					{
 						fprintf(stderr,"libicns: icns_family_from_mac_resource: warning: family size is incorrect - attempting repair!\n");
 						(*iconFamilyOut)->resourceSize = EndianSwapBtoN( resDataSize ,sizeof(icns_sint32_t));
@@ -486,16 +517,27 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	
 	// If mac file type is requested, pass it up
 	if(dataTypeOut != NULL)
-		*dataTypeOut = EndianSwapBtoN( *((icns_type_t*)(dataPtr+65)), sizeof(icns_type_t) );
+	{
+		icns_type_t	dataType = 0x00000000;
+		dataType = *((icns_type_t*)(dataPtr+65));
+		*dataTypeOut = EndianSwapBtoN( dataType, sizeof(icns_type_t) );
+	}
 
 	// If mac file creator is requested, pass it up
 	if(dataCreatorOut != NULL)
-		*dataCreatorOut = EndianSwapBtoN( *((icns_type_t*)(dataPtr+69)), sizeof(icns_type_t) );
-	
+	{
+		icns_type_t	dataCreator = 0x00000000;
+		dataCreator = *((icns_type_t*)(dataPtr+69));
+		*dataCreatorOut = EndianSwapBtoN( dataCreator, sizeof(icns_type_t) );
+	}
+
 	// Load up the data lengths
-	secondHeaderLength = EndianSwapBtoN( *((icns_sint16_t *)(dataPtr+120)), sizeof(icns_sint16_t) );
-	fileDataSize = EndianSwapBtoN( *((icns_sint32_t *)(dataPtr+83)), sizeof(icns_sint32_t) );
-	resourceDataSize = EndianSwapBtoN( *((icns_sint32_t *)(dataPtr+87)), sizeof(icns_sint32_t) );
+	secondHeaderLength = *((icns_sint16_t *)(dataPtr+120));
+	fileDataSize = *((icns_sint32_t *)(dataPtr+83));
+	resourceDataSize = *((icns_sint32_t *)(dataPtr+87));
+	secondHeaderLength = EndianSwapBtoN( secondHeaderLength, sizeof(icns_sint16_t) );
+	fileDataSize = EndianSwapBtoN( fileDataSize, sizeof(icns_sint32_t) );
+	resourceDataSize = EndianSwapBtoN( resourceDataSize, sizeof(icns_sint32_t) );
 
 	// Calculate extra padding length for forks
 	fileDataPadding = (((fileDataSize + 127) >> 7) << 7) - fileDataSize;

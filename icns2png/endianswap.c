@@ -18,6 +18,8 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 */
 
+#include <stdio.h>
+
 #include "endianswap.h"
 
 char	EndianSwapRuntime08(long endianSource,long endianDest,char value)
@@ -62,6 +64,9 @@ short	EndianSwapRuntime16(long endianSource,long endianDest,short value)
 	switch(endianSource)
 	{
 	case ES_LITTLE_ENDIAN:
+		#ifdef ES_DEBUG
+			printf("16 bits from little endian: 0x%04X\n",value);
+		#endif
 		if(endianDest == ES_BIG_ENDIAN) {
 			swapValue = EndianSwapLtoB16(swapValue);
 		} else if(endianDest == ES_PDP_ENDIAN) {
@@ -71,6 +76,9 @@ short	EndianSwapRuntime16(long endianSource,long endianDest,short value)
 		}
 		break;
 	case ES_BIG_ENDIAN:
+		#ifdef ES_DEBUG
+			printf("16 bits from big endian: 0x%04X\n",value);
+		#endif
 		if(endianDest == ES_LITTLE_ENDIAN) {
 			swapValue = EndianSwapBtoL16(swapValue);
 		} else if(endianDest == ES_PDP_ENDIAN) {
@@ -80,6 +88,9 @@ short	EndianSwapRuntime16(long endianSource,long endianDest,short value)
 		}
 		break;
 	case ES_PDP_ENDIAN:
+		#ifdef ES_DEBUG
+			printf("16 bits from pdp endian: 0x%04X\n",value);
+		#endif
 		if(endianDest == ES_LITTLE_ENDIAN) {
 			swapValue = EndianSwapPtoL16(swapValue);
 		} else if(endianDest == ES_PDP_ENDIAN) {
@@ -92,7 +103,18 @@ short	EndianSwapRuntime16(long endianSource,long endianDest,short value)
 		swapValue = swapValue;
 		break;
 	}
-	
+
+	#ifdef ES_DEBUG
+		if(endianDest == ES_LITTLE_ENDIAN) {
+			printf("16 bits swapped to little endian: 0x%04X\n",value);
+		} else if(endianDest == ES_BIG_ENDIAN) {
+			printf("16 bits swapped to big endian: 0x%04X\n",value);
+		} else if(endianDest == ES_PDP_ENDIAN) {
+			printf("16 bits swapped to pdp endian: 0x%04X\n",value);
+		} else {
+			printf("16 bits to unknown endian - not swapped.\n");
+		}
+	#endif	
 	return swapValue;
 }
 
@@ -127,6 +149,9 @@ int	EndianSwapRuntime32(long endianSource,long endianDest,int value)
 	switch(endianSource)
 	{
 	case ES_LITTLE_ENDIAN:
+		#ifdef ES_DEBUG
+			printf("32 bits from little endian: 0x%08X\n",value);
+		#endif
 		if(endianDest == ES_BIG_ENDIAN) {
 			swapValue = EndianSwapLtoB32(swapValue);
 		} else if(endianDest == ES_PDP_ENDIAN) {
@@ -136,6 +161,9 @@ int	EndianSwapRuntime32(long endianSource,long endianDest,int value)
 		}
 		break;
 	case ES_BIG_ENDIAN:
+		#ifdef ES_DEBUG
+			printf("32 bits from big endian: 0x%08X\n",value);
+		#endif
 		if(endianDest == ES_LITTLE_ENDIAN) {
 			swapValue = EndianSwapBtoL32(swapValue);
 		} else if(endianDest == ES_PDP_ENDIAN) {
@@ -145,6 +173,9 @@ int	EndianSwapRuntime32(long endianSource,long endianDest,int value)
 		}
 		break;
 	case ES_PDP_ENDIAN:
+		#ifdef ES_DEBUG
+			printf("32 bits from pdp endian: 0x%08X\n",value);
+		#endif
 		if(endianDest == ES_LITTLE_ENDIAN) {
 			swapValue = EndianSwapPtoL32(swapValue);
 		} else if(endianDest == ES_PDP_ENDIAN) {
@@ -157,6 +188,18 @@ int	EndianSwapRuntime32(long endianSource,long endianDest,int value)
 		swapValue = swapValue;
 		break;
 	}
+	
+	#ifdef ES_DEBUG
+		if(endianDest == ES_LITTLE_ENDIAN) {
+			printf("32 bits swapped to little endian: 0x%08X\n",value);
+		} else if(endianDest == ES_BIG_ENDIAN) {
+			printf("32 bits swapped to big endian: 0x%08X\n",value);
+		} else if(endianDest == ES_PDP_ENDIAN) {
+			printf("32 bits swapped to pdp endian: 0x%08X\n",value);
+		} else {
+			printf("32 bits to unknown endian - not swapped.\n");
+		}
+	#endif	
 	
 	return swapValue;
 }
