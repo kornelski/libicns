@@ -122,30 +122,46 @@ Boston, MA 02111-1307, USA.
 #endif
 
 #ifdef __BYTE_ORDER__
-        #define ES_ARCH_BYTE_ORDER                   __BYTE_ORDER__
+	#ifndef ES_ARCH_BYTE_ORDER
+	        #define ES_ARCH_BYTE_ORDER                   __BYTE_ORDER__
+	#endif
 
 	#ifdef __LITTLE_ENDIAN__
-		#define ES_ARCH_LITTLE_ENDIAN        __LITTLE_ENDIAN__
+		#ifndef ES_ARCH_LITTLE_ENDIAN
+			#define ES_ARCH_LITTLE_ENDIAN        __LITTLE_ENDIAN__
+		#endif
 	#endif
 	#ifdef __BIG_ENDIAN__
-		#define ES_ARCH_BIG_ENDIAN           __BIG_ENDIAN__
+		#ifndef ES_ARCH_BIG_ENDIAN
+			#define ES_ARCH_BIG_ENDIAN           __BIG_ENDIAN__
+		#endif
 	#endif
 	#ifdef __PDP_ENDIAN__
-		#define ES_ARCH_PDP_ENDIAN           __PDP_ENDIAN__
+		#ifndef ES_ARCH_PDP_ENDIAN
+			#define ES_ARCH_PDP_ENDIAN           __PDP_ENDIAN__
+		#endif
 	#endif
 #endif
 
 #ifdef BYTE_ORDER
-	#define ES_ARCH_BYTE_ORDER                   BYTE_ORDER
+	#ifndef ES_ARCH_BYTE_ORDER
+	        #define ES_ARCH_BYTE_ORDER                   BYTE_ORDER
+	#endif
 
 	#ifdef LITTLE_ENDIAN
-		#define ES_ARCH_LITTLE_ENDIAN        LITTLE_ENDIAN
+		#ifndef ES_ARCH_LITTLE_ENDIAN
+			#define ES_ARCH_LITTLE_ENDIAN        LITTLE_ENDIAN
+		#endif
 	#endif
 	#ifdef BIG_ENDIAN
-		#define ES_ARCH_BIG_ENDIAN           BIG_ENDIAN
+		#ifndef ES_ARCH_BIG_ENDIAN
+			#define ES_ARCH_BIG_ENDIAN           BIG_ENDIAN
+		#endif
 	#endif
 	#ifdef PDP_ENDIAN
-		#define ES_ARCH_PDP_ENDIAN           PDP_ENDIAN
+		#ifndef ES_ARCH_PDP_ENDIAN
+			#define ES_ARCH_PDP_ENDIAN           PDP_ENDIAN
+		#endif
 	#endif
 #endif
 

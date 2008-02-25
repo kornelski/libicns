@@ -1,5 +1,5 @@
 /*
-File:       colormaps.h
+File:       icns_colormaps.h
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
 Copyright (C) 2004 Brion Vibber <brion@pobox.com>
 Copyright (C) 2007 Lyonel Vincent <lyonel@ezix.org>

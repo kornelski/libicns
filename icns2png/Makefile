@@ -26,10 +26,10 @@
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 3.0c
+LIBVERMIN = 3.0d
 
 # Compile with debug flags and icns debug messages
-DEBUG = false
+DEBUG = true
 
 # Compile with openjpeg support for icons >= 256x256
 OPENJPEG = true

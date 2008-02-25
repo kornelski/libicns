@@ -1,5 +1,5 @@
 /*
-File:       icns.cpp
+File:       icns_image.c
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
               2007 Thomas Lübking <thomas.luebking@web.de>
               2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.
 #include "icns.h"
 
 #include "endianswap.h"
-#include "colormaps.h"
+#include "icns_colormaps.h"
 
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t iconType)
 {
@@ -572,14 +572,19 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	elementSize = iconElement->elementSize;
 	elementType = EndianSwapBtoN(elementType,sizeof(icns_type_t));
 	elementSize = EndianSwapBtoN(elementSize,sizeof(icns_size_t));
+	
+	#if ICNS_DEBUG
+	printf("Retreiving image from icon element...\n");
+	printf("  type is: 0x%8X\n",(unsigned int)elementType);
+	printf("  size is: %d\n",(int)elementSize);	
+	#endif
 
 	iconType = elementType;
 	rawDataSize = elementSize - sizeof(icns_type_t) - sizeof(icns_size_t);
 	rawDataPtr = (unsigned char*)&(iconElement->elementData[0]);
 	
 	#if ICNS_DEBUG
-	printf("Icon element type is: 0x%8X\n",(unsigned int)iconType);
-	printf("Icon element size is: %d\n",(int)rawDataSize);	
+	printf("  data size is: %d\n",(int)rawDataSize);	
 	#endif
 	
 	// We use the jp2 processor for these two
@@ -635,15 +640,29 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 			for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
 				memcpy(&(((char*)(imageOut->imageData))[dataCount*iconDataRowSize]),&(((char*)(rawDataPtr))[dataCount*iconDataRowSize]),iconDataRowSize);
 		}
-
-		packBytes = iconBitDepth / icns_byte_bits;
-		swapPtr = (char*)imageOut->imageData;
-		byte4Ptr = NULL;
-		
-		for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
+		if(ES_IS_LITTLE_ENDIAN)
 		{
-			byte4Ptr = (int *)(swapPtr + dataCount);
-			*( byte4Ptr ) = EndianSwapBtoL32( *( byte4Ptr ) );
+			packBytes = iconBitDepth / icns_byte_bits;
+			swapPtr = (char*)imageOut->imageData;
+			byte4Ptr = NULL;
+			
+			for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
+			{
+				byte4Ptr = (int *)(swapPtr + dataCount);
+				*( byte4Ptr ) = EndianSwapBtoL32( *( byte4Ptr ) );
+			}
+		}
+		if(ES_IS_PDP_ENDIAN)
+		{
+			packBytes = iconBitDepth / icns_byte_bits;
+			swapPtr = (char*)imageOut->imageData;
+			byte4Ptr = NULL;
+			
+			for(dataCount = 0; dataCount < iconDataSize; dataCount+=packBytes)
+			{
+				byte4Ptr = (int *)(swapPtr + dataCount);
+				*( byte4Ptr ) = EndianSwapBtoP32( *( byte4Ptr ) );
+			}
 		}
 		break;
 	case 8:
@@ -836,11 +855,11 @@ int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int 
 	
 	#ifdef ICNS_DEBUG
 	printf("Initializing new image...\n");
-	printf("Icon image width is: %d\n",iconWidth);
-	printf("Icon image height is: %d\n",iconHeight);
-	printf("Icon image channels are: %d\n",iconChannels);
-	printf("Icon image bit depth is: %d\n",iconBitDepth);
-	printf("Icon image data size is: %d\n",(int)iconDataSize);
+	printf("  width is: %d\n",iconWidth);
+	printf("  height is: %d\n",iconHeight);
+	printf("  channels are: %d\n",iconChannels);
+	printf("  bit depth is: %d\n",iconBitDepth);
+	printf("  data size is: %d\n",(int)iconDataSize);
 	#endif
 	
 	imageOut->imageWidth = iconWidth;

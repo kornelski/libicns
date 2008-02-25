@@ -121,12 +121,12 @@ typedef struct icns_family_t {
 
 typedef struct icns_image_t
 {
-	long		imageDataSize;	// bytes = width * height * depth / bits-per-pixel
-	int		imageWidth;	// width of image in pixels
-	int		imageHeight;	// height of image in pixels
-	short		imageChannels;	// number of channels in data
-	short		pixel_depth;	// number of bits-per-pixel
-	unsigned char	*imageData;	// pointer to base address of uncompressed raw image data
+	long                imageDataSize;  // bytes = width * height * depth / bits-per-pixel
+	int                 imageWidth;     // width of image in pixels
+	int                 imageHeight;    // height of image in pixels
+	short               imageChannels;  // number of channels in data
+	short               pixel_depth;    // number of bits-per-pixel
+	unsigned char       *imageData;     // pointer to base address of uncompressed raw image data
 } icns_image_t;
 
 typedef struct icns_pixel32_t
@@ -145,11 +145,38 @@ typedef struct icns_pixel32_swap_t
 	unsigned char	 alpha;
 } icns_pixel32_swap_t;
 
+typedef struct icns_rgb_t
+{
+	unsigned char	 red;
+	unsigned char	 green;
+	unsigned char	 blue;
+} icns_rgb_t;
+
 
 /* icns constants */
 
 #define			icns_byte_bits	8
 
+
+/* icns macros */
+
+/*
+These macros will will on systems that support unaligned
+accesses, as well as those that don't support it
+*/
+
+#define ICNS_WRITE_UNALIGNED(addr, val, type)       memcpy(addr, &val, sizeof(type))
+#define ICNS_READ_UNALIGNED(val, addr, type)        memcpy(&val, addr, sizeof(type))
+
+/*
+If we find a way to determine whether we have aligned
+access or not at compile-time, this could also be defined for
+systems that don't care instead of the above...
+
+#define ICNS_WRITE_UNALIGNED(addr, val, type)       ( *((type *)(addr)) = val )
+#define ICNS_READ_UNALIGNED(val, addr, type)        ( val = *((type *)(addr)) )
+
+*/
 
 /* icns function prototypes */
 

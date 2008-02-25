@@ -1,5 +1,5 @@
 /*
-File:       icns.cpp
+File:       icns_element.c
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
               2007 Thomas Lübking <thomas.luebking@web.de>
               2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
@@ -341,7 +341,7 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 	int		foundData = 0;
 	icns_type_t	iconFamilyType = 0x00000000;
 	icns_size_t	iconFamilySize = 0;
-	icns_element_t	*icnsElement = NULL;
+	icns_element_t	*iconElement = NULL;
 	icns_type_t	elementType = 0x00000000;
 	icns_size_t	elementSize = 0;
 	icns_uint32_t	dataOffset = 0;
@@ -368,22 +368,22 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 	}
 
 	// Retrieve first, then swap. May help with alignement errors an some arch
-	iconFamilyType = iconFamily->resourceType;
-	iconFamilySize = iconFamily->resourceSize;
-	iconFamilyType = EndianSwapBtoN(iconFamilyType,sizeof(int));
-	iconFamilySize = EndianSwapBtoN(iconFamilySize,sizeof(int));
+	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType), icns_type_t);
+	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize), icns_size_t);
+	iconFamilyType = EndianSwapBtoN(iconFamilyType,sizeof(icns_type_t));
+	iconFamilySize = EndianSwapBtoN(iconFamilySize,sizeof(icns_size_t));
 	
 	#ifdef ICNS_DEBUG
-	printf("Resource size: %d\n",iconFamilySize);
-	printf("Resource type: 0x%8X\n",(unsigned int)iconFamilyType);
-	printf("Looking for icon of type: 0x%8X\n",(unsigned int)iconType);
+	printf("Icon family resource size: %d\n",iconFamilySize);
+	printf("Icon family resource type: 0x%8X\n",(unsigned int)iconFamilyType);
+	printf("Looking for icon element of type: 0x%8X\n",(unsigned int)iconType);
 	#endif
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
 	while ( (foundData == 0) && (dataOffset < iconFamilySize) )
 	{
-		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
+		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
 		
 		if( iconFamilySize < (dataOffset+sizeof(icns_type_t)+sizeof(icns_size_t)) )
 		{
@@ -392,23 +392,23 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 		}
 		
 		// Retrieve first, then swap. May help with some alignment errors on some arch
-		elementType = icnsElement->elementType;
-		elementSize = icnsElement->elementSize;
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
 		elementType = EndianSwapBtoN(elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(elementSize,sizeof(icns_size_t));
 	
+		#ifdef ICNS_DEBUG
+		printf("Found element data...%s\n",((elementType == iconType) ? " match!" : " "));
+		printf("  type: 0x%8X\n",(unsigned int)elementType);
+		printf("  size: %d\n",(unsigned int)elementSize);
+		#endif
+		
 		if( (elementSize == 0) || ((dataOffset+elementSize) > iconFamilySize) )
 		{
 			fprintf(stderr,"libicns: icns_get_element_from_family: Invalid element size!\n");
 			return -1;
 		}
 		
-		#ifdef ICNS_DEBUG
-		printf("Found data...\n");
-		printf("  type: 0x%8X\n",(unsigned int)elementType);
-		printf("  size: %d\n",(unsigned int)elementSize);
-		#endif
-
 		if (elementType == iconType)
 			foundData = 1;
 		else
@@ -423,7 +423,7 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 			fprintf(stderr,"libicns: icns_get_element_from_family: Unable to allocate memory block of size: %d!\n",elementSize);
 			return -1;
 		}
-		memcpy( *iconElementOut, icnsElement, elementSize);
+		memcpy( *iconElementOut, iconElement, elementSize);
 	}
 	else
 	{
@@ -445,7 +445,7 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	icns_family_t	*iconFamily = NULL;
 	icns_type_t	iconFamilyType = 0x00000000;
 	icns_size_t	iconFamilySize = 0;
-	icns_element_t	*icnsElement = NULL;
+	icns_element_t	*iconElement = NULL;
 	icns_type_t	newElementType = 0x00000000;
 	icns_size_t	newElementSize = 0;
 	icns_type_t	elementType = 0x00000000;
@@ -474,8 +474,8 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 		error = -1;
 	}
 	
-	iconFamilyType = iconFamily->resourceType;
-	iconFamilySize = iconFamily->resourceSize;
+	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType), icns_type_t);
+	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize), icns_size_t);
 	iconFamilyType = EndianSwapBtoN(iconFamilyType,sizeof(icns_type_t));
 	iconFamilySize = EndianSwapBtoN(iconFamilySize,sizeof(icns_size_t));
 
@@ -486,8 +486,8 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	}
 
 	// Retrieve first, then swap. May help with problems on some arch	
-	newElementType = newIconElement->elementType;
-	newElementSize = newIconElement->elementSize;
+	ICNS_READ_UNALIGNED(newElementType, &(newIconElement->elementType), icns_type_t);
+	ICNS_READ_UNALIGNED(newElementSize, &(newIconElement->elementSize), icns_size_t);
 	newElementType = EndianSwapNtoB(newElementType,sizeof(icns_type_t));
 	newElementSize = EndianSwapNtoB(newElementSize,sizeof(icns_size_t));
 	
@@ -495,9 +495,9 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	
 	while ( (foundData == 0) && (dataOffset < iconFamilySize) )
 	{
-		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
-		elementType = icnsElement->elementType;
-		elementSize = icnsElement->elementSize;
+		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
 		elementType = EndianSwapBtoN(elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(elementSize,sizeof(icns_size_t));
 		
@@ -530,9 +530,9 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	
 	while ( dataOffset < iconFamilySize )
 	{
-		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
-		elementType = icnsElement->elementType;
-		elementSize = icnsElement->elementSize;
+		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
 		elementType = EndianSwapBtoN(elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(elementSize,sizeof(icns_size_t));
 		
@@ -567,14 +567,14 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 //***************************** icns_remove_element_in_family **************************//
 // Parses requested data from an icon family - puts it into a "raw" image format
 
-int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icnsElementType)
+int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t iconElementType)
 {
 	int		error = 0;
 	int		foundData = 0;
 	icns_family_t	*iconFamily = NULL;
 	icns_type_t	iconFamilyType = 0x00000000;
 	icns_size_t	iconFamilySize = 0;
-	icns_element_t	*icnsElement = NULL;
+	icns_element_t	*iconElement = NULL;
 	icns_type_t	elementType = 0x00000000;
 	icns_size_t	elementSize = 0;
 	icns_uint32_t	dataOffset = 0;
@@ -598,8 +598,8 @@ int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icns
 		error = -1;
 	}
 	
-	iconFamilyType = iconFamily->resourceType;
-	iconFamilySize = iconFamily->resourceSize;
+	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType), icns_type_t);
+	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize), icns_size_t);
 	iconFamilyType = EndianSwapBtoN(iconFamilyType,sizeof(int));
 	iconFamilySize = EndianSwapBtoN(iconFamilySize,sizeof(int));
 	
@@ -607,13 +607,13 @@ int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icns
 	
 	while ( (foundData == 0) && (dataOffset < iconFamilySize) )
 	{
-		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
-		elementType = icnsElement->elementType;
-		elementSize = icnsElement->elementSize;
+		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
 		elementType = EndianSwapBtoN(elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(elementSize,sizeof(icns_size_t));
 		
-		if (elementType == icnsElementType)
+		if (elementType == iconElementType)
 			foundData = 1;
 		else
 			dataOffset += elementSize;
@@ -646,13 +646,13 @@ int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icns
 	
 	while ( dataOffset < iconFamilySize )
 	{
-		icnsElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
-		elementType = icnsElement->elementType;
-		elementSize = icnsElement->elementSize;
+		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
 		elementType = EndianSwapBtoN(elementType,sizeof(icns_type_t));
 		elementSize = EndianSwapBtoN(elementSize,sizeof(icns_size_t));
 		
-		if (elementType != icnsElementType)
+		if (elementType != iconElementType)
 		{
 			memcpy( ((char *)(newIconFamily))+newDataOffset , ((char *)(iconFamily))+dataOffset, elementSize);
 			newDataOffset += elementSize;
