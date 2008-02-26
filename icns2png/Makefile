@@ -26,27 +26,31 @@
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 3.0e
+LIBVERMIN = 4
+LIBVERREL = 1
 
 # Compile with debug flags and icns debug messages
 DEBUG = false
 
 # Compile with openjpeg support for icons >= 256x256
-OPENJPEG = true
+OPENJPEG = false
 
 ######################################################
 # Operating system name
 UNAME := $(shell uname)
 
-VERSION = $(LIBVERMAJ).$(LIBVERMIN)
+VERSION = $(LIBVERMAJ).$(LIBVERMIN).$(LIBVERREL)
+COMPATVER = $(LIBVERMAJ).$(LIBVERMIN).0
 LIBSTATIC = $(LIBNAME).a
 ifeq "$(UNAME)" "Darwin"
  LIBSO = $(LIBNAME).dylib
  LIBSOMAJ = $(LIBNAME).$(LIBVERMAJ).dylib
+ LIBSOMIN = $(LIBNAME).$(LIBVERMAJ).$(LIBVERMIN).dylib
  LIBSOVER = $(LIBNAME).$(VERSION).dylib
 else
  LIBSO = $(LIBNAME).so
  LIBSOMAJ = $(LIBSO).$(LIBVERMAJ)
+ LIBSOMIN = $(LIBSO).$(LIBVERMAJ).$(LIBVERMIN)
  LIBSOVER = $(LIBSO).$(VERSION)
 endif
 
@@ -57,6 +61,7 @@ LIBHDR = icns.h
 CC=gcc
 AR_RC=ar rc
 RANLIB=ranlib
+LT=libtool
 MAKE=make
 
 # Where make install puts libicns and icns2png
@@ -116,12 +121,16 @@ $(LIBSTATIC): $(LIBOBJS)
 $(LIBSO): $(LIBSOMAJ)
 	ln -sf $(LIBSOMAJ) $(LIBSO)
 
-$(LIBSOMAJ): $(LIBSOVER)
-	ln -sf $(LIBSOVER) $(LIBSOMAJ)
+$(LIBSOMAJ): $(LIBSOMIN)
+	ln -sf $(LIBSOMIN) $(LIBSOMAJ)
+
+$(LIBSOMIN): $(LIBSOVER)
+	ln -sf $(LIBSOVER) $(LIBSOMIN)
 
 $(LIBSOVER): $(LIBOBJSDLL)
 ifeq "$(UNAME)" "Darwin"
-	$(CC) -dynamiclib -install_name $(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
+	$(CC) -dynamiclib -install_name $(LIBSOMAJ) -current_version $(VERSION) \
+	 -compatibility_version $(COMPATVER) -o $(LIBSOVER) $(LIBOBJSDLL)
 else
 	$(CC) -shared -W1,-soname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
 endif
@@ -167,7 +176,7 @@ install-utils: $(LIBUTILS)
 install: install-static install-shared install-utils
 	
 clean:
-	rm -f $(LIBSTATIC) $(LIBSO) $(LIBSOMAJ) $(LIBSOVER) \
-		*.o $(LIBUTILS) *.png
+	rm -f $(LIBSTATIC) $(LIBSO) $(LIBSOMAJ) $(LIBSOMIN) \
+		$(LIBSOVER) *.o $(LIBUTILS) *.png
 
 

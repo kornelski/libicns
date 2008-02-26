@@ -4,6 +4,5 @@ TODO
 2) Fix support for 1-bit icons and masks
    a) See DEVNOTES for info on 1-bit data and mask format
    b) Current implementation reads 1-bit icon data as mask
-3) Fix Makefile to use -compatibility_version and -current_version for Darwin
-
+3) Create a test program for icns write support
 
