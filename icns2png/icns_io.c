@@ -395,13 +395,13 @@ int icns_family_from_mac_resource(unsigned long dataSize,unsigned char *dataPtr,
 					{
 						fprintf(stderr,"libicns: icns_family_from_mac_resource: warning: family type is incorrect - attempting repair!\n");
 						resourceType = EndianSwapNtoB( ICNS_FAMILY_TYPE ,sizeof(icns_type_t));
-						ICNS_WRITE_UNALIGNED((*iconFamilyOut)->resourceType, resourceType, sizeof(icns_type_t));
+						ICNS_WRITE_UNALIGNED(&((*iconFamilyOut)->resourceType), resourceType, sizeof(icns_type_t));
 					}
 					if(resDataSize != EndianSwapBtoN( resourceSize ,sizeof(icns_size_t)))
 					{
 						fprintf(stderr,"libicns: icns_family_from_mac_resource: warning: family size is incorrect - attempting repair!\n");
 						resourceSize = EndianSwapNtoB( resDataSize ,sizeof(icns_size_t));
-						ICNS_WRITE_UNALIGNED((*iconFamilyOut)->resourceSize, resourceSize, sizeof(icns_size_t));
+						ICNS_WRITE_UNALIGNED(&((*iconFamilyOut)->resourceSize), resourceSize, sizeof(icns_size_t));
 					}
 					found = 1;
 				}

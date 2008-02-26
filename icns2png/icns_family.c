@@ -1,5 +1,5 @@
 /*
-File:       icns.cpp
+File:       icns_family.c
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
               2007 Thomas Lübking <thomas.luebking@web.de>
               2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
@@ -55,8 +55,8 @@ int icns_create_family(icns_family_t **iconFamilyOut)
 		return -1;
 	}
 	
-	ICNS_WRITE_UNALIGNED(newIconFamily->resourceType, iconFamilyType, icns_type_t);
-	ICNS_WRITE_UNALIGNED(newIconFamily->resourceSize, iconFamilySize, icns_size_t);
+	ICNS_WRITE_UNALIGNED(&(newIconFamily->resourceType), iconFamilyType, icns_type_t);
+	ICNS_WRITE_UNALIGNED(&(newIconFamily->resourceSize), iconFamilySize, icns_size_t);
 
 	*iconFamilyOut = newIconFamily;
 	

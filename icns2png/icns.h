@@ -39,7 +39,6 @@ Boston, MA 02111-1307, USA.
 /*  OpenJPEG headers   */
 #ifdef ICNS_OPENJPEG
 #include <openjpeg.h>
-#endif
 
 /*  OpenJPEG version check   */
 // OPENJPEG_VERSION seems to be a reliable test for having
@@ -49,7 +48,7 @@ Boston, MA 02111-1307, USA.
 	#warning "libicns: 256x256 and 512x512 support will not be available."
 	#undef	ICNS_OPENJPEG
 #endif
-
+#endif
 
 /*  icns element type constants */
 
@@ -59,31 +58,35 @@ Boston, MA 02111-1307, USA.
 #define ICNS_128X128_32BIT_DATA	      0x69743332 /* it32 */
 #define ICNS_128X128_8BIT_MASK	      0x74386D6B /* t8mk */
 
-#define ICNS_48x48_1BIT_MASK          0x69636823 /* ich# */
-#define ICNS_48x48_1BIT_DATA	      ICNS_48x48_1BIT_MASK
+#define ICNS_48x48_1BIT_DATA	      0x69636823 /* ich# */
 #define ICNS_48x48_4BIT_DATA          0x69636834 /* ich4 */
 #define ICNS_48x48_8BIT_DATA          0x69636838 /* ich8 */
 #define ICNS_48x48_32BIT_DATA	      0x69683332 /* ih32 */
+#define ICNS_48x48_1BIT_MASK          0x69636823 /* ich# */
 #define ICNS_48x48_8BIT_MASK          0x68386D6B /* h8mk */
 
-#define ICNS_32x32_1BIT_MASK          0x49434E23 /* ICN# */
-#define ICNS_32x32_1BIT_DATA	      ICNS_32x32_1BIT_MASK
+#define ICNS_32x32_1BIT_DATA	      0x49434E23 /* ICN# */
 #define ICNS_32x32_4BIT_DATA          0x69636C34 /* icl4 */
 #define ICNS_32x32_8BIT_DATA          0x69636C38 /* icl8 */
 #define ICNS_32x32_32BIT_DATA         0x696C3332 /* il32 */
+#define ICNS_32x32_1BIT_MASK          0x49434E23 /* ICN# */
 #define ICNS_32x32_8BIT_MASK          0x6C386D6B /* l8mk */
 
-#define ICNS_16x16_1BIT_MASK          0x69637323 /* ics# */
-#define ICNS_16x16_1BIT_DATA	      ICNS_16x16_1BIT_MASK
+#define ICNS_16x16_1BIT_DATA	      0x69637323 /* ics# */
 #define ICNS_16x16_4BIT_DATA          0x69637334 /* ics4 */
 #define ICNS_16x16_8BIT_DATA          0x69637338 /* ics8 */
 #define ICNS_16x16_32BIT_DATA         0x69733332 /* is32 */
+#define ICNS_16x16_1BIT_MASK          0x69637323 /* ics# */
 #define ICNS_16x16_8BIT_MASK          0x73386D6B /* s8mk */
 
-#define ICNS_16x12_1BIT_MASK          0x69636D23 /* icm# */
-#define ICNS_16x12_1BIT_DATA          ICNS_16x12_1BIT_MASK
+#define ICNS_16x12_1BIT_DATA          0x69636D23 /* icm# */
 #define ICNS_16x12_4BIT_DATA          0x69636D34 /* icm4 */
+#define ICNS_16x12_1BIT_MASK          0x69636D23 /* icm# */
 #define ICNS_16x12_8BIT_DATA          0x69636D38 /* icm8 */
+
+/* other mac icon types */
+
+#define ICNS_32x32_1BIT_ICON	      0x49434F4E /* ICON */
 
 #define ICNS_INVALID_DATA             0x00000000
 #define ICNS_INVALID_MASK             0x00000000

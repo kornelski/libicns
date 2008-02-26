@@ -271,6 +271,10 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Conversion of %s failed!\n",inputfiles[count]);
 	}
 	
+	for(count = 0; count < fileindex; count++)
+		if(inputfiles[count] != NULL)
+			free(inputfiles[count]);
+
 	return 0;
 }
 

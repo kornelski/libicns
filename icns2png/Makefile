@@ -26,13 +26,13 @@
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 3.0d
+LIBVERMIN = 3.0e
 
 # Compile with debug flags and icns debug messages
-DEBUG = true
+DEBUG = false
 
 # Compile with openjpeg support for icons >= 256x256
-OPENJPEG = true
+OPENJPEG = false
 
 ######################################################
 # Operating system name

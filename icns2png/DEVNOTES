@@ -206,13 +206,48 @@ icns data format is basically an 8-byte header, followed by icns elements
 +4 byte int - total size of icns data: equal to total icns size
 ---- icns_element objects ----
 |---- 8 byte header ----
-|+ 4 byte type id 'ICN#', 'icl8', etc...
-|+ 4 byte int - total size of element data: equal to size of element
+|+4 byte type id 'ICN#', 'icl8', etc...
+|+4 byte int - total size of element data: equal to size of element
 |==== raw, rle, or jp2 image data
 |---- 8 byte header ----
-|+ 4 byte type id 'ICN#', 'icl8', etc...
-|+ 4 byte int - total size of image data: equal to size of element
+|+4 byte type id 'ICN#', 'icl8', etc...
+|+4 byte int - total size of image data: equal to size of element
 |==== raw, rle, or jp2 image data
 |EOF
+
+===============================================================================
+icns element is basically an 8-byte header, followed by icon data
++4 byte type id 'ICN#', 'icl8', etc...
++4 byte int - total size of icns data: equal to total element size
+== data size equal to (elementSize - 8)
+
+1-bit ich#, icm#, ics#, ICN#, icon notes 
+- data is 8 pixels to a byte. 
+- mask data follows the icon data
+- example: data should be 256 bytes long for 32x32 icons
+--- 128 bytes (32*32) / 8 for the icon data
+--- 128 bytes (32*32) / 8 for the mask data
+
+4-bit ich4, icm4, ics4, icl4, icon notes 
+- data is 2 pixels to a byte, mask data is not part of the resource
+- data is in 16 indexed colors, libicns provides the 32-bit colormap
+- example: data should be 512 bytes long for 32x32 icons
+--- 512 bytes (32*32) / 2 for the icon data
+
+8-bit ich8, icm8, ics8, icl8, icon notes 
+- data is 1 pixels to a byte, mask data is not part of the resource
+- data is in 256 indexed colors, libicns provides the 32-bit colormap
+- example: data should be 1024 bytes long for 32x32 icons
+--- 1024 bytes (32*32) for the icon data
+
+32-bit icon notes (size < 256x256) 
+- data may or may not be RLE ecoded. Older icons never were, but newer
+- icon editors seem to RLE encode even 16x16 32-bit icons. Mac OS seems
+- to have no problem with this although only 128x128 icons were originally
+- compressed using RLE.
+
+32-bit icon notes (size >= 256x256) 
+- data is jp2 encoded
+
 
 ==============================================================================

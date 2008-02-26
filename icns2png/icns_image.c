@@ -805,6 +805,10 @@ int icns_init_image_for_type(icns_type_t iconType,icns_image_t *imageOut)
 			break;
 
 		// 1-Bit Icon Image/Mask Data Types (Data is the same)
+		// WARNING: The first 128 bytes are icon data. This may
+		// or may not be followed by 128 more bytes of mask data.
+		// it is important to note this on the receiving end
+		// of this format of image data.
 		case ICNS_48x48_1BIT_DATA:  // Also ICNS_48x48_1BIT_MASK
 			iconWidth = 48;
 			iconHeight = 48;
