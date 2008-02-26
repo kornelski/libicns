@@ -32,7 +32,7 @@ LIBVERMIN = 3.0e
 DEBUG = false
 
 # Compile with openjpeg support for icons >= 256x256
-OPENJPEG = false
+OPENJPEG = true
 
 ######################################################
 # Operating system name

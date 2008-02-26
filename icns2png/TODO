@@ -1,6 +1,9 @@
 TODO
 
 1) Finish support for 256x256 and 512x512 in icns_new_element_from_image
-2) Find and fix potential input issues using zzuf
-3) Find and fix any endianness, 64-bit and alignment issues
-4) Fix Makefile to use -compatibility_version and -current_version for Darwin
+2) Fix support for 1-bit icons and masks
+   a) See DEVNOTES for info on 1-bit data and mask format
+   b) Current implementation reads 1-bit icon data as mask
+3) Fix Makefile to use -compatibility_version and -current_version for Darwin
+
+
