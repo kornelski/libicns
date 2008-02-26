@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.
 
 
 //***************************** icns_new_element_from_image **************************//
-// Creates a new icns element from an image
+// Creates a new icon element from an image
 int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut)
 {
 	int		error = 0;
@@ -332,8 +332,8 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 	return error;
 }
 
-//***************************** GetIconDataFromIconFamily **************************//
-// Parses requested data from an icon family - puts it into a icns element
+//***************************** icns_get_element_from_family **************************//
+// Parses requested data from an icon family - puts it into a icon element
 
 int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,icns_element_t **iconElementOut)
 {

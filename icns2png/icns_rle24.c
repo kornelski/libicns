@@ -1,5 +1,5 @@
 /*
-File:       icns.cpp
+File:       icns_rle24.c
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
               2007 Thomas Lübking <thomas.luebking@web.de>
               2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
