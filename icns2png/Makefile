@@ -35,6 +35,12 @@ DEBUG = false
 # Compile with openjpeg support for icons >= 256x256
 OPENJPEG = false
 
+# Where make install puts libicns and icns2png
+PREFIX ?= /usr/local
+LIBPATH=$(PREFIX)/lib
+BINPATH=$(PREFIX)/bin
+INCPATH=$(PREFIX)/include
+
 ######################################################
 # Operating system name
 UNAME := $(shell uname)
@@ -63,12 +69,6 @@ AR_RC=ar rc
 RANLIB=ranlib
 LT=libtool
 MAKE=make
-
-# Where make install puts libicns and icns2png
-PREFIX ?= /usr/local
-LIBPATH=$(PREFIX)/lib
-BINPATH=$(PREFIX)/bin
-INCPATH=$(PREFIX)/include
 
 # Compiler flags
 CFLAGS+=-Wall -I$(INCPATH)
