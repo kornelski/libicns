@@ -497,8 +497,7 @@ int icns_parse_macbinary_resource_fork(unsigned long dataSize,unsigned char *dat
 	ICNS_READ_UNALIGNED(dataCreator, (dataPtr+69), icns_type_t);
 
 	// Checking for valid MacBinary data...
-                                  /* 'mBIN' */
-	if(dataType == EndianSwapBtoN(0x6D42494E,4))
+	if(dataType == EndianSwapBtoN(ICNS_MACBINARY_TYPE,sizeof(icns_type_t)))
 	{
 		// Valid MacBinary III file
 		isValid = 1;

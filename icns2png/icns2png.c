@@ -351,14 +351,15 @@ int ConvertIconFamilyFile(char *filename)
 		goto cleanup;
 	}
 	
-	error = icns_get_element_from_family(iconFamily,iconType,&icon);
+	error = icns_get_image32_with_mask_from_family(iconFamily,iconType,&iconImage);
 	
 	if(error) {
-		fprintf(stderr,"Unable to load icon data from icon family!\n");
+		fprintf(stderr,"Unable to load 32-bit icon image from icon family!\n");
 		goto cleanup;
 	}
-
-	error = icns_get_image32_from_element(icon, &iconImage);
+	
+	/*
+	error = icns_get_image32_with_mask_from_family(icon, &iconImage);
 
 	if(error) {
 		fprintf(stderr,"Unable to load image from icon data!\n");
@@ -380,6 +381,7 @@ int ConvertIconFamilyFile(char *filename)
 			goto cleanup;
 		}
 	}
+	*/
 	
 	outfile = fopen(outfilename,"w");
 	if(!outfile) {
@@ -388,11 +390,11 @@ int ConvertIconFamilyFile(char *filename)
 	}
 	
 	// Finally! We save the image
-	if(maskType != ICNS_INVALID_MASK) {
-		error = WritePNGImage(outfile,&iconImage,&maskImage);	
-	} else {
+	//if(maskType != ICNS_INVALID_MASK) {
+	//	error = WritePNGImage(outfile,&iconImage,&maskImage);	
+	//} else {
 		error = WritePNGImage(outfile,&iconImage,NULL);	
-	}
+	//}
 	
 	if(error) {
 		fprintf(stderr,"Error writing PNG image!\n");
@@ -487,13 +489,10 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	png_set_IHDR (png_ptr, info_ptr, width, height, image_bit_depth, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	
 	png_write_info (png_ptr, info_ptr);
-
-	png_set_swap_alpha( png_ptr );
-	png_set_swap( png_ptr );
-
+	
 	if(image_bit_depth < 8)
 		png_set_packing (png_ptr);
-
+	
 	row_pointers = (png_bytep*)malloc(sizeof(png_bytep)*height);
 	
 	if (row_pointers == NULL)
@@ -515,23 +514,23 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 			
 			for(j = 0; j < width; j++)
 			{
-				icns_pixel32_t	*src_rgb_pixel;
-				icns_pixel32_t	*src_pha_pixel;
-				icns_pixel32_t	*dst_pixel;
+				icns_rgba_t	*src_rgb_pixel;
+				icns_rgba_t	*src_pha_pixel;
+				icns_rgba_t	*dst_pixel;
 				
-				dst_pixel = (icns_pixel32_t *)&(row_pointers[i][j*image_channels]);
+				dst_pixel = (icns_rgba_t *)&(row_pointers[i][j*image_channels]);
 				
-				src_rgb_pixel = (icns_pixel32_t *)&(image->imageData[i*width*image_channels+j*image_channels]);
+				src_rgb_pixel = (icns_rgba_t *)&(image->imageData[i*width*image_channels+j*image_channels]);
 
-				dst_pixel->red = src_rgb_pixel->red;
-				dst_pixel->green = src_rgb_pixel->green;
-				dst_pixel->blue = src_rgb_pixel->blue;
+				dst_pixel->r = src_rgb_pixel->r;
+				dst_pixel->g = src_rgb_pixel->g;
+				dst_pixel->b = src_rgb_pixel->b;
 				
 				if(mask != NULL) {
-					src_pha_pixel = (icns_pixel32_t *)&(mask->imageData[i*width*mask_channels+j*mask_channels]);
-					dst_pixel->alpha = src_pha_pixel->alpha;
+					src_pha_pixel = (icns_rgba_t *)&(mask->imageData[i*width*mask_channels+j*mask_channels]);
+					dst_pixel->a = src_pha_pixel->a;
 				} else {
-					dst_pixel->alpha = src_rgb_pixel->alpha;
+					dst_pixel->a = src_rgb_pixel->a;
 				}
 			}
 		}

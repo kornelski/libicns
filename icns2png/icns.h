@@ -22,6 +22,7 @@ Boston, MA 02111-1307, USA.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #ifndef _ICNS_H_
@@ -93,19 +94,25 @@ Boston, MA 02111-1307, USA.
 
 #define ICNS_FAMILY_TYPE              0x69636E73 /* icns */
 
+#define ICNS_MACBINARY_TYPE           0x6D42494E /* mBIN */
 
 /* icns data types */
 
-typedef unsigned char   icns_bool_t;
+typedef uint8_t         icns_bool_t;
 
-typedef unsigned char   icns_uint8_t;
-typedef signed char     icns_sint8_t;
-typedef unsigned short  icns_uint16_t;
-typedef signed short    icns_sint16_t;
-typedef unsigned int    icns_uint32_t;
-typedef signed int      icns_sint32_t;
-typedef unsigned long   icns_uint64_t;
-typedef signed long     icns_sint64_t;
+typedef uint8_t         icns_uint8_t;
+typedef int8_t          icns_sint8_t;
+typedef uint16_t        icns_uint16_t;
+typedef int16_t         icns_sint16_t;
+typedef uint32_t        icns_uint32_t;
+typedef int32_t         icns_sint32_t;
+typedef uint64_t        icns_uint64_t;
+typedef int64_t         icns_sint64_t;
+
+typedef uint8_t         icns_byte_t;  /* 1-byte integer */
+typedef uint16_t        icns_word_t;  /* 2-byte integer */
+typedef uint32_t        icns_dword_t; /* 4-byte integer */
+typedef uint64_t        icns_qword_t; /* 8-byte integer */
 
 typedef icns_uint32_t   icns_size_t;
 typedef icns_uint32_t   icns_type_t;
@@ -132,27 +139,27 @@ typedef struct icns_image_t
 	unsigned char       *imageData;     // pointer to base address of uncompressed raw image data
 } icns_image_t;
 
-typedef struct icns_pixel32_t
+typedef struct icns_rgba_t
 {
-	unsigned char	 alpha;
-	unsigned char	 red;
-	unsigned char	 green;
-	unsigned char	 blue;
-} icns_pixel32_t;
+	icns_byte_t	 r;
+	icns_byte_t	 g;
+	icns_byte_t	 b;
+	icns_byte_t	 a;
+} icns_rgba_t;
 
-typedef struct icns_pixel32_swap_t
+typedef struct icns_argb_t
 {
-	unsigned char	 blue;
-	unsigned char	 green;
-	unsigned char	 red;
-	unsigned char	 alpha;
-} icns_pixel32_swap_t;
+	icns_byte_t	 a;
+	icns_byte_t	 r;
+	icns_byte_t	 g;
+	icns_byte_t	 b;
+} icns_argb_t;
 
 typedef struct icns_rgb_t
 {
-	unsigned char	 red;
-	unsigned char	 green;
-	unsigned char	 blue;
+	icns_byte_t	 r;
+	icns_byte_t	 g;
+	icns_byte_t	 b;
 } icns_rgb_t;
 
 
@@ -162,6 +169,29 @@ typedef struct icns_rgb_t
 
 
 /* icns macros */
+
+/*
+These functions swap the position of the alpha channel
+*/
+
+
+static inline icns_rgba_t ICNS_ARGB_TO_RGBA(icns_argb_t pxin) {
+	icns_rgba_t pxout;
+	pxout.r = pxin.r;
+	pxout.g = pxin.g;
+	pxout.b = pxin.b;
+	pxout.a = pxin.a;
+	return pxout;
+}
+
+static inline icns_argb_t ICNS_RGBA_TO_ARGB(icns_rgba_t pxin) {
+	icns_argb_t pxout;
+	pxout.r = pxin.r;
+	pxout.g = pxin.g;
+	pxout.b = pxin.b;
+	pxout.a = pxin.a;
+	return pxout;
+}
 
 /*
 These macros will will on systems that support unaligned
@@ -190,8 +220,8 @@ void bin_print_int(int x);
 // icns_image.c
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
 int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t sourceType,icns_image_t *imageOut);
-int icns_get_image32_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
 int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
+int icns_get_mask_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
 int icns_init_image_for_type(icns_type_t iconType,icns_image_t *imageOut);
 int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut);
 int icns_free_image(icns_image_t *imageIn);

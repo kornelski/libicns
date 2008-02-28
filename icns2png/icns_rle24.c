@@ -32,17 +32,15 @@ Boston, MA 02111-1307, USA.
 
 int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr)
 {
-	unsigned int	myshift = 0;
-	unsigned int	mymask = 0;
-	unsigned int	length = 0;
-	unsigned int	value = 0;
-	long		r = 0;
-	long		y = 0;
-	long		i = 0;
-	unsigned char	*rawDataPtr = NULL;
-	long		destIconLength = 0;
-	unsigned int	*destIconData = NULL;	// Decompressed Raw Icon Data
-	unsigned int	*destIconDataBaseAddr = NULL;	// Decompressed Raw Icon Data Base Address
+	icns_uint8_t	runLength = 0;
+	icns_byte_t	colorValue = 0;
+	icns_uint8_t	colorOffset = 0;
+	unsigned long	dataOffset = 0;
+	unsigned long	pixelOffset = 0;
+	unsigned long	i = 0;
+	icns_byte_t	*rawDataPtr = NULL;
+	icns_byte_t	*destIconData = NULL;	// Decompressed Raw Icon Data
+	unsigned long	destIconPixelCount = 0;
 	
 	if(dataInPtr == NULL)
 	{
@@ -62,17 +60,17 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 		return -1;
 	}
 	
-	rawDataPtr = (unsigned char *)dataInPtr;
-	destIconData = (unsigned int *)(*dataOutPtr);
-	destIconDataBaseAddr = (unsigned int *)(*dataOutPtr);
+	rawDataPtr = (icns_byte_t *)dataInPtr;
+	destIconData = (icns_byte_t *)(*dataOutPtr);
 	
 	// There's always going to be 4 channels in this
-	// so we want our counter to increment through
-	// channels, not bytes....
-	destIconLength = (*dataOutSize) / 4;
+	// and we want our counter to increment through
+	// pixels, not bytes....
+	destIconPixelCount = (*dataOutSize) / 4;
 	
-	myshift = 24;
-	mymask = 0xFFFFFFFF;
+	#ifdef ICNS_DEBUG
+		printf("Decoding %d bytes of data into %d RGB pixels\n",(int)dataInSize,(int)destIconPixelCount);
+	#endif
 	
 	// What's this??? In the 128x128 icons, we need to start 4 bytes
 	// ahead. There see to be a NULL padding here for some reason. If
@@ -82,61 +80,50 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 		#ifdef ICNS_DEBUG
 		printf("4 byte null padding found in rle data!\n");
 		#endif
-		r = 4;
+		dataOffset = 4;
 	}
 	
-	for(i = 0; i < destIconLength; i++)
+	for(i = 0; i < destIconPixelCount; i++)
 		destIconData[i] = 0x00000000;
-		
-	// Data is stored in red...run, green...run,blue...run
-	// Red, Green, Blue
-	// 24,  16,    8   
-	while(myshift > 0)
+	
+	// Data is stored in red run, green run,blue run
+	// So we decompress to pixel format RGBA
+	// RED:   byte[0], byte[4], byte[8]  ...
+	// GREEN: byte[1], byte[5], byte[9]  ...
+	// BLUE:  byte[2], byte[6], byte[10] ...
+	// ALPHA: byte[3], byte[7], byte[11] do nothing with these bytes
+	for(colorOffset = 0; colorOffset < 3; colorOffset++)
 	{
-		int	runCount = 0;
-		int	dataSum = 0;
-
-		// Next Color Byte
-		myshift -= 8;
-		
-		// Right shift mask 8 bits to prevent overwriting our other colors
-		mymask >>= 8;
-		
-		// Start with mask 0x00FFFFFF, then 0x0000FFFF, then 0x0000FF
-		
-		y = 0;
-		while((y < destIconLength) && (r < dataInSize))
+		pixelOffset = 0;
+		while((pixelOffset < destIconPixelCount) && (dataOffset < dataInSize))
 		{
-			if( (rawDataPtr[r] & 0x80) == 0)
+			if( (rawDataPtr[dataOffset] & 0x80) == 0)
 			{
 				// Top bit is clear - run of various values to follow
-				length = (int)(0xFF & rawDataPtr[r++]) + 1; // 1 <= len <= 128
-				dataSum += length;
+				runLength = (0xFF & rawDataPtr[dataOffset++]) + 1; // 1 <= len <= 128
 				
-				for(i = 0; (i < (int)length) && (y < destIconLength) ; i++)
-					destIconData[y++] |= ( ((int)rawDataPtr[r++]) << myshift) & mymask;
-				
-				runCount++;
+				for(i = 0; (i < runLength) && (pixelOffset < destIconPixelCount) ; i++) {
+					destIconData[(pixelOffset * 4) + colorOffset] = rawDataPtr[dataOffset];
+					pixelOffset++;
+					dataOffset++;
+				}
 			}
 			else
 			{
 				// Top bit is set - run of one value to follow
-				length = (int)(0xFF & rawDataPtr[r++]) - 125; // 3 <= len <= 130
-				dataSum += 2;
+				runLength = (0xFF & rawDataPtr[dataOffset++]) - 125; // 3 <= len <= 130
 				
 				// Set the value to the color shifted to the correct bit offset
-				value = ( ((int)rawDataPtr[r++]) << myshift) & mymask;
+				colorValue = rawDataPtr[dataOffset++];
 				
-				for(i = 0; (i < (int)length) && (y < destIconLength); i++)
-					destIconData[y++] |= value;
-				
-				runCount++;
+				for(i = 0; (i < runLength) && (pixelOffset < destIconPixelCount); i++) {
+					destIconData[(pixelOffset * 4) + colorOffset] = colorValue;
+					pixelOffset++;
+				}
 			}
 		}
-		
 	}
 	
-	destIconDataBaseAddr = NULL;
 	destIconData = NULL;
 	
 	return 0;
