@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.
 #include <string.h>
 
 #include "icns.h"
-
+#include "icns_internals.h"
 // Only compile the openjpeg routines if we have support for it
 #ifdef ICNS_OPENJPEG
 
@@ -55,7 +55,7 @@ void icns_opj_info_callback(const char *msg, void *client_data) {
 // Convert from uncompressed opj data to ICNS_ImageData
 int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 {
-	int		error = 0;
+	int		error = ICNS_STATUS_OK;
 	unsigned int	iconWidth = 0;
 	unsigned int	iconHeight = 0;
 	unsigned int	iconPixelDepth = 0;
@@ -67,7 +67,8 @@ int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 	int i,j;
 	
 	if(image == NULL) {
-		return -1;
+		icns_print_err("icns_opj_to_image: icon image reference is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
 	}
 	
 	iconWidth = image->comps[0].w;
@@ -80,12 +81,12 @@ int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 	outIcon->imageWidth = iconWidth;
 	outIcon->imageHeight = iconHeight;
 	outIcon->imageChannels = iconChannels;
-	outIcon->pixel_depth = iconPixelDepth;
+	outIcon->imagePixelDepth = iconPixelDepth;
 	outIcon->imageDataSize = iconDataSize;
 	outIcon->imageData = (unsigned char *)malloc(iconDataSize);
 	if(!outIcon->imageData) {
-		printf("Failed alloc iconData\n");
-		return 0;
+		icns_print_err("icns_create_family: Unable to allocate memory block of size: %d!\n",iconDataSize);
+		return ICNS_STATUS_NO_MEMORY;
 	}
 	memset(outIcon->imageData,0,iconDataSize);
 	dataPtr = outIcon->imageData;
@@ -168,7 +169,7 @@ opj_image_t * jp2dec(unsigned char *bufin, int len)
 
 	image = opj_decode(dinfo, cio);
 	if(!image) {
-		fprintf(stderr, "libicns: jp2dec: failed to decode image!\n");
+		icns_print_err("jp2dec: failed to decode image!\n");
 		opj_destroy_decompress(dinfo);
 		opj_cio_close(cio);
 		return image;

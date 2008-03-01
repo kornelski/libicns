@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.
 #include <string.h>
 
 #include "icns.h"
-
+#include "icns_internals.h"
 //***************************** icns_decode_rle24_data ****************************//
 // Decode a rgb 24 bit rle encoded data stream into 32 bit argb (alpha is ignored)
 
@@ -44,20 +44,20 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	
 	if(dataInPtr == NULL)
 	{
-		fprintf(stderr,"libicns: icns_decode_rle24_data: rle decoder data in ptr is NULL!\n");
-		return -1;
+		icns_print_err("icns_decode_rle24_data: rle decoder data in ptr is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
 	}
 	
 	if(dataOutPtr == NULL)
 	{
-		fprintf(stderr,"libicns: icns_decode_rle24_data: rle decoder data out ptr is NULL!\n");
-		return -1;
+		icns_print_err("icns_decode_rle24_data: rle decoder data out ptr is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
 	}
 	
 	if(*dataOutPtr == NULL)
 	{
-		fprintf(stderr,"libicns: icns_decode_rle24_data: rle decoder data out ptr ref is NULL!\n");
-		return -1;
+		icns_print_err("icns_decode_rle24_data: rle decoder data out ptr ref is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
 	}
 	
 	rawDataPtr = (icns_byte_t *)dataInPtr;
@@ -126,7 +126,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	
 	destIconData = NULL;
 	
-	return 0;
+	return ICNS_STATUS_OK;
 }
 
 //***************************** icns_encode_rle24_data *******************************************//
@@ -149,20 +149,20 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	
 	if(dataInPtr == NULL)
 	{
-		fprintf(stderr,"libicns: icns_encode_rle24_data: rle encoder data in ptr is NULL!\n");
-		return -1;
+		icns_print_err("icns_encode_rle24_data: rle encoder data in ptr is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
 	}
 	
 	if(dataOutSize == NULL)
 	{
-		fprintf(stderr,"libicns: icns_encode_rle24_data: rle encoder data out size ref is NULL!\n");
-		return -1;
+		icns_print_err("icns_encode_rle24_data: rle encoder data out size ref is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
 	}
 	
 	if(dataOutPtr == NULL)
 	{
-		fprintf(stderr,"libicns: icns_encode_rle24_data: rle encoder data out ptr ref is NULL!\n");
-		return -1;
+		icns_print_err("icns_encode_rle24_data: rle encoder data out ptr ref is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
 	}
 
 	// Assumptions of what icns rle data is all about:
@@ -191,8 +191,8 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	dataTemp = (icns_sint8_t *)malloc(dataInSize + (dataInSize / 4));
 	if(dataTemp == NULL)
 	{
-		fprintf(stderr,"libicns: icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",(int)dataInSize);
-		return -1;
+		icns_print_err("icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",(int)dataInSize);
+		return ICNS_STATUS_NO_MEMORY;
 	}
 	memset(dataTemp,0,dataInSize);
 	
@@ -200,9 +200,9 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	dataRun = (icns_uint8_t *)malloc(128);
 	if(dataRun == NULL)
 	{
-		fprintf(stderr,"libicns: icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",128);
+		icns_print_err("icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",128);
 		free(dataTemp);
-		return -1;
+		return ICNS_STATUS_NO_MEMORY;
 	}
 	memset(dataRun,0,128);
 	
@@ -389,6 +389,6 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	free(dataRun);
 	free(dataTemp);
 	
-	return 0;
+	return ICNS_STATUS_OK;
 }
 

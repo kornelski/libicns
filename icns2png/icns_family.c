@@ -26,33 +26,33 @@ Boston, MA 02111-1307, USA.
 #include <string.h>
 
 #include "icns.h"
-
-#include "endianswap.h"
+#include "icns_internals.h"
 
 /***************************** icns_create_family **************************/
 
 int icns_create_family(icns_family_t **iconFamilyOut)
 {
 	icns_family_t	*newIconFamily = NULL;
-	icns_type_t		iconFamilyType = 0x00000000;
+	icns_type_t		iconFamilyType = ICNS_NULL_TYPE;
 	icns_size_t		iconFamilySize = 0;
 
 	if(iconFamilyOut == NULL)
 	{
-		fprintf(stderr,"libicns: icns_create_family: icns family reference is NULL!\n");
-		return -1;
+		icns_print_err("icns_create_family: icon family reference is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
 	}
 	
 	*iconFamilyOut = NULL;
 	
+	iconFamilyType = ICNS_FAMILY_TYPE;
 	iconFamilySize = sizeof(icns_type_t) + sizeof(icns_size_t);
 
 	newIconFamily = malloc(iconFamilySize);
 		
 	if(newIconFamily == NULL)
 	{
-		fprintf(stderr,"libicns: icns_create_family: Unable to allocate memory block of size: %d!\n",iconFamilySize);
-		return -1;
+		icns_print_err("icns_create_family: Unable to allocate memory block of size: %d!\n",iconFamilySize);
+		return ICNS_STATUS_NO_MEMORY;
 	}
 	
 	ICNS_WRITE_UNALIGNED(&(newIconFamily->resourceType), iconFamilyType, icns_type_t);
@@ -60,6 +60,7 @@ int icns_create_family(icns_family_t **iconFamilyOut)
 
 	*iconFamilyOut = newIconFamily;
 	
-	return 0;
+	return ICNS_STATUS_OK;
 }
+
 

@@ -1,150 +1,16 @@
 ===============================================================================
-Developers notes for libicns 0.3.0a - February 15th, 2008
+Developers notes for libicns 0.5.0a - March 1st, 2008
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
 
 ===============================================================================
-Section I:  (For those wishing to use libicns)
-  Structures
-  Functions
-  Example
-Section II: (For those wishing to contribute to libicns)
-  Versioning Notes
-  Naming Conventions
-  Endianness issues
-  icns data format
+This file is indented for those wishing to contribute to libicns
+-------------------------------------------------------------------------------
+To develop an application using libicns, please see the file APIDOCS
 ===============================================================================
-Section I
-===============================================================================
-Structures
-typedef struct icns_element_t
-typedef struct icns_family_t
-typedef struct icns_image_t
-Note about the data in icns_image_t - if the bit-depth is less than 8 bits, the
-data will be a squashed stream. i.e. for 1 bit data, one byte is actually 8
-pixels, that is, 11111111, for 4 bit data, one byte is two pixels, 0xF 0xF
-In 32-bit data, the data stream is in ARGB order by default
-In addition, the 4 and 8 byte images are encoded using the palettes found in
-the file colormaps.h
-See icns.h for more information
-===============================================================================
-Functions
-
--------------------------------------------------------------------------------
-Note: The functions defined as *external* are guaranteed to be binary compatible
-with libicns through version 0.2.0, probably later, unless a major bug
-requires it to be changed.
--------------------------------------------------------------------------------
-
-
--------------------------------------------------------------------------------
-icns_get_mask_type_for_icon_type *external*
-- Retreives the mask type that should be associated with a given icon type
-
-icns_get_image32_with_mask_from_family *external*
-- Retreives an icon image from an icns family. Additionally retrieves the mask
-- and loads it to the alpha channel. This function would be slightly faster than
-- loading the icon and mask as seperate 32-bit images. Data is returned by
-- reference in an icns image object with 32-bit raw, decoded, uncompressed data
-
--------------------------------------------------------------------------------
-icns_get_image32_from_element *external*
-- Retreives an icon image from an icns element. Data is returned by
-- reference in an icns image object with 32-bit raw, decoded, uncompressed data
-
--------------------------------------------------------------------------------
-icns_get_image_from_element *external*
-- Retreives an icon image from an icns element. Data is returned by
-- reference in an icns image object with raw, decoded, uncompressed data.
-- However, if the bytes are packed, they will stay that way. The 'image32'
-- functions above will both unpack the bytes first.
-
--------------------------------------------------------------------------------
-icns_decode_rle24_data *internal*
-- Decodes rgb run-length-encoded data into a 24-bit rgb data stream (stored in
-  32-bit argb format, the alpha is simply ignored.
-
--------------------------------------------------------------------------------
-icns_encode_rle24_data *internal*
-- Encodes an argb data stream into a 24-bit rgb run-length-encoded data stream
-- note that the alhpa channel is ignored
-
--------------------------------------------------------------------------------
-icns_init_image_for_type *external*
-- Initializes an icns image using the type for the parameters
-
--------------------------------------------------------------------------------
-icns_init_image *external*
-- Initializes an icns image using given parameters
-
--------------------------------------------------------------------------------
-icns_free_image *external*
-- Deallocates the memory used by an icns_image structure
-
--------------------------------------------------------------------------------
-icns_opj_error_callback *internal*
-- Error callback for the openjpeg library routines. For internal use only
-
--------------------------------------------------------------------------------
-icns_opj_warning_callback *internal*
-- Warning callback for the openjpeg library routines. For internal use only
-
--------------------------------------------------------------------------------
-icns_opj_info_callback *internal*
-- Info callback for the openjpeg library routines. For internal use only
-
--------------------------------------------------------------------------------
-icns_opj_to_image *internal*
-- Converts jpeg2000 data to a 32-bit icns_image
-
--------------------------------------------------------------------------------
-jp2dec *internal*
-- Decompresses jpeg2000 data
-
--------------------------------------------------------------------------------
-icns_new_element_from_image *external*
-- Creates an icns element structure from an icns image
-
--------------------------------------------------------------------------------
-icns_get_element_from_family *external*
-- Retreives an icns element of the requested type from an icns family
-
--------------------------------------------------------------------------------
-icns_set_element_in_family *external*
-- Adds/updates an icns element of it's type in an icns family
-
--------------------------------------------------------------------------------
-icns_remove_element_in_family *external*
-- Removes an icns element of the requested type from an icns family
-
--------------------------------------------------------------------------------
-icns_create_family *external*
-- Creates a new icns family
-
--------------------------------------------------------------------------------
-icns_write_family_to_file *external*
-
--------------------------------------------------------------------------------
-icns_read_family_from_file *external*
-
--------------------------------------------------------------------------------
-icns_family_from_file_data *internal*
-- Retreives an icns family from a file. Note that if the file is in raw icns
-- format, this essentially means copying the file data to a location in
-- memory. Many icns files, however, are stored as rsrc files, do more decoding
-- is usually necessary
-
--------------------------------------------------------------------------------
-icns_family_from_mac_resource *internal*
-- Primarily for internal use. Parses a Macintosh rsrc data set and retrieves
-- the first 'icns' resource found. Note that it is technically possible for
-- there to be more than one resource of type 'icns'.
-
--------------------------------------------------------------------------------
-icns_parse_macbinary_resource_fork *internal*
-- Again primarily for internal use. Parses MacBinary data into Macintosh
-- rsrc data. Some icns files are stored within macbinary encoded rsrc files
-See icns.h for reference on the actual parameters used in these functions.
-
+1) Versioning Notes
+2) Naming Conventions
+3) Endianness issues
+4) icns data format
 ===============================================================================
 Version information
 versions are in the format of: 0.0.0a (MAJOR.MINOR.RELEASE[dev])
@@ -172,6 +38,29 @@ are mature, and developers are well aquanted with them.
 
 ===============================================================================
 Endianness issues
+
+-------------------------------------------------------------------------------
+Everything in libicns is in native endian format, with two exceptions:
+
+int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut,unsigned char **dataPtrOut);
+Here, the outgoing data pointer will have big endian values where necessary
+
+int icns_import_family_data(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
+Here, the incoming icon family MUST be in native big endian where appropriate
+
+These two functions call icns_export_family_data and icns_import_family_data:
+int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn);
+int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut);
+
+-------------------------------------------------------------------------------
+All endian swapping is handled by icns_io by icns.c with the following
+#define ICNS_READ_UNALIGNED_BE(val, addr, type)    icns_read_be(&(val), (addr), sizeof(type))
+static inline void icns_read_be(void *outp, void *inp, int size)
+#define ICNS_WRITE_UNALIGNED_BE(addr, val, type)    icns_write_be((addr), &(val), sizeof(type))
+static inline void icns_write_be(void *outp, void *inp, int size)
+   
+-------------------------------------------------------------------------------
+Where there are endian issues in the first place
 
 The 'icns' icon family type has been in existence since the Mac 68k. The data
 stored within the files is, therefore, big-endian native. From experience, it

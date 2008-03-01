@@ -25,28 +25,25 @@ Boston, MA 02111-1307, USA.
 #include <png.h>
 
 #include "icns.h"
-
+#include "icns_internals.h"
 int ConvertIconFamilyFile(char *filename);
 int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define	MAX_INPUTFILES  4096
 
-#define	ICNS_INVALID_MASK	0x00000000
-#define	ICNS_INVALID_DATA	0x00000000
-
 char 	*inputfiles[MAX_INPUTFILES];
 int	fileindex = 0;
 
-/* default iconType to be extracted */
-int		iconExtractSizeID = 5;	// 128x128
-int		iconExtractDepth = 32;
-icns_type_t	iconType = ICNS_128X128_32BIT_DATA;
-icns_type_t	maskType = ICNS_128X128_8BIT_MASK;
+/* default extractIconType to be extracted */
+int		extractIconSizeID;
+int		extractIconDepth;
+icns_type_t	extractIconType;
+icns_type_t	extractMaskType;
 
 icns_type_t getIconDataType(int sizeID,int depthVal)
 {
-	const icns_type_t iconTypes32[] = {  
+	const icns_type_t extractIconTypes32[] = {  
 				ICNS_512x512_32BIT_ARGB_DATA,
 				ICNS_512x512_32BIT_ARGB_DATA,
 				ICNS_256x256_32BIT_ARGB_DATA,
@@ -59,16 +56,16 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 				ICNS_32x32_32BIT_DATA,
 				ICNS_16x16_32BIT_DATA,
 				ICNS_16x16_32BIT_DATA,
-				ICNS_INVALID_DATA
+				ICNS_NULL_DATA
 			     };
 
-	const icns_type_t iconTypes8[] = {  
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
+	const icns_type_t extractIconTypes8[] = {  
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
 				ICNS_48x48_8BIT_DATA,
 				ICNS_48x48_8BIT_DATA,
 				ICNS_32x32_8BIT_DATA,
@@ -78,13 +75,13 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 				ICNS_16x12_8BIT_DATA
 			     };
 
-	const icns_type_t iconTypes4[] = {  
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
+	const icns_type_t extractIconTypes4[] = {  
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
 				ICNS_48x48_4BIT_DATA,
 				ICNS_48x48_4BIT_DATA,
 				ICNS_32x32_4BIT_DATA,
@@ -94,13 +91,13 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 				ICNS_16x12_4BIT_DATA
 			     };
 			     
-	const icns_type_t iconTypes1[] = {  
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
-				ICNS_INVALID_DATA,
+	const icns_type_t extractIconTypes1[] = {  
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
+				ICNS_NULL_DATA,
 				ICNS_48x48_1BIT_DATA,
 				ICNS_48x48_1BIT_DATA,
 				ICNS_32x32_1BIT_DATA,
@@ -112,15 +109,15 @@ icns_type_t getIconDataType(int sizeID,int depthVal)
 	
 	switch(depthVal) {
 		case 32:
-			return iconTypes32[sizeID];
+			return extractIconTypes32[sizeID];
 		case 8:
-			return iconTypes8[sizeID];
+			return extractIconTypes8[sizeID];
 		case 4:
-			return iconTypes4[sizeID];
+			return extractIconTypes4[sizeID];
 		case 1:
-			return iconTypes1[sizeID];
+			return extractIconTypes1[sizeID];
 		default:
-			return ICNS_INVALID_DATA;
+			return ICNS_NULL_DATA;
 	}
 }
 
@@ -148,9 +145,9 @@ int parse_size(char *size)
 		return -1;
 	for(i = 0; i < ARRAY_SIZE(sizes); i++) {
 		if(strcmp(sizes[i], size) == 0) {
-			iconExtractSizeID = i;
-			iconType = getIconDataType(iconExtractSizeID,iconExtractDepth);
-			maskType = icns_get_mask_type_for_icon_type(iconType);
+			extractIconSizeID = i;
+			extractIconType = getIconDataType(extractIconSizeID,extractIconDepth);
+			extractMaskType = icns_get_mask_type_for_icon_type(extractIconType);
 			found = 1;
 			break;
 		}
@@ -170,9 +167,9 @@ int parse_depth(char *cdepth)
 		return -1;
 	for(i = 0; i < ARRAY_SIZE(depths); i++) {
 		if(strcmp(depths[i], cdepth) == 0) {
-			iconExtractDepth = depthVals[i];
-			iconType = getIconDataType(iconExtractSizeID,iconExtractDepth);
-			maskType = icns_get_mask_type_for_icon_type(iconType);
+			extractIconDepth = depthVals[i];
+			extractIconType = getIconDataType(extractIconSizeID,extractIconDepth);
+			extractMaskType = icns_get_mask_type_for_icon_type(extractIconType);
 			found = 1;
 		}
 	}
@@ -241,6 +238,12 @@ int main(int argc, char *argv[])
 {
 	int count;
 	
+	// Initialize the globals;
+	extractIconSizeID = 5;	// 128x128
+	extractIconDepth = 32;
+	extractIconType = ICNS_128X128_32BIT_DATA;
+	extractMaskType = ICNS_128X128_8BIT_MASK;
+	
 	if(argc < 2)
 	{
 		printf("Usage: icns2png [options] [file]\n");
@@ -265,6 +268,8 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	
+	icns_set_print_errors(1);
+	
 	for(count = 0; count < fileindex; count++)
 	{
 		if(ConvertIconFamilyFile(inputfiles[count]))
@@ -280,44 +285,40 @@ int main(int argc, char *argv[])
 
 int ConvertIconFamilyFile(char *filename)
 {
-	int		error = 0;
+	int		error = ICNS_STATUS_OK;
 	char		*infilename = NULL;
 	char		*outfilename = NULL;
 	unsigned int	filenamelength = 0;
 	unsigned int	infilenamelength = 0;
 	unsigned int	outfilenamelength = 0;
-	icns_family_t	*iconFamily = NULL;
-	icns_element_t	*icon = NULL;
-	icns_element_t	*mask = NULL;
-	icns_image_t	iconImage;
-	icns_image_t	maskImage;
 	FILE            *inFile = NULL;
 	FILE 		*outfile = NULL;
+	icns_family_t	*iconFamily = NULL;
+	icns_image_t	iconImage;
 	
 	memset ( &iconImage, 0, sizeof(icns_image_t) );
-	memset ( &maskImage, 0, sizeof(icns_image_t) );
-
+	
 	filenamelength = strlen(filename);
-
+	
 	infilenamelength = filenamelength;
 	outfilenamelength = filenamelength;
-
+	
 	// Create a buffer for the input filename
 	infilename = (char *)malloc(infilenamelength+1);
-
+	
 	// Copy the input filename into the new buffer
 	strncpy(infilename,filename,infilenamelength+1);
 	infilename[filenamelength] = 0;
-
+	
 	// See if we can find a '.'
 	while(infilename[outfilenamelength] != '.' && outfilenamelength > 0)
 		outfilenamelength--;
-
+	
 	// Caculate new filename length
 	if(outfilenamelength == 0)
 		outfilenamelength = strlen(filename);
 	outfilenamelength += 4;
-
+	
 	// Create a buffer for the output filename
 	outfilename = (char *)malloc(outfilenamelength+1);
 	if(infilenamelength < outfilenamelength+1) {
@@ -338,7 +339,7 @@ int ConvertIconFamilyFile(char *filename)
 	inFile = fopen( infilename, "r" );
 	
 	if ( inFile == NULL ) {
-		fprintf(stderr,"Unable to open file %s!\n",infilename);
+		fprintf (stderr, "Unable to open file %s!\n",infilename);
 		goto cleanup;
 	}
 
@@ -347,57 +348,27 @@ int ConvertIconFamilyFile(char *filename)
 	fclose(inFile);
 		
 	if(error) {
-		fprintf(stderr,"Unable to read icns family from file %s!\n",infilename);
+		fprintf (stderr, "Unable to read icns family from file %s!\n",infilename);
 		goto cleanup;
 	}
 	
-	error = icns_get_image32_with_mask_from_family(iconFamily,iconType,&iconImage);
+	error = icns_get_image32_with_mask_from_family(iconFamily,extractIconType,&iconImage);
 	
 	if(error) {
-		fprintf(stderr,"Unable to load 32-bit icon image from icon family!\n");
+		fprintf (stderr, "Unable to load 32-bit icon image with mask from icon family!\n");
 		goto cleanup;
 	}
-	
-	/*
-	error = icns_get_image32_with_mask_from_family(icon, &iconImage);
-
-	if(error) {
-		fprintf(stderr,"Unable to load image from icon data!\n");
-		goto cleanup;
-	}
-	
-	if(maskType != ICNS_INVALID_MASK) {
-		error = icns_get_element_from_family(iconFamily,maskType,&mask);
-	
-		if(error) {
-			fprintf(stderr,"Unable to load mask data from icon family!\n");
-			goto cleanup;
-		}
-		
-		error = icns_get_image32_from_element(mask, &maskImage);
-
-		if(error) {
-			fprintf(stderr,"Unable to load image from mask data!\n");
-			goto cleanup;
-		}
-	}
-	*/
 	
 	outfile = fopen(outfilename,"w");
 	if(!outfile) {
-		fprintf(stderr,"Unable to open %s for writing!\n",outfilename);
+		fprintf (stderr, "Unable to open %s for writing!\n",outfilename);
 		goto cleanup;
 	}
 	
-	// Finally! We save the image
-	//if(maskType != ICNS_INVALID_MASK) {
-	//	error = WritePNGImage(outfile,&iconImage,&maskImage);	
-	//} else {
-		error = WritePNGImage(outfile,&iconImage,NULL);	
-	//}
+	error = WritePNGImage(outfile,&iconImage,NULL);
 	
 	if(error) {
-		fprintf(stderr,"Error writing PNG image!\n");
+		fprintf (stderr, "Error writing PNG image!\n");
 	} else {
 		printf("Saved to %s.\n",outfilename);
 	}
@@ -412,16 +383,7 @@ cleanup:
 		free(iconFamily);
 		iconFamily = NULL;
 	}
-	if(icon != NULL) {
-		free(icon);
-		icon = NULL;
-	}
-	if(mask != NULL) {
-		free(mask);
-		mask = NULL;
-	}
 	icns_free_image(&iconImage);
-	icns_free_image(&maskImage);
 	free(infilename);
 	free(outfilename);
 	
@@ -453,7 +415,7 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	width = image->imageWidth;
 	height = image->imageHeight;
 	image_channels = image->imageChannels;
-	image_bit_depth = image->pixel_depth;
+	image_bit_depth = image->imagePixelDepth;
 	
 	//printf("width: %d\n",width);
 	//printf("height: %d\n",height);
@@ -462,7 +424,7 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	
 	if(mask != NULL) {
 		mask_channels = mask->imageChannels;
-		mask_bit_depth = mask->pixel_depth;
+		mask_bit_depth = mask->imagePixelDepth;
 	}
 	
 	png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);

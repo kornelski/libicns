@@ -26,8 +26,8 @@
 # See DEVNOTES for more information on versioning
 LIBNAME = libicns
 LIBVERMAJ = 0
-LIBVERMIN = 4
-LIBVERREL = 1
+LIBVERMIN = 5
+LIBVERREL = 0a
 
 # Compile with debug flags and icns debug messages
 DEBUG = false
@@ -36,7 +36,7 @@ DEBUG = false
 OPENJPEG = false
 
 # Where make install puts libicns and icns2png
-PREFIX ?= /usr/local
+PREFIX ?= /usr
 LIBPATH=$(PREFIX)/lib
 BINPATH=$(PREFIX)/bin
 INCPATH=$(PREFIX)/include
@@ -94,7 +94,7 @@ else
 endif
 
 # Library object files
-LIBOBJS = endianswap.o icns_debug.o icns_element.o icns_family.o icns_image.o icns_io.o icns_jp2.o icns_rle24.o 
+LIBOBJS = icns_debug.o icns_element.o icns_family.o icns_image.o icns_io.o icns_jp2.o icns_rle24.o icns_utils.o 
 LIBOBJSDLL = $(LIBOBJS:.o=.pic.o)
 
 # Utility programs included in library
