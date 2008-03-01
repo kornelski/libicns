@@ -156,7 +156,14 @@ test: $(LIBUTILS)
 	echo 'Test: Converting icon in mac resource...'; \
 	./icns2png test2.rsrc; \
 	echo 'Test: Converting icon in macbinary resource...'; \
-	./icns2png test3.bin
+	./icns2png test3.bin; \
+	echo 'Test: Converting 32-bit 48x48 icon...'; \
+	./icns2png -s 48 test4.icns; \
+	echo 'Test: Converting 1-bit 32x32 icon...'; \
+	./icns2png -s 32 -d 1 test5.icns; \
+	echo 'Test: Listing icon information...'; \
+	./icnsinfo -d test5.icns;
+
 
 install-headers: $(LIBHDR)
 	cp $(LIBHDR) $(INCPATH)/
