@@ -52,7 +52,7 @@ int main(int argc, char **argv)
    FILE *icns = NULL;
    short i = 0;
    
-   int iconCounter = 0;
+   //int iconCounter = 0;
    int c;
    char name[256];
 
@@ -136,4 +136,5 @@ int main(int argc, char **argv)
       }
    }
    fclose(icontainer);
+   return 0;
 }
