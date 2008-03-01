@@ -1,7 +1,6 @@
 /*
-File:       icns2png.c
+File:       icnsinfo.c
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
-Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public

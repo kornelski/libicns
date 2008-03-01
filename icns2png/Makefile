@@ -86,25 +86,31 @@ ifeq "$(OPENJPEG)" "true"
 endif
 
 LDFLAGS_A+=$(LDFLAGS) $(LIBSTATIC)
-LDFLAGS_SO+=-lz -lm -lpng12
 ifeq "$(UNAME)" "Darwin"
  LDFLAGS_SO+=-licns $(LDFLAGS)
 else
  LDFLAGS_SO+=-Wl,-rpath,. -licns $(LDFLAGS)
 endif
+LDFLAGS_PNG+=-lz -lm -lpng12
 
 # Library object files
 LIBOBJS = icns_debug.o icns_element.o icns_family.o icns_image.o icns_io.o icns_jp2.o icns_rle24.o icns_utils.o 
 LIBOBJSDLL = $(LIBOBJS:.o=.pic.o)
 
 # Utility programs included in library
-LIBUTILS = icns2png icontainer2icns
+LIBUTILS = icnsinfo icns2png icontainer2icns
+
+# icnsinfo object files
+ICNSINFOOBJS = icnsinfo.o
 
 # icns2png object files
-UTILOBJS = icns2png.o
+ICNS2PNGOBJS = icns2png.o
 
-# Subdirectories to make
-SUBDIRS = $(TESTDIR)
+# icontainer2icns object files
+ICONTOBJS = icontainer2icns.o
+
+# All utility object files
+UTILOBJS = $(ICNSINFOOBJS) $(ICNS2PNGOBJS) $(ICONTOBJS)
 
 # Macros for makefile
 .SUFFIXES:	.c .o .pic.o
@@ -135,11 +141,14 @@ else
 	$(CC) -shared -W1,-soname,$(LIBSOMAJ) -o $(LIBSOVER) $(LIBOBJSDLL)
 endif
 
-icns2png: $(UTILOBJS) $(LIBSO)
-	$(CC) -o icns2png $(CFLAGS) $(UTILOBJS) $(LDFLAGS_SO)
+icnsinfo: $(ICNSINFOOBJS) $(LIBSO)
+	$(CC) -o icnsinfo $(CFLAGS) $(ICNSINFOOBJS) $(LDFLAGS_SO)
 
-icontainer2icns:
-	$(CC) -o icontainer2icns icontainer2icns.c
+icns2png: $(ICNS2PNGOBJS) $(LIBSO)
+	$(CC) -o icns2png $(CFLAGS) $(ICNS2PNGOBJS) $(LDFLAGS_PNG) $(LDFLAGS_SO)
+
+icontainer2icns: $(ICONTOBJS)
+	$(CC) -o icontainer2icns $(ICONTOBJS)
 
 test: $(LIBUTILS)
 	+@echo 'Test: Converting icon in native icns format...'; \
@@ -177,6 +186,6 @@ install: install-static install-shared install-utils
 	
 clean:
 	rm -f $(LIBSTATIC) $(LIBSO) $(LIBSOMAJ) $(LIBSOMIN) \
-		$(LIBSOVER) *.o $(LIBUTILS) *.png
+		$(LIBSOVER) $(LIBUTILS) $(UTILOBJS) *.o *.png
 
 
