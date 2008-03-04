@@ -25,9 +25,9 @@ Boston, MA 02111-1307, USA.
 
 typedef struct icns_colormap_rgb_t
 {
-  unsigned char r;
-  unsigned char g;
-  unsigned char b;
+  icns_byte_t r;
+  icns_byte_t g;
+  icns_byte_t b;
 } icns_colormap_rgb_t;
 
 

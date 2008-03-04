@@ -40,10 +40,10 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	icns_image_t	iconImage;
 	icns_image_t	maskImage;
 	unsigned long	dataCount = 0;
-	unsigned char	dataValue = 0;
+	icns_byte_t	dataValue = 0;
 	unsigned long	pixelCount = 0;
 	unsigned long	pixelID = 0;
-	unsigned char	colorIndex = 0;	
+	icns_byte_t	colorIndex = 0;	
 	
 	memset ( &iconImage, 0, sizeof(icns_image_t) );
 	memset ( &maskImage, 0, sizeof(icns_image_t) );
@@ -81,7 +81,7 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		opj_image_t	*image = NULL;
 		
 		elementSize = iconElement->elementSize;
-		image = jp2dec((unsigned char *)&(iconElement->elementData[0]), elementSize);
+		image = jp2dec((icns_byte_t *)&(iconElement->elementData[0]), elementSize);
 		
 		if(image == NULL)
 			return ICNS_STATUS_ENCODING_ERR;
@@ -160,10 +160,10 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	// Unpack image pixels if depth is < 32
 	if((iconImage.imagePixelDepth * iconImage.imageChannels) < 32)
 	{
-		unsigned char	*oldData = NULL;
-		unsigned char	*newData = NULL;
-		unsigned int	oldBitDepth = 0;
-		unsigned int	oldDataSize = 0;
+		icns_byte_t	*oldData = NULL;
+		icns_byte_t	*newData = NULL;
+		icns_uint32_t	oldBitDepth = 0;
+		icns_uint32_t	oldDataSize = 0;
 		unsigned long	newBlockSize = 0;
 		unsigned long	newDataSize = 0;
 		icns_colormap_rgb_t	colorRGB;
@@ -177,7 +177,7 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		newDataSize = newBlockSize * iconImage.imageHeight;
 		
 		oldData = iconImage.imageData;
-		newData = (unsigned char *)malloc(newDataSize);
+		newData = (icns_byte_t *)malloc(newDataSize);
 		
 		if(newData == NULL)
 		{
@@ -370,8 +370,8 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	icns_size_t	elementSize = 0;
 	icns_type_t	iconType = ICNS_NULL_TYPE;
 	unsigned long	rawDataSize = 0;
-	unsigned char	*rawDataPtr = NULL;
-	unsigned int	iconBitDepth = 0;
+	icns_byte_t	*rawDataPtr = NULL;
+	icns_uint32_t	iconBitDepth = 0;
 	unsigned long	iconDataSize = 0;
 	unsigned long	iconDataRowSize = 0;
 	
@@ -404,7 +404,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 
 	iconType = elementType;
 	rawDataSize = elementSize - sizeof(icns_type_t) - sizeof(icns_size_t);
-	rawDataPtr = (unsigned char*)&(iconElement->elementData[0]);
+	rawDataPtr = (icns_byte_t*)&(iconElement->elementData[0]);
 	
 	#if ICNS_DEBUG
 	printf("  data size is: %d\n",(int)rawDataSize);
@@ -419,7 +419,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	
 		opj_image_t* image = NULL;
 	
-		image = jp2dec((unsigned char *)rawDataPtr, (int)rawDataSize);
+		image = jp2dec((icns_byte_t *)rawDataPtr, (int)rawDataSize);
 		if(!image)
 			return ICNS_STATUS_ENCODING_ERR;
 	
@@ -534,8 +534,8 @@ int icns_get_mask_from_element(icns_element_t *maskElement,icns_image_t *imageOu
 	icns_size_t	elementSize = 0;
 	icns_type_t	maskType = ICNS_NULL_TYPE;
 	unsigned long	rawDataSize = 0;
-	unsigned char	*rawDataPtr = NULL;
-	unsigned int	maskBitDepth = 0;
+	icns_byte_t	*rawDataPtr = NULL;
+	icns_uint32_t	maskBitDepth = 0;
 	unsigned long	maskDataSize = 0;
 	unsigned long	maskDataRowSize = 0;
 			
@@ -568,7 +568,7 @@ int icns_get_mask_from_element(icns_element_t *maskElement,icns_image_t *imageOu
 	
 	maskType = elementType;
 	rawDataSize = elementSize - sizeof(icns_type_t) - sizeof(icns_size_t);
-	rawDataPtr = (unsigned char*)&(maskElement->elementData[0]);
+	rawDataPtr = (icns_byte_t*)&(maskElement->elementData[0]);
 	
 	#if ICNS_DEBUG
 	printf("  data size is: %d\n",(int)rawDataSize);	
@@ -696,9 +696,9 @@ int icns_init_image_for_type(icns_type_t iconType,icns_image_t *imageOut)
 //***************************** icns_init_image **************************//
 // Initialize a new image structure for holding the data
 
-int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut)
+int icns_init_image(icns_uint32_t iconWidth,icns_uint32_t iconHeight,icns_uint32_t iconChannels,icns_uint32_t iconPixelDepth,icns_image_t *imageOut)
 {
-	unsigned int	iconBitDepth = 0;
+	icns_uint32_t	iconBitDepth = 0;
 	unsigned long	iconDataSize = 0;
 	unsigned long	iconDataRowSize = 0;
 
@@ -720,7 +720,7 @@ int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int 
 	imageOut->imageChannels = iconChannels;
 	imageOut->imagePixelDepth = (iconBitDepth / iconChannels);
 	imageOut->imageDataSize = iconDataSize;
-	imageOut->imageData = (unsigned char *)malloc(iconDataSize);
+	imageOut->imageData = (icns_byte_t *)malloc(iconDataSize);
 	if(!imageOut->imageData)
 	{
 		icns_print_err("icns_init_image: Unable to allocate memory block of size: %d ($s:%m)!\n",(int)iconDataSize);

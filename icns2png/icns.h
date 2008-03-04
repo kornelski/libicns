@@ -172,8 +172,8 @@ static const icns_type_t  ICNS_NULL_TYPE                 = {{ 0 , 0 , 0 , 0 }};
 // icns_io.c
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn);
 int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut);
-int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut,unsigned char **dataPtrOut);
-int icns_import_family_data(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
+int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut,icns_byte_t **dataPtrOut);
+int icns_import_family_data(unsigned long dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
 
 // icns_family.c
 int icns_create_family(icns_family_t **iconFamilyOut);
@@ -191,7 +191,7 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
 int icns_get_mask_from_element(icns_element_t *iconElement,icns_image_t *imageOut);
 int icns_init_image_for_type(icns_type_t iconType,icns_image_t *imageOut);
-int icns_init_image(unsigned int iconWidth,unsigned int iconHeight,unsigned int iconChannels,unsigned int iconPixelDepth,icns_image_t *imageOut);
+int icns_init_image(icns_uint32_t iconWidth,icns_uint32_t iconHeight,icns_uint32_t iconChannels,icns_uint32_t iconPixelDepth,icns_image_t *imageOut);
 int icns_free_image(icns_image_t *imageIn);
 
 // icns_rle24.c
@@ -201,7 +201,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 // icns_jp2.c
 #ifdef ICNS_OPENJPEG
 int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
-opj_image_t * jp2dec(unsigned char *bufin, int len);
+opj_image_t * jp2dec(icns_byte_t *bufin, int len);
 #endif
 
 // icns_utils.c

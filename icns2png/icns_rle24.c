@@ -75,7 +75,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	// What's this??? In the 128x128 icons, we need to start 4 bytes
 	// ahead. There see to be a NULL padding here for some reason. If
 	// we don't, the red channel will be off by 2 pixels
-	if( *((unsigned int*)dataInPtr) == 0x00000000 )
+	if( *((icns_uint32_t*)dataInPtr) == 0x00000000 )
 	{
 		#ifdef ICNS_DEBUG
 		printf("4 byte null padding found in rle data!\n");
@@ -144,8 +144,8 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	icns_bool_t	runType = 0;
 	icns_uint8_t	runLength = 0; // Runs will never go over 130, one byte is ok
 	int		runCount = 0;
-	unsigned int	myshift = 0;
-	unsigned int	mymask = 0;
+	icns_uint32_t	myshift = 0;
+	icns_uint32_t	mymask = 0;
 	
 	if(dataInPtr == NULL)
 	{

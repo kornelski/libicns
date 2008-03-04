@@ -324,7 +324,7 @@ exception:
 
 /***************************** icns_export_family_data **************************/
 
-int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut,unsigned char **dataPtrOut)
+int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut,icns_byte_t **dataPtrOut)
 {
 	int		error = ICNS_STATUS_OK;
 	icns_type_t	dataType = ICNS_NULL_TYPE;
@@ -448,10 +448,10 @@ exception:
 
 /***************************** icns_import_family_data **************************/
 
-int icns_import_family_data(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **iconFamilyOut)
+int icns_import_family_data(unsigned long dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int error = ICNS_STATUS_OK;
-	unsigned char *iconFamilyData;
+	icns_byte_t *iconFamilyData;
 	
 	if(dataSize < 8)
 	{
@@ -495,7 +495,7 @@ int icns_import_family_data(unsigned long dataSize,unsigned char *dataPtr,icns_f
 
 /***************************** icns_parse_family_data **************************/
 
-int icns_parse_family_data(unsigned long dataSize,unsigned char *dataPtr,icns_family_t **iconFamilyOut)
+int icns_parse_family_data(unsigned long dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int		error = ICNS_STATUS_OK;
 	icns_type_t	resourceType = ICNS_NULL_TYPE;
@@ -602,7 +602,7 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 {
 	icns_bool_t	error = ICNS_STATUS_OK;
 	icns_bool_t	found = 0;
-	unsigned int	count = 0;
+	icns_uint32_t	count = 0;
 	
 	icns_sint32_t	resHeadDataOffset = 0;
 	icns_sint32_t	resHeadMapOffset = 0;
@@ -707,7 +707,7 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 			char		resName[256] = {0};
 			icns_sint32_t	resItemDataOffset = 0;
 			icns_sint32_t	resItemDataSize = 0;
-			unsigned char	*resItemData = NULL;
+			icns_byte_t	*resItemData = NULL;
 			
 			found = 1;
 			
@@ -754,7 +754,7 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 				goto exception;
 			}
 			
-			resItemData = (unsigned char*)malloc(resItemDataSize);
+			resItemData = (icns_byte_t*)malloc(resItemDataSize);
 			
 			if(resItemData != NULL)
 			{
@@ -934,7 +934,7 @@ int icns_read_macbinary_resource_fork(icns_uint32_t dataSize,icns_byte_t *dataPt
 		return ICNS_STATUS_INVALID_DATA;
 	}
 
-	resourceDataPtr = (unsigned char *)malloc(resourceDataSize);
+	resourceDataPtr = (icns_byte_t *)malloc(resourceDataSize);
 	
 	if(resourceDataPtr == NULL)
 	{

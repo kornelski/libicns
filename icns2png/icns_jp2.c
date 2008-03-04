@@ -56,14 +56,14 @@ void icns_opj_info_callback(const char *msg, void *client_data) {
 int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 {
 	int		error = ICNS_STATUS_OK;
-	unsigned int	iconWidth = 0;
-	unsigned int	iconHeight = 0;
-	unsigned int	iconPixelDepth = 0;
-	unsigned int	iconChannels = 0;
+	icns_uint32_t	iconWidth = 0;
+	icns_uint32_t	iconHeight = 0;
+	icns_uint32_t	iconPixelDepth = 0;
+	icns_uint32_t	iconChannels = 0;
 	unsigned long	iconDataSize = 0;
 	unsigned long	blockSize = 0;
 	int adjustR, adjustG, adjustB, adjustA;
-	unsigned char	*dataPtr = NULL;
+	icns_byte_t	*dataPtr = NULL;
 	int i,j;
 	
 	if(image == NULL) {
@@ -83,7 +83,7 @@ int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 	outIcon->imageChannels = iconChannels;
 	outIcon->imagePixelDepth = iconPixelDepth;
 	outIcon->imageDataSize = iconDataSize;
-	outIcon->imageData = (unsigned char *)malloc(iconDataSize);
+	outIcon->imageData = (icns_byte_t *)malloc(iconDataSize);
 	if(!outIcon->imageData) {
 		icns_print_err("icns_create_family: Unable to allocate memory block of size: %d!\n",iconDataSize);
 		return ICNS_STATUS_NO_MEMORY;
@@ -128,10 +128,10 @@ int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 
 			dst_pixel = (icns_pixel32_t *)&(dataPtr[i*iconWidth*iconChannels+j*iconChannels]);
 
-			dst_pixel->alpha = (unsigned char) ((a >> adjustA)+((a >> (adjustA-1))%2));
-			dst_pixel->red = (unsigned char) ((r >> adjustR)+((r >> (adjustR-1))%2));
-			dst_pixel->green = (unsigned char) ((g >> adjustG)+((g >> (adjustG-1))%2));
-			dst_pixel->blue = (unsigned char) ((b >> adjustB)+((b >> (adjustB-1))%2));
+			dst_pixel->alpha = (icns_byte_t) ((a >> adjustA)+((a >> (adjustA-1))%2));
+			dst_pixel->red = (icns_byte_t) ((r >> adjustR)+((r >> (adjustR-1))%2));
+			dst_pixel->green = (icns_byte_t) ((g >> adjustG)+((g >> (adjustG-1))%2));
+			dst_pixel->blue = (icns_byte_t) ((b >> adjustB)+((b >> (adjustB-1))%2));
 		}
 	}
 	
@@ -139,7 +139,7 @@ int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 }
 
 // Decompress jp2
-opj_image_t * jp2dec(unsigned char *bufin, int len)
+opj_image_t * jp2dec(icns_byte_t *bufin, int len)
 {
 	opj_dparameters_t parameters;	/* decompression parameters */
 	opj_dinfo_t* dinfo = NULL;

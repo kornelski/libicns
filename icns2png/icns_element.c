@@ -458,11 +458,11 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 	}
 	
 	// Finally, done with all the preliminary checks
-	unsigned char	*imageDataPtr = NULL;
+	icns_byte_t	*imageDataPtr = NULL;
 	unsigned long	imageDataSize = 0;
 	
 	// For use to easily track deallocation if we use rle24
-	unsigned char	*rle24DataPtr = NULL;
+	icns_byte_t	*rle24DataPtr = NULL;
 	
 	if( (icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) )
 	{
