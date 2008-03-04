@@ -57,10 +57,10 @@ static inline void icns_read_be(void *outp, void *inp, int size)
 		*((uint8_t *)(outp)) = b[0];
 		break;
 	case 2:
-		*((uint16_t *)(outp)) = b[1]|(uint16_t)b[0]<< 8;
+		*((uint16_t *)(outp)) = b[1]|b[0]<< 8;
 		break;
 	case 4:
-		*((uint32_t *)(outp)) = b[3]|(uint32_t)b[2]<<8| \
+		*((uint32_t *)(outp)) = b[3]|b[2]<<8| \
 		                        b[1]<<16|b[0]<<24;
 		break;
 	case 8:
