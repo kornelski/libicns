@@ -305,7 +305,9 @@ icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB)
 void icns_set_print_errors(icns_bool_t shouldPrint)
 {
 	#ifdef ICNS_DEBUG
-		icns_print_err("Debugging enabled - error message status cannot be changed!\n");
+		if(shouldPrint == 0) {
+			icns_print_err("Debugging enabled - error message status cannot be disabled!\n");
+		}
 	#else
 		gShouldPrintErrors = shouldPrint;
 	#endif
@@ -316,9 +318,11 @@ void icns_print_err(const char *template, ...)
 	va_list ap;
 	
 	#ifdef ICNS_DEBUG
-	gShouldPrintErrors = 1;
-	#endif
-	
+	printf ( "libicns: ");
+	va_start (ap, template);
+	vprintf (template, ap);
+	va_end (ap);
+	#else
 	if(gShouldPrintErrors)
 	{
 		fprintf (stderr, "libicns: ");
@@ -326,5 +330,6 @@ void icns_print_err(const char *template, ...)
 		vfprintf (stderr, template, ap);
 		va_end (ap);
 	}
+	#endif
 }
 

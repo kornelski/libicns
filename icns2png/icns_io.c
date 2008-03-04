@@ -34,15 +34,23 @@ Boston, MA 02111-1307, USA.
 static inline void icns_read_be(void *outp, void *inp, int size)
 {
 	icns_byte_t	b[8] = {0,0,0,0,0,0,0,0};
-	
+		
 	if(outp == NULL)
 		return;
 	
 	if(inp == NULL)
 		return;
-	
+
 	memcpy(&b, inp, size);
-	
+
+	#ifdef ICNS_DEBUG
+	int i = 0;
+	printf("Reading %d bytes: ",size);
+	for(i = 0; i < size; i++)
+		printf("0x%02X ",b[i]);
+	printf("\n");
+	#endif
+		
 	switch(size)
 	{
 	case 1:
