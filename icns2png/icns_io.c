@@ -66,8 +66,8 @@ static inline void icns_read_be(void *outp, void *inp, int size)
 	case 8:
 		*((uint64_t *)(outp)) = b[7]|b[6]<<8| \
 		                        b[5]<<16|b[4]<<24| \
-					(uint64_t)b[4]<<32|(uint64_t)b[4]<<40| \
-					(uint64_t)b[4]<<48|(uint64_t)b[4]<<56;
+					(uint64_t)b[3]<<32|(uint64_t)b[2]<<40| \
+					(uint64_t)b[1]<<48|(uint64_t)b[0]<<56;
 		break;
 	
 	// This is a special case needed by icns_read_macbinary_resource_fork
