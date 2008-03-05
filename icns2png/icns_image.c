@@ -81,7 +81,8 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		opj_image_t	*image = NULL;
 		
 		elementSize = iconElement->elementSize;
-		image = jp2dec((icns_byte_t *)&(iconElement->elementData[0]), elementSize);
+		
+		error = icns_opj_jp2_dec(elementSize, (icns_byte_t *)&(iconElement->elementData[0]), &image);
 		
 		if(image == NULL)
 			return ICNS_STATUS_ENCODING_ERR;
@@ -419,7 +420,8 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	
 		opj_image_t* image = NULL;
 	
-		image = jp2dec((icns_byte_t *)rawDataPtr, (int)rawDataSize);
+		error = icns_opj_jp2_dec((int)rawDataSize, (icns_byte_t *)rawDataPtr, &image);
+		
 		if(!image)
 			return ICNS_STATUS_ENCODING_ERR;
 	

@@ -201,7 +201,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 // icns_jp2.c
 #ifdef ICNS_OPENJPEG
 int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
-opj_image_t * jp2dec(icns_byte_t *bufin, int len);
+int icns_opj_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, opj_image_t **imageOut);
 #endif
 
 // icns_utils.c

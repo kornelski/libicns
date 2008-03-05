@@ -27,7 +27,7 @@
 LIBNAME = libicns
 LIBVERMAJ = 0
 LIBVERMIN = 5
-LIBVERREL = 0
+LIBVERREL = 1
 
 # Compile with debug flags and icns debug messages
 DEBUG = true

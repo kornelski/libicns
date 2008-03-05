@@ -27,6 +27,70 @@ Boston, MA 02111-1307, USA.
 
 #include "icns.h"
 #include "icns_internals.h"
+
+/*
+#if defined(ICNS_JASPER) && defined(ICNS_OPENJPEG)
+	#error "Must use either Jasper or OpenJPEG, but not both!"
+#endif
+
+
+#ifdef ICNS_JASPER
+
+
+#include <jasper/jasper.h>
+
+int icns_jas_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, jas_image_t **imageOut)
+{
+	jas_stream_t *imagestream = NULL;
+	jas_image_t  *image = NULL;
+	int imageComponents = 0;
+	int imageWidth = 0;
+	int imageHeight = 0;
+	int imageDepth = 0;
+	
+	imagestream = jas_stream_memopen(dataPtr, dataSize);
+	
+	// Decode the image stream
+	if (!(image = jas_image_decode(imagestream, -1, 0)))
+	{
+		icns_print_err("icns_jas_jp2_dec: Error while decoding jp2 data stream!\n");
+		return ICNS_STATUS_ENCODING_ERR;
+	}
+	
+	jas_stream_close(imagestream);
+	
+	// JP2 components, i.e. channels
+	imageComponents = jas_image_numcmpts(image);
+
+	// There should be 4 of these
+	if( imageComponents != 4)
+	{
+		icns_print_err("icns_jas_jp2_dec: Number of jp2 components is not 4!\n");
+		return ICNS_STATUS_ENCODING_ERR;
+	}
+	
+	// Assume that we can retrieve all the relevant image
+	// information from componenent number zero.
+	imageWidth = jas_image_cmptwidth(image, 0);
+	imageHeight = jas_image_cmptheight(image, 0);
+	imageDepth = jas_image_cmptprec(image, 0);
+	
+	if (jas_image_readcmpt(image, compno, 0, 0, width, height,origdata)) {
+		fprintf(stderr, "cannot read component data\n");
+		return EXIT_FAILURE;
+	}
+	
+	jas_image_destroy(origimage);
+	jas_image_destroy(reconimage);
+	
+	jas_image_clearfmts();
+}
+
+
+#endif
+
+*/
+
 // Only compile the openjpeg routines if we have support for it
 #ifdef ICNS_OPENJPEG
 
@@ -139,13 +203,18 @@ int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 }
 
 // Decompress jp2
-opj_image_t * jp2dec(icns_byte_t *bufin, int len)
+int icns_opj_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, opj_image_t **imageOut);
 {
 	opj_dparameters_t parameters;	/* decompression parameters */
 	opj_dinfo_t* dinfo = NULL;
 	opj_event_mgr_t event_mgr;		/* event manager */
 	opj_cio_t *cio = NULL;
 	opj_image_t *image = NULL;
+	icns_byte_t *bufin = NULL;
+	int len = 0;
+	
+	len = dataSize;
+	bufin = dataPtr;
 
 	/* configure the event callbacks (not required) */
 	memset(&event_mgr, 0, sizeof(opj_event_mgr_t));
@@ -155,7 +224,7 @@ opj_image_t * jp2dec(icns_byte_t *bufin, int len)
 
 	/* get a decoder handle */
 	dinfo = opj_create_decompress(CODEC_JP2);
-	
+
 	/* set decoding parameters to default values */
 	opj_set_default_decoder_parameters(&parameters);
 
@@ -169,17 +238,19 @@ opj_image_t * jp2dec(icns_byte_t *bufin, int len)
 
 	image = opj_decode(dinfo, cio);
 	if(!image) {
-		icns_print_err("jp2dec: failed to decode image!\n");
+		icns_print_err("icns_opj_jp2_dec: failed to decode image!\n");
 		opj_destroy_decompress(dinfo);
 		opj_cio_close(cio);
-		return image;
+		return ICNS_STATUS_ENCODING_ERR;
+	} else {
+		*imageOut = image;	
 	}
 
 	/* close the byte stream */
 	opj_cio_close(cio);
 	opj_destroy_decompress(dinfo);
 
-	return image;
+	return ICNS_STATUS_OK;
 }
 
 
