@@ -269,6 +269,9 @@ int main(int argc, char *argv[])
 	
 	icns_set_print_errors(1);
 	
+	printf("Size of icns_type_t: %d\n",sizeof(icns_type_t));
+	printf("Size of icns_size_t: %d\n",sizeof(icns_size_t));
+	
 	for(count = 0; count < fileindex; count++)
 	{
 		if(ConvertIconFamilyFile(inputfiles[count]))
