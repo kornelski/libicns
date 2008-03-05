@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.
 
 /***************************** ICNS_READ_UNALIGNED_BE **************************/
 /* NOTE: only accessible to icns_io.c */
-#define ICNS_READ_UNALIGNED_BE(val, addr, size)    icns_read_be(&(val), (addr),sizeof( (size)))
+#define ICNS_READ_UNALIGNED_BE(val, addr, size)    icns_read_be(&(val), (addr), (size))
 static inline void icns_read_be(void *outp, void *inp, int size)
 {
 	icns_byte_t	b[8] = {0,0,0,0,0,0,0,0};
