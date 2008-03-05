@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.
 
 /***************************** ICNS_READ_UNALIGNED_BE **************************/
 /* NOTE: only accessible to icns_io.c */
-#define ICNS_READ_UNALIGNED_BE(val, addr, type)    icns_read_be(&(val), (addr), sizeof(type))
+#define ICNS_READ_UNALIGNED_BE(val, addr, size)    icns_read_be(&(val), (addr),sizeof( (size)))
 static inline void icns_read_be(void *outp, void *inp, int size)
 {
 	icns_byte_t	b[8] = {0,0,0,0,0,0,0,0};
@@ -82,7 +82,7 @@ static inline void icns_read_be(void *outp, void *inp, int size)
 
 /***************************** ICNS_WRITE_UNALIGNED_BE **************************/
 /* NOTE: only accessible to icns_io.c */
-#define ICNS_WRITE_UNALIGNED_BE(addr, val, type)    icns_write_be((addr), &(val), sizeof(type))
+#define ICNS_WRITE_UNALIGNED_BE(addr, val, size)    icns_write_be((addr), &(val), (size))
 static inline void icns_write_be(void *outp, void *inp, int size)
 {
 	icns_byte_t	b[8] = {0,0,0,0,0,0,0,0};
@@ -157,7 +157,7 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	ICNS_WRITE_UNALIGNED_BE(&resourceSize, (iconFamilyIn->resourceSize), icns_size_t);
+	ICNS_WRITE_UNALIGNED_BE(&resourceSize, (iconFamilyIn->resourceSize), sizeof(icns_size_t));
 	blockSize = 1024;
 	
 	while( (resourceSize-dataOutTotal) > blockSize)
@@ -405,8 +405,8 @@ int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut
 		// Iterate through the icns resource, converting the 'size' values to big endian
 		while(((dataOffset+8) < dataSize) && (error == 0))
 		{
-			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset, sizeof(icns_type_t));
-			ICNS_READ_UNALIGNED(elementSize, dataPtr+dataOffset+4, sizeof(icns_size_t));
+			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
+			ICNS_READ_UNALIGNED(elementSize, dataPtr+dataOffset+4,sizeof(icns_size_t));
 			
 			#ifdef ICNS_DEBUG
 			printf("  checking element type... type is '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
@@ -520,8 +520,8 @@ int icns_parse_family_data(unsigned long dataSize,icns_byte_t *dataPtr,icns_fami
 	}
 	
 	// Read the type and size of the data - do NOT swap type
-	ICNS_READ_UNALIGNED(resourceType, dataPtr, sizeof(icns_type_t));
-	ICNS_READ_UNALIGNED_BE(resourceSize, dataPtr + 4, sizeof(icns_size_t));
+	ICNS_READ_UNALIGNED(resourceType, dataPtr,sizeof(icns_type_t));
+	ICNS_READ_UNALIGNED_BE(resourceSize, dataPtr + 4,sizeof(icns_size_t));
 	
 	#ifdef ICNS_DEBUG
 	printf("Reading icns family from data...\n");
@@ -563,8 +563,8 @@ int icns_parse_family_data(unsigned long dataSize,icns_byte_t *dataPtr,icns_fami
 		// Iterate through the icns resource, converting the 'size' values to native endian
 		while(((dataOffset+8) < resourceSize) && (error == 0))
 		{
-			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset, sizeof(icns_type_t));
-			ICNS_READ_UNALIGNED_BE(elementSize, dataPtr+dataOffset+4, sizeof(icns_size_t));
+			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
+			ICNS_READ_UNALIGNED_BE(elementSize, dataPtr+dataOffset+4,sizeof(icns_size_t));
 			
 			#ifdef ICNS_DEBUG
 			printf("  checking element type... type is '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
@@ -632,10 +632,10 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 	}
 	
 	// Load Resource Header to if we are dealing with a raw resource fork.
-	ICNS_READ_UNALIGNED_BE(resHeadDataOffset, (resData+0), icns_sint32_t);
-	ICNS_READ_UNALIGNED_BE(resHeadMapOffset, (resData+4), icns_sint32_t);
-	ICNS_READ_UNALIGNED_BE(resHeadDataSize, (resData+8), icns_sint32_t);
-	ICNS_READ_UNALIGNED_BE(resHeadMapSize, (resData+12), icns_sint32_t);
+	ICNS_READ_UNALIGNED_BE(resHeadDataOffset, (resData+0),sizeof( icns_sint32_t));
+	ICNS_READ_UNALIGNED_BE(resHeadMapOffset, (resData+4),sizeof( icns_sint32_t));
+	ICNS_READ_UNALIGNED_BE(resHeadDataSize, (resData+8),sizeof( icns_sint32_t));
+	ICNS_READ_UNALIGNED_BE(resHeadMapSize, (resData+12),sizeof( icns_sint32_t));
 	
 	#ifdef ICNS_DEBUG
 	printf("  data offset: %d (0x%08X)\n",resHeadDataOffset,resHeadDataOffset);
@@ -660,10 +660,10 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 	}
 	
 	// Load Resource Map
-	ICNS_READ_UNALIGNED_BE(resMapAttributes, (resData+resHeadMapOffset+0+22), icns_sint16_t);
-	ICNS_READ_UNALIGNED_BE(resMapTypeOffset, (resData+resHeadMapOffset+2+22), icns_sint16_t);
-	ICNS_READ_UNALIGNED_BE(resMapNameOffset, (resData+resHeadMapOffset+4+22), icns_sint16_t);
-	ICNS_READ_UNALIGNED_BE(resMapNumTypes, (resData+resHeadMapOffset+6+22), icns_sint16_t);
+	ICNS_READ_UNALIGNED_BE(resMapAttributes, (resData+resHeadMapOffset+0+22),sizeof( icns_sint16_t));
+	ICNS_READ_UNALIGNED_BE(resMapTypeOffset, (resData+resHeadMapOffset+2+22),sizeof( icns_sint16_t));
+	ICNS_READ_UNALIGNED_BE(resMapNameOffset, (resData+resHeadMapOffset+4+22),sizeof( icns_sint16_t));
+	ICNS_READ_UNALIGNED_BE(resMapNumTypes, (resData+resHeadMapOffset+6+22),sizeof( icns_sint16_t));
 	
 	// 0 == 1 here, so fix that
 	resMapNumTypes = resMapNumTypes + 1;
@@ -686,10 +686,10 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 		icns_sint16_t	resOffset = 0;
 		
 		// Do NOT swap type
-		ICNS_READ_UNALIGNED(resType, (resData+resHeadMapOffset+resMapTypeOffset+2+(count*8)), icns_type_t);
+		ICNS_READ_UNALIGNED(resType, (resData+resHeadMapOffset+resMapTypeOffset+2+(count*8)),sizeof( icns_type_t));
 		
-		ICNS_READ_UNALIGNED_BE(resNumItems, (resData+resHeadMapOffset+resMapTypeOffset+6+(count*8)), icns_sint16_t);
-		ICNS_READ_UNALIGNED_BE(resOffset, (resData+resHeadMapOffset+resMapTypeOffset+8+(count*8)), icns_sint16_t);
+		ICNS_READ_UNALIGNED_BE(resNumItems, (resData+resHeadMapOffset+resMapTypeOffset+6+(count*8)),sizeof( icns_sint16_t));
+		ICNS_READ_UNALIGNED_BE(resOffset, (resData+resHeadMapOffset+resMapTypeOffset+8+(count*8)),sizeof( icns_sint16_t));
 		
 		// 0 == 1 here, so fix that
 		resNumItems = resNumItems + 1;
@@ -711,14 +711,14 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 			
 			found = 1;
 			
-			ICNS_READ_UNALIGNED_BE(resID, (resData+resHeadMapOffset+resMapTypeOffset+resOffset), icns_sint16_t);
-			ICNS_READ_UNALIGNED_BE(resNameOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+2), icns_sint16_t);
-			ICNS_READ_UNALIGNED_BE(resAttributes, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+4), icns_sint8_t);
+			ICNS_READ_UNALIGNED_BE(resID, (resData+resHeadMapOffset+resMapTypeOffset+resOffset),sizeof( icns_sint16_t));
+			ICNS_READ_UNALIGNED_BE(resNameOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+2),sizeof( icns_sint16_t));
+			ICNS_READ_UNALIGNED_BE(resAttributes, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+4),sizeof( icns_sint8_t));
 			
 			// Read in the resource name, if it exists (-1 indicates it doesn't)
 			if(resNameOffset != -1)
 			{
-				ICNS_READ_UNALIGNED_BE(resNameLength, (resData+resHeadMapOffset+resMapNameOffset+resNameOffset), icns_sint8_t);
+				ICNS_READ_UNALIGNED_BE(resNameLength, (resData+resHeadMapOffset+resMapNameOffset+resNameOffset),sizeof( icns_sint8_t));
 				
 				if(resNameLength > 0)
 					memcpy(&resName[0],(resData+resHeadMapOffset+resMapNameOffset+resNameOffset+1),resNameLength);
@@ -727,13 +727,13 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 			}
 			
 			// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
-			ICNS_READ_UNALIGNED_BE(resItemDataOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+5), 3);
+			ICNS_READ_UNALIGNED_BE(resItemDataOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+5),sizeof( 3));
 			#ifdef ICNS_DEBUG
 			printf("    data offset is: %d (0x%08X)\n",resItemDataOffset,resItemDataOffset);
 			printf("    actual offset is: %d (0x%08X)\n",resHeadDataOffset+resItemDataOffset,resHeadDataOffset+resItemDataOffset);
 			#endif
 
-			ICNS_READ_UNALIGNED_BE(resItemDataSize, (resData+resHeadDataOffset+resItemDataOffset), icns_sint32_t);
+			ICNS_READ_UNALIGNED_BE(resItemDataSize, (resData+resHeadDataOffset+resItemDataOffset),sizeof( icns_sint32_t));
 			
 			#ifdef ICNS_DEBUG
 			printf("    data size is: %d\n",resItemDataSize);
@@ -865,8 +865,8 @@ int icns_read_macbinary_resource_fork(icns_uint32_t dataSize,icns_byte_t *dataPt
 	}
 	
 	// Read headers - do NOT swap data 'type' values
-	ICNS_READ_UNALIGNED(dataType, (dataPtr+65), icns_type_t);
-	ICNS_READ_UNALIGNED(dataCreator, (dataPtr+69), icns_type_t);
+	ICNS_READ_UNALIGNED(dataType, (dataPtr+65),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED(dataCreator, (dataPtr+69),sizeof( icns_type_t));
 
 	// Checking for valid MacBinary data...
 	if(icns_types_equal(dataType,ICNS_MACBINARY_TYPE))
@@ -882,9 +882,9 @@ int icns_read_macbinary_resource_fork(icns_uint32_t dataSize,icns_byte_t *dataPt
 		
 		isValid = 1;
 		
-		ICNS_READ_UNALIGNED_BE(byte00, (dataPtr+0), icns_sint8_t);
-		ICNS_READ_UNALIGNED_BE(byte74, (dataPtr+74), icns_sint8_t);
-		ICNS_READ_UNALIGNED_BE(byte74, (dataPtr+82), icns_sint8_t);
+		ICNS_READ_UNALIGNED_BE(byte00, (dataPtr+0),sizeof( icns_sint8_t));
+		ICNS_READ_UNALIGNED_BE(byte74, (dataPtr+74),sizeof( icns_sint8_t));
+		ICNS_READ_UNALIGNED_BE(byte74, (dataPtr+82),sizeof( icns_sint8_t));
 		
 		// Bytes 0, 74, and 82 should all be zero in a valid MacBinary file
 		if( ( byte00 != 0 ) || ( byte74 != 0 ) || ( byte82 != 0 ) )
@@ -908,9 +908,9 @@ int icns_read_macbinary_resource_fork(icns_uint32_t dataSize,icns_byte_t *dataPt
 	// Start MacBinary Parsing routines
 	
 	// Load up the data lengths
-	ICNS_READ_UNALIGNED_BE(secondHeaderLength, (dataPtr+120), icns_sint16_t);
-	ICNS_READ_UNALIGNED_BE(fileDataSize, (dataPtr+83), icns_sint32_t);
-	ICNS_READ_UNALIGNED_BE(resourceDataSize, (dataPtr+87), icns_sint32_t);
+	ICNS_READ_UNALIGNED_BE(secondHeaderLength, (dataPtr+120),sizeof( icns_sint16_t));
+	ICNS_READ_UNALIGNED_BE(fileDataSize, (dataPtr+83),sizeof( icns_sint32_t));
+	ICNS_READ_UNALIGNED_BE(resourceDataSize, (dataPtr+87),sizeof( icns_sint32_t));
 	
 	// Calculate extra padding length for forks
 	fileDataPadding = (((fileDataSize + 127) >> 7) << 7) - fileDataSize;
@@ -963,8 +963,8 @@ icns_bool_t icns_icns_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr)
 		return 0;
 	
 	// Read the type and size of the data - do NOT swap type
-	ICNS_READ_UNALIGNED(resourceType, dataPtr, sizeof(icns_type_t));
-	ICNS_READ_UNALIGNED_BE(resourceSize, dataPtr + 4, sizeof(icns_size_t));
+	ICNS_READ_UNALIGNED(resourceType, dataPtr,sizeof(icns_type_t));
+	ICNS_READ_UNALIGNED_BE(resourceSize, dataPtr + 4,sizeof(icns_size_t));
 	
 	if(icns_types_not_equal(resourceType,ICNS_FAMILY_TYPE))
 		return 0;
@@ -987,10 +987,10 @@ icns_bool_t icns_rsrc_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr)
 		return 0;
 	
 	// Load Resource Header to if we are dealing with a raw resource fork.
-	ICNS_READ_UNALIGNED_BE(resHeadDataOffset, (dataPtr+0), icns_sint32_t);
-	ICNS_READ_UNALIGNED_BE(resHeadMapOffset, (dataPtr+4), icns_sint32_t);
-	ICNS_READ_UNALIGNED_BE(resHeadDataSize, (dataPtr+8), icns_sint32_t);
-	ICNS_READ_UNALIGNED_BE(resHeadMapSize, (dataPtr+12), icns_sint32_t);
+	ICNS_READ_UNALIGNED_BE(resHeadDataOffset, (dataPtr+0),sizeof( icns_sint32_t));
+	ICNS_READ_UNALIGNED_BE(resHeadMapOffset, (dataPtr+4),sizeof( icns_sint32_t));
+	ICNS_READ_UNALIGNED_BE(resHeadDataSize, (dataPtr+8),sizeof( icns_sint32_t));
+	ICNS_READ_UNALIGNED_BE(resHeadMapSize, (dataPtr+12),sizeof( icns_sint32_t));
 	
 	// Check to see if file is not a raw resource file
 	if( (resHeadMapOffset+resHeadMapSize != dataSize) || (resHeadDataOffset+resHeadDataSize != resHeadMapOffset) )
@@ -1023,8 +1023,8 @@ icns_bool_t icns_macbinary_header_check(icns_uint32_t dataSize,icns_byte_t *data
 		return 0;
 	
 	// Read headers - do NOT swap data 'type' values
-	ICNS_READ_UNALIGNED(dataType, (dataPtr+65), icns_type_t);
-	ICNS_READ_UNALIGNED(dataCreator, (dataPtr+69), icns_type_t);
+	ICNS_READ_UNALIGNED(dataType, (dataPtr+65),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED(dataCreator, (dataPtr+69),sizeof( icns_type_t));
 
 	// Checking for valid MacBinary data...
 	if(icns_types_equal(dataType,ICNS_MACBINARY_TYPE))
@@ -1040,9 +1040,9 @@ icns_bool_t icns_macbinary_header_check(icns_uint32_t dataSize,icns_byte_t *data
 		
 		isValid = 1;
 		
-		ICNS_READ_UNALIGNED_BE(byte00, (dataPtr+0), icns_sint8_t);
-		ICNS_READ_UNALIGNED_BE(byte74, (dataPtr+74), icns_sint8_t);
-		ICNS_READ_UNALIGNED_BE(byte74, (dataPtr+82), icns_sint8_t);
+		ICNS_READ_UNALIGNED_BE(byte00, (dataPtr+0),sizeof( icns_sint8_t));
+		ICNS_READ_UNALIGNED_BE(byte74, (dataPtr+74),sizeof( icns_sint8_t));
+		ICNS_READ_UNALIGNED_BE(byte74, (dataPtr+82),sizeof( icns_sint8_t));
 		
 		// Bytes 0, 74, and 82 should all be zero in a valid MacBinary file
 		if( ( byte00 != 0 ) || ( byte74 != 0 ) || ( byte82 != 0 ) )
@@ -1052,9 +1052,9 @@ icns_bool_t icns_macbinary_header_check(icns_uint32_t dataSize,icns_byte_t *data
 	if( !isValid )
 		return 0;
 	
-	ICNS_READ_UNALIGNED_BE(secondHeaderLength, (dataPtr+120), icns_sint16_t);
-	ICNS_READ_UNALIGNED_BE(fileDataSize, (dataPtr+83), icns_sint32_t);
-	ICNS_READ_UNALIGNED_BE(resourceDataSize, (dataPtr+87), icns_sint32_t);
+	ICNS_READ_UNALIGNED_BE(secondHeaderLength, (dataPtr+120),sizeof( icns_sint16_t));
+	ICNS_READ_UNALIGNED_BE(fileDataSize, (dataPtr+83),sizeof( icns_sint32_t));
+	ICNS_READ_UNALIGNED_BE(resourceDataSize, (dataPtr+87),sizeof( icns_sint32_t));
 	
 	fileDataPadding = (((fileDataSize + 127) >> 7) << 7) - fileDataSize;
 	resourceDataPadding = (((resourceDataSize + 127) >> 7) << 7) - resourceDataSize;

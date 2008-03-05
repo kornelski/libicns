@@ -101,8 +101,8 @@ These macros will will on systems that support unaligned
 accesses, as well as those that don't support it
 */
 
-#define ICNS_READ_UNALIGNED(val, addr, type)        memcpy(&(val), (addr), sizeof(type))
-#define ICNS_WRITE_UNALIGNED(addr, val, type)       memcpy((addr), &(val), sizeof(type))
+#define ICNS_READ_UNALIGNED(val, addr, size)        memcpy(&(val), (addr), size)
+#define ICNS_WRITE_UNALIGNED(addr, val, size)       memcpy((addr), &(val), size)
 
 
 /* global variables */

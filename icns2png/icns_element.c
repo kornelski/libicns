@@ -65,8 +65,8 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
-	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType), icns_type_t);
-	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize), icns_size_t);
+	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize),sizeof( icns_size_t));
 	
 	#ifdef ICNS_DEBUG
 	printf("Looking for icon element of type: '%c%c%c%c'\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
@@ -86,8 +86,8 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 			return ICNS_STATUS_INVALID_DATA;		
 		}
 		
-		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
-		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType),sizeof( icns_type_t));
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize),sizeof( icns_size_t));
 		
 		#ifdef ICNS_DEBUG
 		printf("element data...\n");
@@ -167,8 +167,8 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 		error = ICNS_STATUS_INVALID_DATA;
 	}
 	
-	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType), icns_type_t);
-	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize), icns_size_t);
+	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize),sizeof( icns_size_t));
 	
 	if(newIconElement == NULL)
 	{
@@ -177,16 +177,16 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	}
 	
 	// Retrieve first, then swap. May help with problems on some arch	
-	ICNS_READ_UNALIGNED(newElementType, &(newIconElement->elementType), icns_type_t);
-	ICNS_READ_UNALIGNED(newElementSize, &(newIconElement->elementSize), icns_size_t);
+	ICNS_READ_UNALIGNED(newElementType, &(newIconElement->elementType),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED(newElementSize, &(newIconElement->elementSize),sizeof( icns_size_t));
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
 	while ( (foundData == 0) && (dataOffset < iconFamilySize) )
 	{
 		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
-		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
-		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType),sizeof( icns_type_t));
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize),sizeof( icns_size_t));
 		
 		if(icns_types_equal(elementType,newElementType))
 			foundData = 1;
@@ -218,8 +218,8 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	while ( dataOffset < iconFamilySize )
 	{
 		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
-		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
-		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType),sizeof( icns_type_t));
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize),sizeof( icns_size_t));
 		
 		if(icns_types_not_equal(elementType,newElementType))
 		{
@@ -305,16 +305,16 @@ int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icon
 		error = ICNS_STATUS_INVALID_DATA;
 	}
 	
-	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType), icns_type_t);
-	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize), icns_size_t);
+	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize),sizeof( icns_size_t));
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
 	while ( (foundData == 0) && (dataOffset < iconFamilySize) )
 	{
 		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
-		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
-		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType),sizeof( icns_type_t));
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize),sizeof( icns_size_t));
 		
 		if (icns_types_equal(elementType,iconElementType))
 			foundData = 1;
@@ -350,8 +350,8 @@ int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icon
 	while ( dataOffset < iconFamilySize )
 	{
 		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
-		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType), icns_type_t);
-		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize), icns_size_t);
+		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType),sizeof( icns_type_t));
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize),sizeof( icns_size_t));
 		
 		if(icns_types_not_equal(elementType,iconElementType))
 		{

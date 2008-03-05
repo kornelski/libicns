@@ -55,8 +55,8 @@ int icns_create_family(icns_family_t **iconFamilyOut)
 		return ICNS_STATUS_NO_MEMORY;
 	}
 	
-	ICNS_WRITE_UNALIGNED(&(newIconFamily->resourceType), iconFamilyType, icns_type_t);
-	ICNS_WRITE_UNALIGNED(&(newIconFamily->resourceSize), iconFamilySize, icns_size_t);
+	ICNS_WRITE_UNALIGNED(&(newIconFamily->resourceType), iconFamilyType, sizeof(icns_type_t));
+	ICNS_WRITE_UNALIGNED(&(newIconFamily->resourceSize), iconFamilySize, sizeof(icns_size_t));
 
 	*iconFamilyOut = newIconFamily;
 	
