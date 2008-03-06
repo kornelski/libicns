@@ -794,7 +794,7 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 	else
 	{
 		icns_print_err("icns_find_family_in_mac_resource: Unable to find data of type '%c%c%c%c' in resource file!\n",getResType.c[0],getResType.c[1],getResType.c[2],getResType.c[3]);
-		error = ICNS_STATUS_TYPE_NOT_FOUND;
+		error = ICNS_STATUS_DATA_NOT_FOUND;
 	}
 	
 exception:

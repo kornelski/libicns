@@ -269,9 +269,6 @@ int main(int argc, char *argv[])
 	
 	icns_set_print_errors(1);
 	
-	printf("Size of icns_type_t: %d\n",sizeof(icns_type_t));
-	printf("Size of icns_size_t: %d\n",sizeof(icns_size_t));
-	
 	for(count = 0; count < fileindex; count++)
 	{
 		if(ConvertIconFamilyFile(inputfiles[count]))
@@ -419,10 +416,10 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	image_channels = image->imageChannels;
 	image_bit_depth = image->imagePixelDepth;
 	
-	//printf("width: %d\n",width);
-	//printf("height: %d\n",height);
-	//printf("image_channels: %d\n",image_channels);
-	//printf("image_bit_depth: %d\n",image_bit_depth);
+	printf("width: %d\n",width);
+	printf("height: %d\n",height);
+	printf("image_channels: %d\n",image_channels);
+	printf("image_bit_depth: %d\n",image_bit_depth);
 	
 	if(mask != NULL) {
 		mask_channels = mask->imageChannels;

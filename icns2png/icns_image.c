@@ -30,10 +30,9 @@ Boston, MA 02111-1307, USA.
 #include "icns_colormaps.h"
 
 
-int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t sourceType,icns_image_t *imageOut)
+int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t iconType,icns_image_t *imageOut)
 {
 	int		error = ICNS_STATUS_OK;
-	icns_type_t	iconType = ICNS_NULL_TYPE;
 	icns_type_t	maskType = ICNS_NULL_TYPE;
 	icns_element_t	*iconElement = NULL;
 	icns_element_t	*maskElement = NULL;
@@ -64,56 +63,19 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		icns_free_image(imageOut);
 	}
 	
-	if(icns_types_equal(sourceType,ICNS_128X128_8BIT_MASK) || \
-	icns_types_equal(sourceType,ICNS_48x48_8BIT_MASK) || \
-	icns_types_equal(sourceType,ICNS_32x32_8BIT_MASK) || \
-	icns_types_equal(sourceType,ICNS_16x16_8BIT_MASK) )
-	{
-		icns_print_err("icns_get_image32_with_mask_from_family: Can't make an image with mask from a mask\n");
-		return ICNS_STATUS_INVALID_DATA;
-	}
-	
-	// We use the jp2 processor for these two
-	if( (icns_types_equal(sourceType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(sourceType,ICNS_512x512_32BIT_ARGB_DATA)) )
-	{
-		#ifdef ICNS_OPENJPEG
-		icns_size_t	elementSize;
-		opj_image_t	*image = NULL;
-		
-		elementSize = iconElement->elementSize;
-		
-		error = icns_opj_jp2_dec(elementSize, (icns_byte_t *)&(iconElement->elementData[0]), &image);
-		
-		if(image == NULL)
-			return ICNS_STATUS_ENCODING_ERR;
-		
-		error = icns_opj_to_image(image,imageOut);
-		
-		opj_image_destroy(image);
-		
-		return error;
-		
-		#else
-		
-		icns_print_err("icns_get_image_from_element: libicns requires openjpeg for this data type!\n");
-		return ICNS_STATUS_UNSUPPORTED;
-		
-		#endif /* ifdef ICNS_OPENJPEG */
-	}
-	
-	iconType = sourceType;
-	maskType = icns_get_mask_type_for_icon_type(iconType);
-	
 	#ifdef ICNS_DEBUG
 	printf("Making 32-bit image...\n");
 	printf("  using icon type '%c%c%c%c'\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
-	printf("  using mask type '%c%c%c%c'\n",maskType.c[0],maskType.c[1],maskType.c[2],maskType.c[3]);
 	#endif
 	
-	if( icns_types_equal(maskType,ICNS_NULL_DATA) )
+	
+	if(icns_types_equal(iconType,ICNS_128X128_8BIT_MASK) || \
+	icns_types_equal(iconType,ICNS_48x48_8BIT_MASK) || \
+	icns_types_equal(iconType,ICNS_32x32_8BIT_MASK) || \
+	icns_types_equal(iconType,ICNS_16x16_8BIT_MASK) )
 	{
-		icns_print_err("icns_get_image32_with_mask_from_family: Can't find mask for type '%c%c%c%c'\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
-		return ICNS_STATUS_TYPE_NOT_FOUND;
+		icns_print_err("icns_get_image32_with_mask_from_family: Can't make an image with mask from a mask\n");
+		return ICNS_STATUS_INVALID_DATA;
 	}
 	
 	// Preliminaries checked - carry on with the icon/mask merge
@@ -133,9 +95,27 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		goto cleanup;
 	}
 	
+	// We used the jp2 processor for these two, so we're done!
+	if( (icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) ) {
+		memcpy(imageOut,&iconImage,sizeof(icns_image_t));
+		return error;
+	}
+	
+	maskType = icns_get_mask_type_for_icon_type(iconType);
+	
+	#ifdef ICNS_DEBUG
+	printf("  using mask type '%c%c%c%c'\n",maskType.c[0],maskType.c[1],maskType.c[2],maskType.c[3]);
+	#endif
+	
+	if( icns_types_equal(maskType,ICNS_NULL_DATA) )
+	{
+		icns_print_err("icns_get_image32_with_mask_from_family: Can't find mask for type '%c%c%c%c'\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
+		return ICNS_STATUS_DATA_NOT_FOUND;
+	}
+	
 	// Load mask element then image
 	error = icns_get_element_from_family(iconFamily,maskType,&maskElement);
-
+	
 	if(error) {
 		icns_print_err("icns_get_image32_with_mask_from_family: Unable to load mask element from icon family!\n");
 		goto cleanup;
@@ -402,7 +382,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 		icns_print_err("icns_get_image_from_element: Invalid element size! (%d)\n",elementSize);
 		return ICNS_STATUS_INVALID_DATA;
 	}
-
+	
 	iconType = elementType;
 	rawDataSize = elementSize - sizeof(icns_type_t) - sizeof(icns_size_t);
 	rawDataPtr = (icns_byte_t*)&(iconElement->elementData[0]);
@@ -410,34 +390,14 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	#if ICNS_DEBUG
 	printf("  data size is: %d\n",(int)rawDataSize);
 	#endif
-
-
+	
+	
 	// 32-Bit Icon Image Data Types ( > 256px )
 	if( (icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) )
 	{
-		// We need to use a jp2 processor for these two
-		#ifdef ICNS_OPENJPEG
-	
-		opj_image_t* image = NULL;
-	
-		error = icns_opj_jp2_dec((int)rawDataSize, (icns_byte_t *)rawDataPtr, &image);
-		
-		if(!image)
-			return ICNS_STATUS_ENCODING_ERR;
-	
-		error = icns_opj_to_image(image,imageOut);
-	
-		opj_image_destroy(image);
-	
+		// We need to use a jp2 processor for these two types
+		error = icns_jp2_to_image((int)rawDataSize, (icns_byte_t *)rawDataPtr, imageOut);
 		return error;
-	
-		#else
-	
-		icns_print_err("icns_get_image_from_element: libicns requires openjpeg for this data type!\n");
-		icns_free_image(imageOut);
-		return ICNS_STATUS_UNSUPPORTED;
-	
-		#endif
 	}
 	else if(icns_types_equal(iconType,ICNS_128X128_32BIT_DATA) || \
 	icns_types_equal(iconType,ICNS_48x48_32BIT_DATA) || \
@@ -455,7 +415,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 		
 		iconBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
 		iconDataSize = imageOut->imageDataSize;
-		iconDataRowSize = imageOut->imageWidth * iconBitDepth / icns_byte_bits;
+		iconDataRowSize = imageOut->imageWidth * iconBitDepth / ICNS_BYTE_BITS;
 		
 		if(rawDataSize < imageOut->imageDataSize)
 		{
@@ -510,7 +470,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 		
 		iconBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
 		iconDataSize = imageOut->imageDataSize;
-		iconDataRowSize = imageOut->imageWidth * iconBitDepth / icns_byte_bits;
+		iconDataRowSize = imageOut->imageWidth * iconBitDepth / ICNS_BYTE_BITS;
 		
 		for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
 			memcpy(&(((char*)(imageOut->imageData))[dataCount*iconDataRowSize]),&(((char*)(rawDataPtr))[dataCount*iconDataRowSize]),iconDataRowSize);
@@ -599,7 +559,7 @@ int icns_get_mask_from_element(icns_element_t *maskElement,icns_image_t *imageOu
 		}
 		
 		maskDataSize = imageOut->imageDataSize;
-		maskDataRowSize = imageOut->imageWidth * maskBitDepth / icns_byte_bits;
+		maskDataRowSize = imageOut->imageWidth * maskBitDepth / ICNS_BYTE_BITS;
 		
 		for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
 			memcpy(&(((char*)(imageOut->imageData))[dataCount*maskDataRowSize]),&(((char*)(rawDataPtr))[dataCount*maskDataRowSize]),maskDataRowSize);
@@ -628,7 +588,7 @@ int icns_get_mask_from_element(icns_element_t *maskElement,icns_image_t *imageOu
 		}
 		
 		maskDataSize = imageOut->imageDataSize;
-		maskDataRowSize = imageOut->imageWidth * maskBitDepth / icns_byte_bits;
+		maskDataRowSize = imageOut->imageWidth * maskBitDepth / ICNS_BYTE_BITS;
 		
 		#if ICNS_DEBUG
 		printf("  raw mask data size is: %d\n",(int)rawDataSize);	
@@ -705,7 +665,7 @@ int icns_init_image(icns_uint32_t iconWidth,icns_uint32_t iconHeight,icns_uint32
 	unsigned long	iconDataRowSize = 0;
 
 	iconBitDepth = iconPixelDepth * iconChannels;
-	iconDataRowSize = iconWidth * iconBitDepth / icns_byte_bits;
+	iconDataRowSize = iconWidth * iconBitDepth / ICNS_BYTE_BITS;
 	iconDataSize = iconHeight * iconDataRowSize;
 	
 	#ifdef ICNS_DEBUG

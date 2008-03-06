@@ -32,8 +32,10 @@ LIBVERREL = 1
 # Compile with debug flags and icns debug messages
 DEBUG = true
 
-# Compile with openjpeg support for icons >= 256x256
-OPENJPEG = false
+# Compile with support for icons >= 256x256
+# Use either Jasper or OpenJPEG, but not both
+JASPER = true
+#OPENJPEG = true
 
 # Where make install puts libicns and icns2png
 PREFIX ?= /usr
@@ -75,12 +77,18 @@ CFLAGS+=-Wall -I$(INCPATH)
 ifeq "$(DEBUG)" "true"
 CFLAGS+=-g -DICNS_DEBUG
 endif
+ifeq "$(JASPER)" "true"
+CFLAGS+=-DICNS_JASPER
+endif
 ifeq "$(OPENJPEG)" "true"
 CFLAGS+=-DICNS_OPENJPEG
 endif
 
 # Linker flags
 LDFLAGS+=-L. -L$(LIBPATH)
+ifeq "$(JASPER)" "true"
+ LDFLAGS+=-ljasper
+endif
 ifeq "$(OPENJPEG)" "true"
  LDFLAGS+=-lopenjpeg
 endif

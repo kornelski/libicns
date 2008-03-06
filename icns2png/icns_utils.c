@@ -270,7 +270,7 @@ icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType)
 		iconInfo.iconType = ICNS_NULL_TYPE;
 	}
 	
-	iconInfo.iconRawDataSize = iconInfo.iconHeight * iconInfo.iconWidth * iconInfo.iconBitDepth / icns_byte_bits;
+	iconInfo.iconRawDataSize = iconInfo.iconHeight * iconInfo.iconWidth * iconInfo.iconBitDepth / ICNS_BYTE_BITS;
 	
 	#ifdef ICNS_DEBUG
 	printf("  type is: '%c%c%c%c'\n",iconInfo.iconType.c[0],iconInfo.iconType.c[1],iconInfo.iconType.c[2],iconInfo.iconType.c[3]);

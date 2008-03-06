@@ -120,7 +120,7 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 	else
 	{
 		icns_print_err("icns_get_element_from_family: Unable to find requested icon data!\n");
-		error = ICNS_STATUS_TYPE_NOT_FOUND;
+		error = ICNS_STATUS_DATA_NOT_FOUND;
 	}
 	
 	return error;
@@ -325,7 +325,7 @@ int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icon
 	if(!foundData)
 	{
 		icns_print_err("icns_remove_element_in_family: Unable to find requested icon data for removal!\n");
-		return ICNS_STATUS_TYPE_NOT_FOUND;
+		return ICNS_STATUS_DATA_NOT_FOUND;
 	}
 	
 	icns_size_t	newIconFamilySize = 0;
@@ -482,7 +482,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 					free(imageDataPtr);
 					imageDataPtr = NULL;
 					icns_print_err("icns_new_element_from_image: Error rle encoding image data.\n");
-					return ICNS_STATUS_ENCODING_ERR;
+					return ICNS_STATUS_INVALID_DATA;
 				}
 			}
 			

@@ -34,22 +34,24 @@ Boston, MA 02111-1307, USA.
 // Enable debugging messages?
 // #define	ICNS_DEBUG
 
-// Enable openjpeg for 256x256 and 512x512 support
+// Enable supprt for 256x256 and 512x512 icons
+// Use either Jasper or OpenJPEG, but not both
+// #define	ICNS_JASPER
 // #define	ICNS_OPENJPEG
 
+/* Make sure we're not using both libraries */
+#if defined(ICNS_JASPER) && defined(ICNS_OPENJPEG)
+	#error "Must use either Jasper or OpenJPEG, but not both!"
+#endif
 
-/*  OpenJPEG headers   */
+/*  Include Jasper headers   */
+#ifdef ICNS_JASPER
+#include <jasper/jasper.h>
+#endif
+
+/*  Include OpenJPEG headers   */
 #ifdef ICNS_OPENJPEG
 #include <openjpeg.h>
-
-/*  OpenJPEG version check   */
-// OPENJPEG_VERSION seems to be a reliable test for having
-// the proper openjpeg header files.
-#ifndef OPENJPEG_VERSION
-	#warning "libicns: Can't determine OpenJPEG version."
-	#warning "libicns: 256x256 and 512x512 support will not be available."
-	#undef	ICNS_OPENJPEG
-#endif
 #endif
 
 /* basic data types */
@@ -162,9 +164,8 @@ static const icns_type_t  ICNS_NULL_TYPE                 = {{ 0 , 0 , 0 , 0 }};
 
 #define	ICNS_STATUS_IO_READ_ERR		   1
 #define	ICNS_STATUS_IO_WRITE_ERR	   2
-#define	ICNS_STATUS_ENCODING_ERR           3
-#define	ICNS_STATUS_TYPE_NOT_FOUND         4
-#define	ICNS_STATUS_UNSUPPORTED            5
+#define	ICNS_STATUS_DATA_NOT_FOUND         3
+#define	ICNS_STATUS_UNSUPPORTED            4
 
 /* icns function prototypes */
 /* NOTE: internal functions are found in icns_internals.h */
@@ -199,10 +200,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
 
 // icns_jp2.c
-#ifdef ICNS_OPENJPEG
-int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
-int icns_opj_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, opj_image_t **imageOut);
-#endif
+int icns_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *imageOut);
 
 // icns_utils.c
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);

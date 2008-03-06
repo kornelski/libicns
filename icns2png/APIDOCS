@@ -161,9 +161,8 @@ Error return codes:
 
 #define	ICNS_STATUS_IO_READ_ERR		   1
 #define	ICNS_STATUS_IO_WRITE_ERR	   2
-#define	ICNS_STATUS_ENCODING_ERR           3
-#define	ICNS_STATUS_TYPE_NOT_FOUND         4
-#define	ICNS_STATUS_UNSUPPORTED            5
+#define	ICNS_STATUS_DATA_NOT_FOUND         3
+#define	ICNS_STATUS_UNSUPPORTED            4
 
 ===============================================================================
 Part III: Manipulating the icon family
@@ -225,15 +224,13 @@ int icns_free_image(icns_image_t *imageIn);
 Part VI: Decoding and encoding image data for certian formats
 
 -------------------------------------------------------------------------------
-Decoding and encoding RLE image data
+Decoding and encoding 3 channel RLE data
 int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
 int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
 
 -------------------------------------------------------------------------------
 Decoding jpeg2000 image data
-int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
-int icns_opj_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, opj_image_t **imageOut);
-
+int icns_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t **imageOut);
 
 ===============================================================================
 Part VII: Misc utility functions
