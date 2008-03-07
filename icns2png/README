@@ -38,11 +38,13 @@ Please see DEVNOTES for more information on how to use libicns
 ===============================================================================
 Building libicns
 
-You will need a copy of zlib, libpng, and openjpeg. If you do not want to
-install those libraries, you will need to build them, then modify the Makefile
-to reference the local paths to each library.
+You will need a copy of zlib, and libpng. Additionally, you will need a copy
+of either libjasper or libopenjpeg. If you do not want to install those
+libraries, you will need to build them, then modify the Makefile to build
+against the static libraries in thier respective directories.
 
-For a complete build of libicns and icns2png, you should then only have to run
+For a complete build of libicns and icns2png, you should check the Makefile
+to esure you are building against the correct libraries, then run
 make
 make test
 make install
@@ -56,6 +58,8 @@ Using icns2png
 Converting OmniWeb.icns to OmniWeb.png...
 
 This will result in a file OmniWeb.png with a 128x128 icon from OmniWeb.icns.
+
+Run ./icns2png --help for more detailed information.
 
 ===============================================================================
 Using icontainer2icns

@@ -1,5 +1,5 @@
 ===============================================================================
-Developers notes for libicns 0.5.0a - March 1st, 2008
+Developers notes for libicns 0.5.1 - March 6th, 2008
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
 
 ===============================================================================
@@ -7,10 +7,30 @@ This file is indented for those wishing to contribute to libicns
 -------------------------------------------------------------------------------
 To develop an application using libicns, please see the file APIDOCS
 ===============================================================================
-1) Versioning Notes
-2) Naming Conventions
-3) Endianness issues
-4) icns data format
+1) Jasper vs OpenJPEG
+2) Versioning Notes
+3) Naming Conventions
+4) Endianness issues
+5) icns data format
+===============================================================================
+Jasper vs OpenJPEG
+
+Jasper and OpenJPEG are both excellent JPEG2000 decoders, however, their
+presence on various linux distributions is at present uncertain.
+
+Jasper (libjasper)
+As of 1.9001 it may 'crash' unless the library is built with -DNDEBUG.
+There is an assertion in the decoding library (jpc_dec.c)
+that fails if there are not 3 channels or components (RGB). The
+data in icns files is usually RGBA - 4 channels. Thus, the
+assert will cause the program to crash. If that is fixed, it works fine.
+
+OpenJPEG (libopenjpeg)
+Building libicns against the OpenJPEG library will provide full read
+support of 256x256 and 512x512 icns data. However, it's distribution at
+present is quite limited, and there seems to be an ongoing debate as
+to it's compatability with free software guidelines.
+
 ===============================================================================
 Version information
 versions are in the format of: 0.0.0a (MAJOR.MINOR.RELEASE[dev])
@@ -28,6 +48,8 @@ Examples, in descending order:
 0.1.1  - beta version 0 milestone 1 release candidate 1 dev b
 0.1.2  - beta version 0 milestone 1 release 2 official
 0.2.0  - stable version 0 milestone 1 release 0 official
+
+Note that the dev letter must be removed to build the shared library under OS X
 
 ===============================================================================
 Naming conventions
@@ -51,13 +73,17 @@ Here, the incoming icon family MUST be in native big endian where appropriate
 These two functions call icns_export_family_data and icns_import_family_data:
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn);
 int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut);
+The resulting data written to the file is thus in big-endian format.
 
 -------------------------------------------------------------------------------
-All endian swapping is handled by icns_io by icns.c with the following
+All endian swapping is handled by icns_io by icns.c with the following:
 #define ICNS_READ_UNALIGNED_BE(val, addr, type)    icns_read_be(&(val), (addr), sizeof(type))
 static inline void icns_read_be(void *outp, void *inp, int size)
 #define ICNS_WRITE_UNALIGNED_BE(addr, val, type)    icns_write_be((addr), &(val), sizeof(type))
 static inline void icns_write_be(void *outp, void *inp, int size)
+
+As the macro names imply, these functions are safe to use on architectures
+that do not deal well with unaligned memory access.
    
 -------------------------------------------------------------------------------
 Where there are endian issues in the first place

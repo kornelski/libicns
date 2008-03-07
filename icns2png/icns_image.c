@@ -98,6 +98,10 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	// We used the jp2 processor for these two, so we're done!
 	if( (icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) ) {
 		memcpy(imageOut,&iconImage,sizeof(icns_image_t));
+		if(iconElement != NULL) {
+		free(iconElement);
+		iconElement = NULL;
+		}
 		return error;
 	}
 	

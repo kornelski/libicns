@@ -27,15 +27,17 @@
 LIBNAME = libicns
 LIBVERMAJ = 0
 LIBVERMIN = 5
-LIBVERREL = 1
+LIBVERREL = 2
 
 # Compile with debug flags and icns debug messages
-DEBUG = true
+DEBUG = false
 
 # Compile with support for icons >= 256x256
 # Use either Jasper or OpenJPEG, but not both
-JASPER = true
-#OPENJPEG = true
+# As of 1.900.1, the Jasper library is still buggy when
+# decompressing RGBA icons, so OpenJPEG is preferable
+#JASPER = true
+OPENJPEG = true
 
 # Where make install puts libicns and icns2png
 PREFIX ?= /usr
@@ -87,7 +89,7 @@ endif
 # Linker flags
 LDFLAGS+=-L. -L$(LIBPATH)
 ifeq "$(JASPER)" "true"
- LDFLAGS+=-ljasper
+ LDFLAGS+=-ljasper -ljpeg -lm
 endif
 ifeq "$(OPENJPEG)" "true"
  LDFLAGS+=-lopenjpeg
@@ -165,13 +167,6 @@ test: $(LIBUTILS)
 	./icns2png test2.rsrc; \
 	echo 'Test: Converting icon in macbinary resource...'; \
 	./icns2png test3.bin; \
-	echo 'Test: Converting 32-bit 48x48 icon...'; \
-	./icns2png -s 48 test4.icns; \
-	echo 'Test: Converting 1-bit 32x32 icon...'; \
-	./icns2png -s 32 -d 1 test5.icns; \
-	echo 'Test: Listing icon information...'; \
-	./icnsinfo -d test5.icns;
-
 
 install-headers: $(LIBHDR)
 	cp $(LIBHDR) $(INCPATH)/
