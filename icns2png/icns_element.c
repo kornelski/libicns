@@ -467,7 +467,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 	
 	if( (icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) )
 	{
-		error = icns_image_to_jp2(image,&newDataSize,&newDataPtr);
+		error = icns_image_to_jp2(imageIn,&newDataSize,&newDataPtr);
 		imageDataSize = newDataSize;
 		imageDataPtr = newDataPtr;
 	}
@@ -476,7 +476,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 		newDataSize = imageDataSize;
 		
 		// Note: icns_encode_rle24_data allocates memory that must be freed later
-		if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)imageIn->imageData,&newDataSize,(icns_sint32_t**)&newDataPtr)))
+		if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)imageIn->imageData,(icns_sint32_t*)&newDataSize,(icns_sint32_t**)&newDataPtr)))
 		{
 			icns_print_err("icns_new_element_from_image: Error rle encoding image data.\n");
 			error = ICNS_STATUS_INVALID_DATA;
@@ -486,10 +486,10 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 	}
 	// Note that ICNS_NNxNN_1BIT_DATA == ICNS_NNxNN_1BIT_MASK
 	// so we do not need to put them here twice
-	else if(icns_types_equal(maskType,ICNS_48x48_1BIT_DATA) || \
-	icns_types_equal(maskType,ICNS_32x32_1BIT_DATA) || \
-	icns_types_equal(maskType,ICNS_16x16_1BIT_DATA) || \
-	icns_types_equal(maskType,ICNS_16x12_1BIT_DATA) )
+	else if(icns_types_equal(iconType,ICNS_48x48_1BIT_DATA) || \
+	icns_types_equal(iconType,ICNS_32x32_1BIT_DATA) || \
+	icns_types_equal(iconType,ICNS_16x16_1BIT_DATA) || \
+	icns_types_equal(iconType,ICNS_16x12_1BIT_DATA) )
 	{
 		/*
 		Blast, this won't work right yet...

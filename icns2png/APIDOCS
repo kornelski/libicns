@@ -174,8 +174,8 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut);
 
 -------------------------------------------------------------------------------
 Reading and writing to memory
-int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut,unsigned char **dataPtrOut);
-int icns_import_family_data(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
+int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut,unsigned char **dataPtrOut);
+int icns_import_family_data(icns_uint32_t dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
 
 -------------------------------------------------------------------------------
 Creating an new icon family
@@ -225,8 +225,8 @@ Part VI: Decoding and encoding image data for certian formats
 
 -------------------------------------------------------------------------------
 Decoding and encoding 3 channel RLE data
-int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
-int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
+int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut);
+int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut);
 
 -------------------------------------------------------------------------------
 Decoding and encoding jpeg2000 image data

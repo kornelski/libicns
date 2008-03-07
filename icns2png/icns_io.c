@@ -190,7 +190,7 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 {
 	int	      error = ICNS_STATUS_OK;
-	unsigned long dataSize = 0;
+	icns_uint32_t dataSize = 0;
 	void          *dataPtr = NULL;
 	
 	if ( dataFile == NULL )
@@ -324,7 +324,7 @@ exception:
 
 /***************************** icns_export_family_data **************************/
 
-int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut,icns_byte_t **dataPtrOut)
+int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut,icns_byte_t **dataPtrOut)
 {
 	int		error = ICNS_STATUS_OK;
 	icns_type_t	dataType = ICNS_NULL_TYPE;
@@ -448,7 +448,7 @@ exception:
 
 /***************************** icns_import_family_data **************************/
 
-int icns_import_family_data(unsigned long dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
+int icns_import_family_data(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int error = ICNS_STATUS_OK;
 	icns_byte_t *iconFamilyData;
@@ -495,7 +495,7 @@ int icns_import_family_data(unsigned long dataSize,icns_byte_t *dataPtr,icns_fam
 
 /***************************** icns_parse_family_data **************************/
 
-int icns_parse_family_data(unsigned long dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
+int icns_parse_family_data(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int		error = ICNS_STATUS_OK;
 	icns_type_t	resourceType = ICNS_NULL_TYPE;

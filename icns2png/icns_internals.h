@@ -118,7 +118,7 @@ void bin_print_int(int x);
 int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_bool_t isMask,icns_element_t **iconElementOut);
 
 // icns_io.c
-int icns_parse_family_data(unsigned long dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
+int icns_parse_family_data(icns_uint32_t dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
 int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *resData, icns_family_t **dataOut);
 int icns_read_macbinary_resource_fork(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,icns_uint32_t *parsedResSizeOut,icns_byte_t **parsedResDataOut);
 icns_bool_t icns_icns_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr);

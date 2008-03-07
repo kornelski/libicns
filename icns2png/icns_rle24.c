@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.
 //***************************** icns_decode_rle24_data ****************************//
 // Decode a rgb 24 bit rle encoded data stream into 32 bit argb (alpha is ignored)
 
-int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr)
+int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut)
 {
 	icns_uint8_t	runLength = 0;
 	icns_byte_t	colorValue = 0;
@@ -42,40 +42,40 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	icns_byte_t	*destIconData = NULL;	// Decompressed Raw Icon Data
 	unsigned long	destIconPixelCount = 0;
 	
-	if(dataInPtr == NULL)
+	if(dataPtrIn == NULL)
 	{
 		icns_print_err("icns_decode_rle24_data: rle decoder data in ptr is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	if(dataOutPtr == NULL)
+	if(dataPtrOut == NULL)
 	{
 		icns_print_err("icns_decode_rle24_data: rle decoder data out ptr is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	if(*dataOutPtr == NULL)
+	if(*dataPtrOut == NULL)
 	{
 		icns_print_err("icns_decode_rle24_data: rle decoder data out ptr ref is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	rawDataPtr = (icns_byte_t *)dataInPtr;
-	destIconData = (icns_byte_t *)(*dataOutPtr);
+	rawDataPtr = (icns_byte_t *)dataPtrIn;
+	destIconData = (icns_byte_t *)(*dataPtrOut);
 	
 	// There's always going to be 4 channels in this
 	// and we want our counter to increment through
 	// pixels, not bytes....
-	destIconPixelCount = (*dataOutSize) / 4;
+	destIconPixelCount = (*dataSizeOut) / 4;
 	
 	#ifdef ICNS_DEBUG
-		printf("Decoding %d bytes of data into %d RGB pixels\n",(int)dataInSize,(int)destIconPixelCount);
+		printf("Decoding %d bytes of data into %d RGB pixels\n",(int)dataSizeIn,(int)destIconPixelCount);
 	#endif
 	
 	// What's this??? In the 128x128 icons, we need to start 4 bytes
 	// ahead. There see to be a NULL padding here for some reason. If
 	// we don't, the red channel will be off by 2 pixels
-	if( *((icns_uint32_t*)dataInPtr) == 0x00000000 )
+	if( *((icns_uint32_t*)dataPtrIn) == 0x00000000 )
 	{
 		#ifdef ICNS_DEBUG
 		printf("4 byte null padding found in rle data!\n");
@@ -95,7 +95,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	for(colorOffset = 0; colorOffset < 3; colorOffset++)
 	{
 		pixelOffset = 0;
-		while((pixelOffset < destIconPixelCount) && (dataOffset < dataInSize))
+		while((pixelOffset < destIconPixelCount) && (dataOffset < dataSizeIn))
 		{
 			if( (rawDataPtr[dataOffset] & 0x80) == 0)
 			{
@@ -132,7 +132,7 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 //***************************** icns_encode_rle24_data *******************************************//
 // Encode an 32 bit argb data stream into a 24 bit rgb rle encoded data stream (alpha is ignored)
 
-int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr)
+int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut)
 {
 	unsigned long	dataInCount = 0;
 	unsigned long 	dataInChanSize = 0;
@@ -147,19 +147,19 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	icns_uint32_t	myshift = 0;
 	icns_uint32_t	mymask = 0;
 	
-	if(dataInPtr == NULL)
+	if(dataPtrIn == NULL)
 	{
 		icns_print_err("icns_encode_rle24_data: rle encoder data in ptr is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	if(dataOutSize == NULL)
+	if(dataSizeOut == NULL)
 	{
 		icns_print_err("icns_encode_rle24_data: rle encoder data out size ref is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	if(dataOutPtr == NULL)
+	if(dataPtrOut == NULL)
 	{
 		icns_print_err("icns_encode_rle24_data: rle encoder data out ptr ref is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
@@ -188,13 +188,13 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	// tests seem to indicate it will never be larger than the original
 	
 	// This block is for the new RLE encoded data - make it 25% larger
-	dataTemp = (icns_sint8_t *)malloc(dataInSize + (dataInSize / 4));
+	dataTemp = (icns_sint8_t *)malloc(dataSizeIn + (dataSizeIn / 4));
 	if(dataTemp == NULL)
 	{
-		icns_print_err("icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",(int)dataInSize);
+		icns_print_err("icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",(int)dataSizeIn);
 		return ICNS_STATUS_NO_MEMORY;
 	}
-	memset(dataTemp,0,dataInSize);
+	memset(dataTemp,0,dataSizeIn);
 	
 	// This block is for a run of RLE encoded data
 	dataRun = (icns_uint8_t *)malloc(128);
@@ -209,7 +209,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 	// There's always going to be 4 channels in this
 	// so we want our counter to increment through
 	// channels, not bytes....
-	dataInChanSize = dataInSize / 4;
+	dataInChanSize = dataSizeIn / 4;
 	
 	myshift = 24;
 	mymask = 0xFF000000;
@@ -230,7 +230,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 		mymask >>= 8;
 		
 		// Set the first byte of the run...
-		dataRun[0] = (icns_uint8_t)((*dataInPtr & mymask) >> myshift);
+		dataRun[0] = (icns_uint8_t)((*dataPtrIn & mymask) >> myshift);
 		
 		// Start with a runlength of 1 for the first byte
 		runLength = 1;
@@ -241,7 +241,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 		// Start one byte ahead
 		for(dataInCount = 1; dataInCount < dataInChanSize; dataInCount++)
 		{
-			dataValue = *(dataInPtr+dataInCount);
+			dataValue = *(dataPtrIn+dataInCount);
 			dataByte = (icns_uint8_t)((dataValue & mymask) >> myshift);	// Red Channel
 			
 			if(runLength < 2)

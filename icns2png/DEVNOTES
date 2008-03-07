@@ -64,10 +64,10 @@ Endianness issues
 -------------------------------------------------------------------------------
 Everything in libicns is in native endian format, with two exceptions:
 
-int icns_export_family_data(icns_family_t *iconFamily,unsigned long *dataSizeOut,unsigned char **dataPtrOut);
+int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut,unsigned char **dataPtrOut);
 Here, the outgoing data pointer will have big endian values where necessary
 
-int icns_import_family_data(unsigned long dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
+int icns_import_family_data(icns_uint32_t dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
 Here, the incoming icon family MUST be in native big endian where appropriate
 
 These two functions call icns_export_family_data and icns_import_family_data:
