@@ -385,7 +385,7 @@ int icns_new_element_from_mask_image(icns_image_t *imageIn,icns_type_t iconType,
 	return icns_new_element_from_image(imageIn,iconType,1,iconElementOut);
 }
 
-//***************************** icns_new_element_from_image_data **************************//
+//***************************** icns_new_element_from_image **************************//
 // Creates a new icon element from an image
 int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_bool_t isMask,icns_element_t **iconElementOut)
 {
@@ -458,87 +458,108 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 	}
 	
 	// Finally, done with all the preliminary checks
+	icns_size_t	imageDataSize = 0;
 	icns_byte_t	*imageDataPtr = NULL;
-	unsigned long	imageDataSize = 0;
 	
-	// For use to easily track deallocation if we use rle24
-	icns_byte_t	*rle24DataPtr = NULL;
+	// For use to easily track deallocation if we use rle24, or jp2
+	icns_size_t	newDataSize = 0;
+	icns_byte_t	*newDataPtr = NULL;
 	
 	if( (icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) )
 	{
-		// Future openjpeg routines to go here
-		icns_print_err("icns_new_element_from_image: libicns does't support importing giant icons yet.\n");
-		return ICNS_STATUS_UNSUPPORTED;
+		error = icns_image_to_jp2(image,&newDataSize,&newDataPtr);
+		imageDataSize = newDataSize;
+		imageDataPtr = newDataPtr;
+	}
+	else if(icns_types_equal(iconType,ICNS_128X128_32BIT_DATA))
+	{
+		newDataSize = imageDataSize;
+		
+		// Note: icns_encode_rle24_data allocates memory that must be freed later
+		if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)imageIn->imageData,&newDataSize,(icns_sint32_t**)&newDataPtr)))
+		{
+			icns_print_err("icns_new_element_from_image: Error rle encoding image data.\n");
+			error = ICNS_STATUS_INVALID_DATA;
+		}
+		
+		imageDataPtr = newDataPtr;
+	}
+	// Note that ICNS_NNxNN_1BIT_DATA == ICNS_NNxNN_1BIT_MASK
+	// so we do not need to put them here twice
+	else if(icns_types_equal(maskType,ICNS_48x48_1BIT_DATA) || \
+	icns_types_equal(maskType,ICNS_32x32_1BIT_DATA) || \
+	icns_types_equal(maskType,ICNS_16x16_1BIT_DATA) || \
+	icns_types_equal(maskType,ICNS_16x12_1BIT_DATA) )
+	{
+		/*
+		Blast, this won't work right yet...
+		For 1-bit icons, we want to retrieve
+		existing image/mask data before
+		updating the image/mask
+		*/
+		
+		/*
+		newDataSize = imageDataSize * 2;
+		newDataPtr = (icns_byte_t *)malloc(newDataSize);
+		
+		imageDataSize = newDataSize;
+		imageDataPtr = newDataPtr;
+		*/
+		imageDataSize = imageIn->imageDataSize;
+		imageDataPtr = imageIn->imageData;
 	}
 	else
 	{
-		if(icns_types_equal(iconType,ICNS_128X128_32BIT_DATA))
-		{
-			// Note: icns_encode_rle24_data allocates memory that must be freed later
-			if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)imageIn->imageData,&imageDataSize,(icns_sint32_t**)&imageDataPtr)))
-			{
-				if(imageDataPtr != NULL)
-				{
-					free(imageDataPtr);
-					imageDataPtr = NULL;
-					icns_print_err("icns_new_element_from_image: Error rle encoding image data.\n");
-					return ICNS_STATUS_INVALID_DATA;
-				}
-			}
-			
-			rle24DataPtr = imageDataPtr;
-		}
-		else
-		{
-			imageDataSize = imageIn->imageDataSize;
-			imageDataPtr = imageIn->imageData;
-		}
+		imageDataSize = imageIn->imageDataSize;
+		imageDataPtr = imageIn->imageData;
 	}
+
 	
-	if(imageDataSize == 0)
+	if(error == ICNS_STATUS_OK)
 	{
-		icns_print_err("icns_new_element_from_image: Can't work with size 0 image data\n");
-		return ICNS_STATUS_INVALID_DATA;
-	}
-	
-	if(imageDataPtr == NULL)
-	{
-		icns_print_err("icns_new_element_from_image: Can't work with NULL image data\n");
-		return ICNS_STATUS_NULL_PARAM;
-	}
-	
-	icns_element_t	*newElement = NULL;
-	icns_size_t	newElementSize = 0;
-	icns_type_t	newElementType = ICNS_NULL_DATA;
-	icns_size_t	newElementOffset = 0;
-	
-	// Set up and create the new element
-	newElementOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
-	newElementSize = sizeof(icns_type_t) + sizeof(icns_size_t) + imageDataSize;
-	newElementType = iconType;
-	newElement = (icns_element_t *)malloc(newElementSize);
-	if(newElement == NULL)
-	{
-		icns_print_err("icns_new_element_from_image: Unable to allocate memory block of size: %d!\n",(int)newElementSize);
-		// We might have allocated new memory earlier...
-		if(rle24DataPtr != NULL)
+		icns_element_t	*newElement = NULL;
+		icns_size_t	newElementSize = 0;
+		icns_type_t	newElementType = ICNS_NULL_DATA;
+		icns_size_t	newElementOffset = 0;
+		
+		if(imageDataSize == 0)
 		{
-			free(rle24DataPtr);
-			rle24DataPtr = NULL;
+			icns_print_err("icns_new_element_from_image: Image data size should not be 0!\n");
+			error = ICNS_STATUS_INVALID_DATA;
+			goto exception;
 		}
-		return ICNS_STATUS_NO_MEMORY;
+		
+		if(imageDataPtr == NULL)
+		{
+			icns_print_err("icns_new_element_from_image: Image data should not be NULL!\n");
+			error = ICNS_STATUS_INVALID_DATA;
+			goto exception;
+		}
+
+		// Set up and create the new element
+		newElementOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+		newElementSize = sizeof(icns_type_t) + sizeof(icns_size_t) + imageDataSize;
+		newElementType = iconType;
+		newElement = (icns_element_t *)malloc(newElementSize);
+		if(newElement == NULL)
+		{
+			icns_print_err("icns_new_element_from_image: Unable to allocate memory block of size: %d!\n",(int)newElementSize);
+			error = ICNS_STATUS_NO_MEMORY;
+			goto exception;
+		}
+		
+		// Copy in the image data
+		memcpy(newElement+newElementOffset,imageDataPtr,imageDataSize);
 	}
 	
-	// Copy in the image data
-	memcpy(newElement+newElementOffset,imageDataPtr,imageDataSize);
+exception:
 	
 	// We might have allocated new memory earlier...
-	if(rle24DataPtr != NULL)
+	if(newDataPtr != NULL)
 	{
-		free(rle24DataPtr);
-		rle24DataPtr = NULL;
+		free(newDataPtr);
+		newDataPtr = NULL;
 	}
 	
 	return error;
 }
-

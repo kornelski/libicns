@@ -229,8 +229,9 @@ int icns_decode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,unsigned long *dataOutSize, icns_sint32_t **dataOutPtr);
 
 -------------------------------------------------------------------------------
-Decoding jpeg2000 image data
+Decoding and encoding jpeg2000 image data
 int icns_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t **imageOut);
+int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);
 
 ===============================================================================
 Part VII: Misc utility functions

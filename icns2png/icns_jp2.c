@@ -97,6 +97,48 @@ int icns_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *
 }
 
 
+int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
+{
+	int error = ICNS_STATUS_OK;
+	
+	if(image == NULL)
+	{
+		icns_print_err("icns_image_to_jp2: Image is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(dataSizeOut == NULL)
+	{
+		icns_print_err("icns_image_to_jp2: Data size NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(dataPtrOut == NULL)
+	{
+		icns_print_err("icns_image_to_jp2: Data ref is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	#ifdef ICNS_DEBUG
+	printf("Encoding JP2 image...\n");
+	#endif
+	
+	#ifdef ICNS_JASPER
+		error = icns_jas_image_to_jp2(image, dataSizeOut, dataPtrOut);	
+	#else
+	#ifdef ICNS_OPENJPEG
+		error = icns_opj_image_to_jp2(image, dataSizeOut, dataPtrOut);	
+	#else
+		icns_print_err("icns_image_to_jp2: libicns requires jasper or openjpeg to convert jp2 data!\n");
+		icns_free_image(imageOut);
+		error = ICNS_STATUS_UNSUPPORTED;
+	#endif
+	#endif
+	
+	return error;
+}
+
+
 #ifdef ICNS_JASPER
 
 int icns_jas_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *imageOut)
@@ -269,6 +311,35 @@ exception:
 }
 
 
+int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
+{
+	int error = ICNS_STATUS_OK;
+	
+	if(image == NULL)
+	{
+		icns_print_err("icns_jas_image_to_jp2: Image is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(dataSizeOut == NULL)
+	{
+		icns_print_err("icns_jas_image_to_jp2: Data size NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(dataPtrOut == NULL)
+	{
+		icns_print_err("icns_jas_image_to_jp2: Data ref is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	icns_print_err("icns_jas_image_to_jp2: libicns doesn't support writing jp2 images with libjasper yet!\n");
+	error = ICNS_STATUS_UNSUPPORTED;
+	
+	return error;
+}
+
+
 #endif /* ifdef ICNS_JASPER */
 
 
@@ -311,29 +382,35 @@ int icns_opj_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image
 	return error;	
 }
 
-/**
-sample error callback expecting a FILE* client object
-*/
-void icns_opj_error_callback(const char *msg, void *client_data) {
-	//FILE *stream = (FILE*)client_data;
-	//fprintf(stream, "[ERROR] %s", msg);
-}
-/**
-sample warning callback expecting a FILE* client object
-*/
-void icns_opj_warning_callback(const char *msg, void *client_data) {
-	//FILE *stream = (FILE*)client_data;
-	//fprintf(stream, "[WARNING] %s", msg);
-}
-/**
-sample debug callback expecting no client object
-*/
-void icns_opj_info_callback(const char *msg, void *client_data) {
-	//(void)client_data;
-	//fprintf(stdout, "[INFO] %s", msg);
+int icns_opj_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
+{
+	int error = ICNS_STATUS_OK;
+	
+	if(image == NULL)
+	{
+		icns_print_err("icns_opj_image_to_jp2: Image is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(dataSizeOut == NULL)
+	{
+		icns_print_err("icns_opj_image_to_jp2: Data size NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(dataPtrOut == NULL)
+	{
+		icns_print_err("icns_opj_image_to_jp2: Data ref is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	icns_print_err("icns_opj_image_to_jp2: libicns doesn't support writing jp2 images with libopenjpeg yet!\n");
+	error = ICNS_STATUS_UNSUPPORTED;
+	
+	return error;
 }
 
-// Convert from uncompressed opj data to ICNS_ImageData
+// Convert from uncompressed opj data to icns_image_t
 int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
 {
 	int		error = ICNS_STATUS_OK;
@@ -466,6 +543,27 @@ int icns_opj_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, opj_image_t **i
 }
 
 
+/**
+sample error callback expecting a FILE* client object
+*/
+void icns_opj_error_callback(const char *msg, void *client_data) {
+	//FILE *stream = (FILE*)client_data;
+	//fprintf(stream, "[ERROR] %s", msg);
+}
+/**
+sample warning callback expecting a FILE* client object
+*/
+void icns_opj_warning_callback(const char *msg, void *client_data) {
+	//FILE *stream = (FILE*)client_data;
+	//fprintf(stream, "[WARNING] %s", msg);
+}
+/**
+sample debug callback expecting no client object
+*/
+void icns_opj_info_callback(const char *msg, void *client_data) {
+	//(void)client_data;
+	//fprintf(stdout, "[INFO] %s", msg);
+}
 
 #endif /* ifdef ICNS_OPENJPEG */
 

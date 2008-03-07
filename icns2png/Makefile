@@ -89,7 +89,7 @@ endif
 # Linker flags
 LDFLAGS+=-L. -L$(LIBPATH)
 ifeq "$(JASPER)" "true"
- LDFLAGS+=-ljasper -ljpeg -lm
+ LDFLAGS+=-lm -ljpeg -ljasper
 endif
 ifeq "$(OPENJPEG)" "true"
  LDFLAGS+=-lopenjpeg

@@ -201,6 +201,7 @@ int icns_encode_rle24_data(unsigned long dataInSize, icns_sint32_t *dataInPtr,un
 
 // icns_jp2.c
 int icns_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *imageOut);
+int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);
 
 // icns_utils.c
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
