@@ -184,8 +184,10 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *newIconElement);
 int icns_add_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *newIconElement);
 int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t iconType);
-int icns_new_element_from_icon_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
-int icns_new_element_from_mask_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
+int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
+int icns_new_element_from_mask(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
+int icns_update_element_with_image(icns_image_t *imageIn,icns_element_t **iconElement);
+int icns_update_element_with_mask(icns_image_t *imageIn,icns_element_t **iconElement);
 
 // icns_image.c
 int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t sourceType,icns_image_t *imageOut);

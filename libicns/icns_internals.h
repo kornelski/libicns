@@ -59,6 +59,8 @@ typedef struct icns_rgb_t
 typedef struct icns_icon_image_info_t
 {
   icns_type_t           iconType;         // type of icon (or mask)
+  icns_bool_t           isImage;          // is this type an image
+  icns_bool_t           isMask;           // is this type a mask
   icns_uint32_t         iconWidth;        // width of icon in pixels
   icns_uint32_t         iconHeight;       // height of icon in pixels
   icns_uint8_t          iconChannels;     // number of channels in data
@@ -115,7 +117,8 @@ void bin_print_byte(int x);
 void bin_print_int(int x);
 
 // icns_element.c
-int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_bool_t isMask,icns_element_t **iconElementOut);
+int icns_new_element_from_image_or_mask(icns_image_t *imageIn,icns_type_t iconType,icns_bool_t isMask,icns_element_t **iconElementOut);
+int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isMask,icns_element_t **iconElement);
 
 // icns_io.c
 int icns_parse_family_data(icns_uint32_t dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);

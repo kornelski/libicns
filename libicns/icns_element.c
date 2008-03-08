@@ -373,34 +373,29 @@ int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t icon
 
 //***************************** icns_new_element_from_image **************************//
 // Creates a new icon element from an image
-int icns_new_element_from_icon_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut)
+int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut)
 {
-	return icns_new_element_from_image(imageIn,iconType,0,iconElementOut);
+	return icns_new_element_from_image_or_mask(imageIn,iconType,0,iconElementOut);
 }
 
 //***************************** icns_new_element_from_mask **************************//
 // Creates a new icon element from an image
-int icns_new_element_from_mask_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut)
+int icns_new_element_from_mask(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut)
 {
-	return icns_new_element_from_image(imageIn,iconType,1,iconElementOut);
+	return icns_new_element_from_image_or_mask(imageIn,iconType,1,iconElementOut);
 }
 
-//***************************** icns_new_element_from_image **************************//
+
+//***************************** icns_new_element_from_image_or_mask **************************//
 // Creates a new icon element from an image
-int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_bool_t isMask,icns_element_t **iconElementOut)
+int icns_new_element_from_image_or_mask(icns_image_t *imageIn,icns_type_t iconType,icns_bool_t isMask,icns_element_t **iconElementOut)
 {
-	int		        error = ICNS_STATUS_OK;
-	icns_icon_image_info_t  iconInfo;
-	
-	if(imageIn == NULL)
-	{
-		icns_print_err("icns_new_element_from_image: Icon image is NULL!\n");
-		return ICNS_STATUS_NULL_PARAM;
-	}
+	icns_element_t	*newElement = NULL;
+	icns_size_t	newElementSize = 0;
 	
 	if(iconElementOut == NULL)
 	{
-		icns_print_err("icns_new_element_from_image: Icon element reference is NULL!\n");
+		icns_print_err("icns_new_element_with_image_or_mask: Icon element reference is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	else
@@ -408,38 +403,94 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 		*iconElementOut = NULL;
 	}
 	
+	newElementSize = sizeof(icns_type_t) + sizeof(icns_size_t);
+	newElement = (icns_element_t *)malloc(newElementSize);
+	if(newElement == NULL)
+	{
+		icns_print_err("icns_new_element_with_image_or_mask: Unable to allocate memory block of size: %d!\n",(int)newElementSize);
+		return ICNS_STATUS_NO_MEMORY;
+	}
+	
+	newElement->elementType = iconType;
+	newElement->elementSize = newElementSize;
+	*iconElementOut = newElement;
+	
+	return icns_update_element_with_image_or_mask(imageIn,isMask,iconElementOut);
+}
+
+//***************************** icns_update_element_from_image **************************//
+// Updates an icon element with the given image
+int icns_update_element_with_image(icns_image_t *imageIn,icns_element_t **iconElement)
+{
+	return icns_update_element_with_image_or_mask(imageIn,0,iconElement);
+}
+
+//***************************** icns_update_element_from_mask **************************//
+// Updates an icon element with the given mask
+int icns_update_element_with_mask(icns_image_t *imageIn,icns_element_t **iconElement)
+{
+	return icns_update_element_with_image_or_mask(imageIn,1,iconElement);
+}
+
+//***************************** icns_update_element_with_image_or_mask **************************//
+// Updates an icon element with the given image or mask
+int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isMask,icns_element_t **iconElement)
+{
+	int		        error = ICNS_STATUS_OK;
+	icns_type_t             iconType;
+	icns_icon_image_info_t  iconInfo;
+	
+	if(imageIn == NULL)
+	{
+		icns_print_err("icns_update_element_with_image_or_mask: Icon image is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(iconElement == NULL)
+	{
+		icns_print_err("icns_update_element_with_image_or_mask: Icon element reference is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(*iconElement == NULL)
+	{
+		icns_print_err("icns_update_element_with_image_or_mask: Icon element is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
 	if(icns_types_equal(iconType,ICNS_NULL_DATA)) {
-		icns_print_err("icns_new_element_from_image: Invalid icon type!\n");
+		icns_print_err("icns_update_element_with_image_or_mask: Invalid icon type!\n");
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
-	// Determine what the height and width ought to be, to check the incoming image
+	iconType = (*iconElement)->elementType;
 	
+	// Determine what the height and width ought to be, to check the incoming image
 	iconInfo = icns_get_image_info_for_type(iconType);
 	
 	// Check the image width, height, and pixel depth
 	
 	if(imageIn->imageWidth != iconInfo.iconWidth)
 	{
-		icns_print_err("icns_new_element_from_image: Invalid input image width: %d\n",imageIn->imageWidth);
+		icns_print_err("icns_update_element_with_image_or_mask: Invalid input image width: %d\n",imageIn->imageWidth);
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
 	if(imageIn->imageWidth != iconInfo.iconWidth)
 	{
-		icns_print_err("icns_new_element_from_image: Invalid input image width: %d\n",imageIn->imageWidth);
+		icns_print_err("icns_update_element_with_image_or_mask: Invalid input image width: %d\n",imageIn->imageWidth);
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
 	if(imageIn->imageHeight != iconInfo.iconHeight)
 	{
-		icns_print_err("icns_new_element_from_image: Invalid input image height: %d\n",imageIn->imageHeight);
+		icns_print_err("icns_update_element_with_image_or_mask: Invalid input image height: %d\n",imageIn->imageHeight);
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
 	if(imageIn->imagePixelDepth != (iconInfo.iconBitDepth/iconInfo.iconChannels))
 	{
-		icns_print_err("icns_new_element_from_image: libicns does't support bit depth conversion yet.\n");
+		icns_print_err("icns_update_element_with_image_or_mask: libicns does't support bit depth conversion yet.\n");
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
@@ -447,13 +498,13 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 	
 	if(imageIn->imageDataSize == 0)
 	{
-		icns_print_err("icns_new_element_from_image: Invalid input image data size: %d\n",(int)imageIn->imageDataSize);
+		icns_print_err("icns_update_element_with_image_or_mask: Invalid input image data size: %d\n",(int)imageIn->imageDataSize);
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
 	if(imageIn->imageData == NULL)
 	{
-		icns_print_err("icns_new_element_from_image: Invalid input image data\n");
+		icns_print_err("icns_update_element_with_image_or_mask: Invalid input image data\n");
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
@@ -476,9 +527,9 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 		newDataSize = imageDataSize;
 		
 		// Note: icns_encode_rle24_data allocates memory that must be freed later
-		if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)imageIn->imageData,(icns_sint32_t*)&newDataSize,(icns_sint32_t**)&newDataPtr)))
+		if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)imageIn->imageData,(icns_uint32_t*)&newDataSize,(icns_sint32_t**)&newDataPtr)))
 		{
-			icns_print_err("icns_new_element_from_image: Error rle encoding image data.\n");
+			icns_print_err("icns_update_element_with_image_or_mask: Error rle encoding image data.\n");
 			error = ICNS_STATUS_INVALID_DATA;
 		}
 		
@@ -491,22 +542,70 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 	icns_types_equal(iconType,ICNS_16x16_1BIT_DATA) || \
 	icns_types_equal(iconType,ICNS_16x12_1BIT_DATA) )
 	{
-		/*
-		Blast, this won't work right yet...
-		For 1-bit icons, we want to retrieve
-		existing image/mask data before
-		updating the image/mask
-		*/
+		icns_byte_t	*existingData = NULL;
+		icns_size_t	existingDataSize = 0;
+		icns_size_t	existingDataOffset = 0;
 		
-		/*
-		newDataSize = imageDataSize * 2;
+		if(imageIn->imageDataSize != iconInfo.iconRawDataSize)
+		{
+			icns_print_err("icns_update_element_with_image_or_mask: Invalid input image data size: %d!\n",imageIn->imageDataSize);
+			return ICNS_STATUS_INVALID_DATA;
+		}
+		
+		newDataSize = iconInfo.iconRawDataSize * 2;
 		newDataPtr = (icns_byte_t *)malloc(newDataSize);
+		if(newDataPtr == NULL)
+		{
+			icns_print_err("icns_update_element_with_image_or_mask: Unable to allocate memory block of size: %d!\n",newDataSize);
+			error = ICNS_STATUS_NO_MEMORY;
+			goto exception;
+		}
+		
+		memset (newDataPtr,0,newDataSize);
+		
+		existingData = (icns_byte_t*)(*iconElement);
+		existingDataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+		existingDataSize = (*iconElement)->elementSize - existingDataOffset;
+		
+		// No icon data
+		if(existingDataSize == 0)
+		{
+			if(isMask == 0) {
+				memcpy(newDataPtr,imageIn->imageData,imageIn->imageDataSize);
+			} else {
+				memcpy(newDataPtr,imageIn->imageData + iconInfo.iconRawDataSize,imageIn->imageDataSize);
+			}
+		}
+		// Only image data
+		else if(existingDataSize == iconInfo.iconRawDataSize)
+		{
+			if(isMask == 0) {
+				memcpy(newDataPtr,imageIn->imageData,imageIn->imageDataSize);
+			} else {
+				memcpy(newDataPtr,existingData+existingDataOffset,iconInfo.iconRawDataSize);
+				memcpy(newDataPtr,imageIn->imageData + iconInfo.iconRawDataSize,imageIn->imageDataSize);
+			}
+		}
+		// Image + Mask data
+		else if(existingDataSize == newDataSize)
+		{
+			if(isMask == 0) {
+				memcpy(newDataPtr,imageIn->imageData,imageIn->imageDataSize);
+				memcpy(newDataPtr,existingData+existingDataOffset+iconInfo.iconRawDataSize,iconInfo.iconRawDataSize);
+			} else {
+				memcpy(newDataPtr,existingData+existingDataOffset,iconInfo.iconRawDataSize);
+				memcpy(newDataPtr,imageIn->imageData + iconInfo.iconRawDataSize,imageIn->imageDataSize);
+			}
+		}
+		else
+		{
+			icns_print_err("icns_update_element_with_image_or_mask: Unexpected element data size: %d!\n",existingDataSize);
+			error = ICNS_STATUS_INVALID_DATA;
+			goto exception;
+		}
 		
 		imageDataSize = newDataSize;
 		imageDataPtr = newDataPtr;
-		*/
-		imageDataSize = imageIn->imageDataSize;
-		imageDataPtr = imageIn->imageData;
 	}
 	else
 	{
@@ -524,14 +623,14 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 		
 		if(imageDataSize == 0)
 		{
-			icns_print_err("icns_new_element_from_image: Image data size should not be 0!\n");
+			icns_print_err("icns_update_element_with_image_or_mask: Image data size should not be 0!\n");
 			error = ICNS_STATUS_INVALID_DATA;
 			goto exception;
 		}
 		
 		if(imageDataPtr == NULL)
 		{
-			icns_print_err("icns_new_element_from_image: Image data should not be NULL!\n");
+			icns_print_err("icns_update_element_with_image_or_mask: Image data should not be NULL!\n");
 			error = ICNS_STATUS_INVALID_DATA;
 			goto exception;
 		}
@@ -543,7 +642,7 @@ int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_
 		newElement = (icns_element_t *)malloc(newElementSize);
 		if(newElement == NULL)
 		{
-			icns_print_err("icns_new_element_from_image: Unable to allocate memory block of size: %d!\n",(int)newElementSize);
+			icns_print_err("icns_update_element_with_image_or_mask: Unable to allocate memory block of size: %d!\n",(int)newElementSize);
 			error = ICNS_STATUS_NO_MEMORY;
 			goto exception;
 		}

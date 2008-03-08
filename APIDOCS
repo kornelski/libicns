@@ -196,8 +196,13 @@ int icns_add_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 
 -------------------------------------------------------------------------------
 Creating new elements from image data
-int icns_new_element_from_icon_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
-int icns_new_element_from_mask_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
+int icns_new_element_from_image(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
+int icns_new_element_from_mask(icns_image_t *imageIn,icns_type_t iconType,icns_element_t **iconElementOut);
+
+-------------------------------------------------------------------------------
+Updating existing elements with image data
+int icns_update_element_with_image(icns_image_t *imageIn,icns_element_t **iconElement);
+int icns_update_element_with_mask(icns_image_t *imageIn,icns_element_t **iconElement);
 
 ===============================================================================
 Part V: Manipulating images of the icon family and icon elements

@@ -119,36 +119,48 @@ icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	
 	// 32-bit image types
 	if(icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 512;
 		iconInfo.iconHeight = 512;
 		iconInfo.iconChannels = 4;
 		iconInfo.iconPixelDepth = 8;
-		iconInfo.iconBitDepth = 32;			
+		iconInfo.iconBitDepth = 32;
 	} else if(icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 256;
 		iconInfo.iconHeight = 256;
 		iconInfo.iconChannels = 4;
 		iconInfo.iconPixelDepth = 8;
-		iconInfo.iconBitDepth = 32;		
+		iconInfo.iconBitDepth = 32;
 	} else if(icns_types_equal(iconType,ICNS_128X128_32BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 128;
 		iconInfo.iconHeight = 128;
 		iconInfo.iconChannels = 4;
 		iconInfo.iconPixelDepth = 8;
-		iconInfo.iconBitDepth = 32;	
+		iconInfo.iconBitDepth = 32;
 	} else if(icns_types_equal(iconType,ICNS_48x48_32BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 48;
 		iconInfo.iconHeight = 48;
 		iconInfo.iconChannels = 4;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 32;	
 	} else if(icns_types_equal(iconType,ICNS_32x32_32BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 32;
 		iconInfo.iconHeight = 32;
 		iconInfo.iconChannels = 4;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 32;
 	} else if(icns_types_equal(iconType,ICNS_16x16_32BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 16;
 		iconInfo.iconHeight = 16;
 		iconInfo.iconChannels = 4;
@@ -158,24 +170,32 @@ icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	
 	// 8-bit mask types
 	else if(icns_types_equal(iconType,ICNS_128X128_8BIT_MASK)) {
+		iconInfo.isImage = 0;
+		iconInfo.isMask = 1;
 		iconInfo.iconWidth = 128;
 		iconInfo.iconHeight = 128;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 8;
 	} else if(icns_types_equal(iconType,ICNS_48x48_8BIT_MASK)) {
+		iconInfo.isImage = 0;
+		iconInfo.isMask = 1;
 		iconInfo.iconWidth = 48;
 		iconInfo.iconHeight = 48;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 8;
 	} else if(icns_types_equal(iconType,ICNS_32x32_8BIT_MASK)) {
+		iconInfo.isImage = 0;
+		iconInfo.isMask = 1;
 		iconInfo.iconWidth = 32;
 		iconInfo.iconHeight = 32;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 8;
 	} else if(icns_types_equal(iconType,ICNS_16x16_8BIT_MASK)) {
+		iconInfo.isImage = 0;
+		iconInfo.isMask = 1;
 		iconInfo.iconWidth = 16;
 		iconInfo.iconHeight = 16;
 		iconInfo.iconChannels = 1;
@@ -186,24 +206,32 @@ icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	
 	// 8-bit image types
 	else if(icns_types_equal(iconType,ICNS_48x48_8BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 48;
 		iconInfo.iconHeight = 48;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 8;
 	} else if(icns_types_equal(iconType,ICNS_32x32_8BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 32;
 		iconInfo.iconHeight = 32;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 8;
 	} else if(icns_types_equal(iconType,ICNS_16x16_8BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 16;
 		iconInfo.iconHeight = 16;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 8;
 	} else if(icns_types_equal(iconType,ICNS_16x12_8BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 16;
 		iconInfo.iconHeight = 12;
 		iconInfo.iconChannels = 1;
@@ -213,24 +241,32 @@ icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	
 	// 4 bit image types
 	 else if(icns_types_equal(iconType,ICNS_48x48_4BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 48;
 		iconInfo.iconHeight = 48;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 4;
 		iconInfo.iconBitDepth = 4;
 	} else if(icns_types_equal(iconType,ICNS_32x32_4BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 32;
 		iconInfo.iconHeight = 32;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 4;
 		iconInfo.iconBitDepth = 4;
 	} else if(icns_types_equal(iconType,ICNS_16x16_4BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 16;
 		iconInfo.iconHeight = 16;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 4;
 		iconInfo.iconBitDepth = 4;
 	} else if(icns_types_equal(iconType,ICNS_16x12_4BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 16;
 		iconInfo.iconHeight = 12;
 		iconInfo.iconChannels = 1;
@@ -240,24 +276,32 @@ icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	
 	// 1 bit image types - same as mask typess
 	else if(icns_types_equal(iconType,ICNS_48x48_1BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 1;
 		iconInfo.iconWidth = 48;
 		iconInfo.iconHeight = 48;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 1;
 		iconInfo.iconBitDepth = 1;
 	} else if(icns_types_equal(iconType,ICNS_32x32_1BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 1;
 		iconInfo.iconWidth = 32;
 		iconInfo.iconHeight = 32;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 1;
 		iconInfo.iconBitDepth = 1;
 	} else if(icns_types_equal(iconType,ICNS_16x16_1BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 1;
 		iconInfo.iconWidth = 16;
 		iconInfo.iconHeight = 16;
 		iconInfo.iconChannels = 1;
 		iconInfo.iconPixelDepth = 1;
 		iconInfo.iconBitDepth = 1;
 	} else if(icns_types_equal(iconType,ICNS_16x12_1BIT_DATA)) {
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 1;
 		iconInfo.iconWidth = 16;
 		iconInfo.iconHeight = 12;
 		iconInfo.iconChannels = 1;

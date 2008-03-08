@@ -25,6 +25,8 @@ Boston, MA 02111-1307, USA.
 
 #include "icns.h"
 #include "icns_internals.h"
+
+int DesribeIconFamilyFile(char *filename);
 int ConvertIconFamilyFile(char *filename);
 int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 
@@ -39,6 +41,8 @@ int		extractIconSizeID;
 int		extractIconDepth;
 icns_type_t	extractIconType;
 icns_type_t	extractMaskType;
+
+int		extractMode;
 
 icns_type_t getIconDataType(int sizeID,int depthVal)
 {
@@ -183,25 +187,35 @@ int parse_options(int argc, char** argv)
 	int opt;
 
 	while(1) {
-		opt = getopt(argc, argv, "d:h:s:");
+		opt = getopt(argc, argv, "hvlxd:w:s:");
 		if(opt < 0)
 			break;
 		switch(opt)
 		{
-			case 'd':
+			case 'd': // depth set
 				if((err = parse_depth(optarg))) {
 					fprintf(stderr, "Invalid icon color depth specified.\n");
 					return err;
 				}
 				break;
-			case 'h':
+			case 'h': // help
 				return -1;
 				break;
-			case 's':
+			case 'l': // list
+				extractMode |= 1;
+				break;
+			case 'w': // width set
+			case 's': // size set
 				if((err = parse_size(optarg))) {
 					fprintf(stderr, "Invalid icon size specified.\n");
 					return err;
 				}
+				break;
+			case 'v': // version
+				return -2;
+				break;
+			case 'x': // extract
+				extractMode |= 2;
 				break;
 			default:
 				fprintf(stderr, "Invalid options specified. %c (%d)\n",(char)opt,opt);
@@ -209,7 +223,7 @@ int parse_options(int argc, char** argv)
 				break;
 		}
 	}
-
+	
 	argc -= optind;
 	argv += optind;
 	
@@ -236,12 +250,14 @@ int parse_options(int argc, char** argv)
 int main(int argc, char *argv[])
 {
 	int count;
+	int result;
 	
 	// Initialize the globals;
 	extractIconSizeID = 5;	// 128x128
 	extractIconDepth = 32;
 	extractIconType = ICNS_128X128_32BIT_DATA;
 	extractMaskType = ICNS_128X128_8BIT_MASK;
+	extractMode = 0; // Extract only
 	
 	if(argc < 2)
 	{
@@ -249,21 +265,46 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	if(parse_options(argc, argv) != 0)
+	result = parse_options(argc, argv);
+
+	if(result != -2 && argc < 3)
+	{
+		printf("Usage: icns2png [options] [file]\n");
+		return -1;
+	}
+	
+	if(result == -2)
+	{
+		printf("icns2png 1.5                                                                  \n");
+		printf("                                                                              \n");
+		printf("Copyright (c) 2001-2008 Mathew Eis                                            \n");
+		printf("This is free software; see the source for copying conditions.  There is NO    \n");
+		printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.   \n");
+		printf("                                                                              \n");
+		printf("Written by Mathew Eis                                                         \n");
+		return 0;
+	}
+	else if(result != 0 || extractMode == 0)
 	{
 		printf("Usage: icns2png [options] [file]                                              \n");
 		printf("icns2png extracts images from mac .icns files, and exports them to png format.\n");
 		printf("                                                                              \n");
 		printf("Examples:                                                                     \n");
-		printf("icns2png anicon.icns            # Extract 128x128 32-bit icon to anicon.png   \n");
-		printf("icns2png -s 48 anicon.icns      # Extract 48x48 32-bit icon to anicon.png     \n");
-		printf("icns2png -s 32 -d 1 anicon.icns # Extract 32x32 1-bit icon to anicon.png      \n");
+		printf("icns2png -x anicon.icns            # Extract 128x128 32-bit icon              \n");
+		printf("icns2png -x -s 48 anicon.icns      # Extract 48x48 32-bit icon                \n");
+		printf("icns2png -x -s 32 -d 1 anicon.icns # Extract 32x32 1-bit icon                 \n");
+		printf("icns2png -l anicon.icns            # Lists the icons contained in anicon.icns \n");
 		printf("                                                                              \n");
 		printf("Options:                                                                      \n");
-		printf(" -d            Sets the pixel depth of the icon to extract. (1,4,8,32)        \n");
-		printf(" -s            Sets the size of the icon to extract. (16,32,64,128,256,512)   \n");
+		printf(" -l            List the contents of one or more icns images                   \n");
+		printf("                                                                              \n");
+		printf(" -x            Extract one or more icons to png images                        \n");
+		printf(" -d            Sets the pixel depth of the icons to extract. (1,4,8,32)       \n");
+		printf(" -s            Sets the size of the icons to extract. (16,32,64,128,256,512)  \n");
 		printf("               Sizes 16x12, 16x16, 32x32, 48x48, 128x128, etc. are also valid.\n");
-		printf(" -h            Shows this help message.                                       \n");
+		printf("                                                                              \n");
+		printf(" -h            Displays this help message.                                    \n");
+		printf(" -v            Displays the version information                               \n");
 		return 0;
 	}
 	
@@ -271,8 +312,12 @@ int main(int argc, char *argv[])
 	
 	for(count = 0; count < fileindex; count++)
 	{
-		if(ConvertIconFamilyFile(inputfiles[count]))
-			fprintf(stderr, "Conversion of %s failed!\n",inputfiles[count]);
+		if(extractMode & 1)
+			DesribeIconFamilyFile(inputfiles[count]);
+		
+		if(extractMode & 2)
+			if(ConvertIconFamilyFile(inputfiles[count]))
+				fprintf(stderr, "Conversion of %s failed!\n",inputfiles[count]);
 	}
 	
 	for(count = 0; count < fileindex; count++)
@@ -281,6 +326,104 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+
+int DesribeIconFamilyFile(char *filename)
+{
+	int		error = ICNS_STATUS_OK;
+	FILE            *inFile = NULL;
+	icns_family_t	*iconFamily = NULL;
+	icns_byte_t	*dataPtr = NULL;
+	char		typeStr[5] = {0,0,0,0,0};
+	unsigned long	dataOffset = 0;
+	int		elementCount = 0;
+
+	inFile = fopen( filename, "r" );
+	
+	if ( inFile == NULL ) {
+		fprintf (stderr, "Unable to open file %s!\n",filename);
+		goto cleanup;
+	}
+	
+	printf("----------------------------------------------------\n");
+	printf("Reading icns family from %s...\n",filename);
+	
+	error = icns_read_family_from_file(inFile,&iconFamily);
+		
+	fclose(inFile);
+		
+	if(error) {
+		fprintf (stderr, "Unable to read icns family from file %s!\n",filename);
+		goto cleanup;
+	}
+	
+	// Start listing info:
+	memcpy(&typeStr,&(iconFamily->resourceType),4);
+	
+	printf(" Icon family type is '%s'\n",typeStr);
+	printf(" Icon family size is %d bytes\n",iconFamily->resourceSize);
+	
+	// Skip past the icns header
+	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	dataPtr = (icns_byte_t *)iconFamily;
+	
+	printf(" Listing icon elements...\n");
+	
+	// Iterate through the icns resource, converting the 'size' values to native endian
+	while(((dataOffset+8) < iconFamily->resourceSize) && (error == 0))
+	{
+		icns_element_t	       iconElement;
+		icns_icon_image_info_t iconInfo;
+		icns_size_t            iconDataSize;
+		
+		memcpy(&iconElement,(dataPtr+dataOffset),8);
+		memcpy(&typeStr,&(iconElement.elementType),4);
+		
+		iconDataSize = iconElement.elementSize - 8;
+		
+		iconInfo = icns_get_image_info_for_type(iconElement.elementType);
+		
+		printf(" ");
+		// type
+		printf(" '%s'",typeStr);
+		// size
+		printf(" %dx%d",iconInfo.iconWidth,iconInfo.iconHeight);
+		// bit depth
+		printf(" %d-bit",iconInfo.iconBitDepth);
+		if(iconInfo.isImage)
+			printf(" icon");
+		if(iconInfo.isImage && iconInfo.isMask)
+			printf(" with");
+		if(iconInfo.isMask)
+			printf(" mask");
+		if((iconElement.elementSize-8) < iconInfo.iconRawDataSize) {
+			printf(" (%d bytes compressed to %d)",(int)iconInfo.iconRawDataSize,iconDataSize);
+		} else {
+			printf(" (%d bytes)",iconDataSize);
+		}
+		printf("\n");
+		
+		// Move on to the next element
+		dataOffset += iconElement.elementSize;
+		elementCount++;
+	}
+	
+	if(elementCount > 0) {
+		printf(" %d elements total in %s.\n",elementCount,filename);
+	} else {
+		printf(" No elements found in %s.\n",filename);
+	}
+	
+cleanup:
+	
+	if(iconFamily != NULL) {
+		free(iconFamily);
+		iconFamily = NULL;
+	}
+	
+	return error;
+}
+
 
 int ConvertIconFamilyFile(char *filename)
 {
@@ -299,46 +442,33 @@ int ConvertIconFamilyFile(char *filename)
 	
 	filenamelength = strlen(filename);
 	
+	// Create a buffer for the input filename (without the extension)
+	infilename = (char *)malloc(filenamelength+1);
+	if(infilename == NULL)
+		return -1;
+	
+	// See if we can find a '.' after the last '/'
 	infilenamelength = filenamelength;
-	outfilenamelength = filenamelength;
-	
-	// Create a buffer for the input filename
-	infilename = (char *)malloc(infilenamelength+1);
-	
-	// Copy the input filename into the new buffer
-	strncpy(infilename,filename,infilenamelength+1);
-	infilename[filenamelength] = 0;
-	
-	// See if we can find a '.'
-	while(infilename[outfilenamelength] != '.' && outfilenamelength > 0)
-		outfilenamelength--;
-	
-	// Caculate new filename length
-	if(outfilenamelength == 0)
-		outfilenamelength = strlen(filename);
-	outfilenamelength += 4;
+	while(filename[infilenamelength] != '.' && filename[infilenamelength] != '/' && infilenamelength > 0)
+		infilenamelength--;
+	if(infilenamelength == 0)
+		infilenamelength = filenamelength;
+	if(filename[infilenamelength] == '/')
+		infilenamelength = filenamelength;
+	strncpy(&infilename[0],&filename[0],infilenamelength);
+	infilename[infilenamelength] = 0;
 	
 	// Create a buffer for the output filename
-	outfilename = (char *)malloc(outfilenamelength+1);
-	if(infilenamelength < outfilenamelength+1) {
-		strncpy(outfilename,filename,infilenamelength);
-	} else {
-		strncpy(outfilename,filename,outfilenamelength+1);
-	}
+	outfilename = (char *)malloc(infilenamelength+20);
+	if(outfilename == NULL)
+		return -1;
 	
-	// Add the .png extension to the filename
-	outfilename[outfilenamelength-4] = '.';
-	outfilename[outfilenamelength-3] = 'p';
-	outfilename[outfilenamelength-2] = 'n';
-	outfilename[outfilenamelength-1] = 'g';
-	outfilename[outfilenamelength-0] = 0;
+	printf("Reading %s...\n",filename);
 	
-	printf("Converting %s...\n",infilename);
-	
-	inFile = fopen( infilename, "r" );
+	inFile = fopen( filename, "r" );
 	
 	if ( inFile == NULL ) {
-		fprintf (stderr, "Unable to open file %s!\n",infilename);
+		fprintf (stderr, "Unable to open file %s!\n",filename);
 		goto cleanup;
 	}
 
@@ -347,7 +477,7 @@ int ConvertIconFamilyFile(char *filename)
 	fclose(inFile);
 		
 	if(error) {
-		fprintf (stderr, "Unable to read icns family from file %s!\n",infilename);
+		fprintf (stderr, "Unable to read icns family from file %s!\n",filename);
 		goto cleanup;
 	}
 	
@@ -357,6 +487,10 @@ int ConvertIconFamilyFile(char *filename)
 		fprintf (stderr, "Unable to load 32-bit icon image with mask from icon family!\n");
 		goto cleanup;
 	}
+	
+	// Set up the output file name: filename_WWxHHxDD.png
+	outfilenamelength = sprintf(&outfilename[0],"%s_%dx%dx%d.png",infilename,iconImage.imageWidth,iconImage.imageHeight,iconImage.imagePixelDepth * iconImage.imageChannels);
+	outfilename[outfilenamelength] = 0;
 	
 	outfile = fopen(outfilename,"w");
 	if(!outfile) {
@@ -397,7 +531,7 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	int 			width = 0;
 	int 			height = 0;
 	int 			image_channels = 0;
-	int			image_bit_depth = 0;
+	int			image_pixel_depth = 0;
 	int 			mask_channels = 0;
 	int			mask_bit_depth = 0;
 	png_structp 		png_ptr;
@@ -414,12 +548,14 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	width = image->imageWidth;
 	height = image->imageHeight;
 	image_channels = image->imageChannels;
-	image_bit_depth = image->imagePixelDepth;
+	image_pixel_depth = image->imagePixelDepth;
 	
+	/*
 	printf("width: %d\n",width);
 	printf("height: %d\n",height);
 	printf("image_channels: %d\n",image_channels);
-	printf("image_bit_depth: %d\n",image_bit_depth);
+	printf("image_pixel_depth: %d\n",image_pixel_depth);
+	*/
 	
 	if(mask != NULL) {
 		mask_channels = mask->imageChannels;
@@ -447,11 +583,11 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 
 	png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
 	
-	png_set_IHDR (png_ptr, info_ptr, width, height, image_bit_depth, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_set_IHDR (png_ptr, info_ptr, width, height, image_pixel_depth, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	
 	png_write_info (png_ptr, info_ptr);
 	
-	if(image_bit_depth < 8)
+	if(image_pixel_depth < 8)
 		png_set_packing (png_ptr);
 	
 	row_pointers = (png_bytep*)malloc(sizeof(png_bytep)*height);
@@ -509,3 +645,5 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 
 	return 0;
 }
+
+
