@@ -55,20 +55,6 @@ typedef struct icns_rgb_t
 	icns_byte_t	 b;
 } icns_rgb_t;
 
-
-typedef struct icns_icon_image_info_t
-{
-  icns_type_t           iconType;         // type of icon (or mask)
-  icns_bool_t           isImage;          // is this type an image
-  icns_bool_t           isMask;           // is this type a mask
-  icns_uint32_t         iconWidth;        // width of icon in pixels
-  icns_uint32_t         iconHeight;       // height of icon in pixels
-  icns_uint8_t          iconChannels;     // number of channels in data
-  icns_uint16_t         iconPixelDepth;   // number of bits-per-pixel
-  icns_uint16_t         iconBitDepth;     // overall bit depth = iconPixelDepth * iconChannels
-  icns_uint64_t         iconRawDataSize;  // bytes = width * height * depth / bits-per-pixel
-} icns_icon_image_info_t;
-
 /* icns constants */
 
 #define			ICNS_BYTE_BITS	8
@@ -144,7 +130,6 @@ void icns_opj_info_callback(const char *msg, void *client_data);
 #endif
 
 // icns_utils.c
-icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType);
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);
 icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB);
 void icns_print_err(const char *template, ...);

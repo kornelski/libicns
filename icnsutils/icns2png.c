@@ -24,7 +24,14 @@ Boston, MA 02111-1307, USA.
 #include <png.h>
 
 #include "icns.h"
-#include "icns_internals.h"
+
+typedef struct pixel32_t
+{
+	uint8_t	 r;
+	uint8_t	 g;
+	uint8_t	 b;
+	uint8_t	 a;
+} pixel32_t;
 
 int DesribeIconFamilyFile(char *filename);
 int ConvertIconFamilyFile(char *filename);
@@ -611,20 +618,20 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 			
 			for(j = 0; j < width; j++)
 			{
-				icns_rgba_t	*src_rgb_pixel;
-				icns_rgba_t	*src_pha_pixel;
-				icns_rgba_t	*dst_pixel;
+				pixel32_t	*src_rgb_pixel;
+				pixel32_t	*src_pha_pixel;
+				pixel32_t	*dst_pixel;
 				
-				dst_pixel = (icns_rgba_t *)&(row_pointers[i][j*image_channels]);
+				dst_pixel = (pixel32_t *)&(row_pointers[i][j*image_channels]);
 				
-				src_rgb_pixel = (icns_rgba_t *)&(image->imageData[i*width*image_channels+j*image_channels]);
+				src_rgb_pixel = (pixel32_t *)&(image->imageData[i*width*image_channels+j*image_channels]);
 
 				dst_pixel->r = src_rgb_pixel->r;
 				dst_pixel->g = src_rgb_pixel->g;
 				dst_pixel->b = src_rgb_pixel->b;
 				
 				if(mask != NULL) {
-					src_pha_pixel = (icns_rgba_t *)&(mask->imageData[i*width*mask_channels+j*mask_channels]);
+					src_pha_pixel = (pixel32_t *)&(mask->imageData[i*width*mask_channels+j*mask_channels]);
 					dst_pixel->a = src_pha_pixel->a;
 				} else {
 					dst_pixel->a = src_rgb_pixel->a;
