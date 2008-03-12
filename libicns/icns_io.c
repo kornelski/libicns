@@ -1,7 +1,7 @@
 /*
 File:       icns_io.c
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
-              2007 Thomas Lübking <thomas.luebking@web.de>
+              2007 Thomas LÃ¼bking <thomas.luebking@web.de>
               2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
 This library is free software; you can redistribute it and/or

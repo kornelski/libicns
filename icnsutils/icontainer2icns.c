@@ -1,6 +1,6 @@
 /*
 File:       icontainer2icns.cpp
-Copyright (C) 2005 Thomas Lübking <baghira-style@gmx.net>
+Copyright (C) 2005 Thomas LÃ¼bking <baghira-style@gmx.net>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -38,7 +38,7 @@ static inline int isChar(char c) {
 
 int main(int argc, char **argv)
 {
-   printf("icontainer2icns, (C) 2005/2007 by Thomas Lübking\n\n");
+   printf("icontainer2icns, (C) 2005/2007 by Thomas LÃ¼bking\n\n");
    if (argc < 2) {
       printf("\nusage: icontainer2icns foo.icontainer\n\n");
       return -1;
