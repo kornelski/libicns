@@ -33,24 +33,26 @@ to it's compatability with free software guidelines.
 
 ===============================================================================
 Version information
-versions are in the format of: 0.0.0a (MAJOR.MINOR.RELEASE[dev])
+IMPORTANT:
+There are two versions in use:
+1) The library interface version
+2) The package release version
+-------------------------------------------------------------------------------
+Library interface versioning follows GNU libtool versioning to the letter
+1:0:0 (CURRENT:REVISION:AGE)
+See GNU libtool documentation for more information:
+http://www.gnu.org/software/libtool/manual.html#Libtool-versioning
 
-Development changes should increment the letter with each commit
-Releases should increment the middle number and remove the letter
-Milestone releases should increment the middle number and remove the letter
-  -- beta relases should be odd numbered
-  -- stable releases should be even numbered
-Major number should increment only for file format changes causing breakage
-to a previously stable version, or on the decision of two or more developers
-Examples, in descending order:
-0.1.1  - beta version 0 milestone 1 release 1 official
-0.1.1a - beta version 0 milestone 1 release candidate 1 dev a 
-0.1.1  - beta version 0 milestone 1 release candidate 1 dev b
-0.1.2  - beta version 0 milestone 1 release 2 official
-0.2.0  - stable version 0 milestone 1 release 0 official
+Please take the time to understand this before making changes to libicns
+-------------------------------------------------------------------------------
+package release versions are in the format of: 0.0.0 (MAJOR.MINOR.REVISION)
 
-Note that the dev letter must be removed to build the shared library under OS X
-
+The revision number should increase with each development change, and return
+ to zero with any major or minor change
+The minor number should increase with change that adds, removes, or changes
+ the functionality of libicns or it's utility programs.
+The major number should increase with any change that dramatically breaks
+ compatability with some major part of the library or utilities
 ===============================================================================
 Naming conventions
 
@@ -68,7 +70,7 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut
 Here, the outgoing data pointer will have big endian values where necessary
 
 int icns_import_family_data(icns_uint32_t dataSize,unsigned char *data,icns_family_t **iconFamilyOut);
-Here, the incoming icon family MUST be in native big endian where appropriate
+Here, the incoming icon family MUST be in 'native' big endian where appropriate
 
 These two functions call icns_export_family_data and icns_import_family_data:
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn);

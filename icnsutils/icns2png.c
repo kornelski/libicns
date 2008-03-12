@@ -35,12 +35,33 @@ typedef struct pixel32_t
 	uint8_t	 a;
 } pixel32_t;
 
-int DesribeIconFamilyFile(char *filename);
-int ConvertIconFamilyFile(char *filename);
-int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
+enum {
+    VERSION_OPT	= 1000,
+    HELP_OPT,
+    ICON_OPT,
+    CURSOR_OPT,
+};
+
+static char *short_opts = "xlo:w:h:d:";
+static struct option long_opts[] = {
+    { "extract",		no_argument,    	NULL, 'x' },
+    { "list",			no_argument,		NULL, 'l' },
+    { "version",		no_argument, 	    	NULL, VERSION_OPT },
+    { "help", 	    	 	no_argument,	    	NULL, HELP_OPT },
+    { "output", 		required_argument, 	NULL, 'o' },
+    { "type",	    	 	required_argument, 	NULL, 't' },
+    { "width",	    	 	required_argument, 	NULL, 'w' },
+    { "height", 		required_argument, 	NULL, 'h' },
+    { "depth",			required_argument, 	NULL, 'd' },
+    { 0, 0, 0, 0 }
+};
 
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define	MAX_INPUTFILES  4096
+
+int DesribeIconFamilyFile(char *filename);
+int ConvertIconFamilyFile(char *filename);
+int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 
 char 	*inputfiles[MAX_INPUTFILES];
 int	fileindex = 0;
@@ -196,7 +217,7 @@ int parse_options(int argc, char** argv)
 	int opt;
 
 	while(1) {
-		opt = getopt(argc, argv, "hvlxd:w:s:");
+		opt = getopt(argc, argv, ":hvlxd:w:s:");
 		if(opt < 0)
 			break;
 		switch(opt)
@@ -276,7 +297,7 @@ int main(int argc, char *argv[])
 	
 	result = parse_options(argc, argv);
 
-	if(result != -2 && argc < 3)
+	if(result != -1 && result != -2 && argc < 3)
 	{
 		printf("Usage: icns2png [options] [file]\n");
 		return -1;

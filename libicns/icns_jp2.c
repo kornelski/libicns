@@ -129,8 +129,7 @@ int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t
 	#ifdef ICNS_OPENJPEG
 		error = icns_opj_image_to_jp2(image, dataSizeOut, dataPtrOut);	
 	#else
-		icns_print_err("icns_image_to_jp2: libicns requires jasper or openjpeg to convert jp2 data!\n");
-		icns_free_image(imageOut);
+		*dataPtrOut = NULL;
 		error = ICNS_STATUS_UNSUPPORTED;
 	#endif
 	#endif
