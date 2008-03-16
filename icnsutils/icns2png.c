@@ -38,6 +38,8 @@ typedef struct pixel32_t
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define	MAX_INPUTFILES  4096
 
+#define	PRINT_ICNS_ERRORS	1
+
 int ExtractAndDescribeIconFamilyFile(char *filename);
 int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 
@@ -247,7 +249,7 @@ int main(int argc, char *argv[])
 		return result;
 	
 	// display any exceptions thrown by libicns
-	icns_set_print_errors(1);
+	icns_set_print_errors(PRINT_ICNS_ERRORS);
 	
 	for(count = 0; count < fileCount; count++)
 	{
@@ -278,8 +280,24 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	unsigned int	filenamelength = 0;
 	unsigned int	prefilenamelength = 0;
 	
+	#ifdef __APPLE__
+	char	*rsrcfilename = NULL;
+	unsigned int	rsrcfilenamelength = 0;
+	#endif
+	
 	filenamelength = strlen(filename);
 	
+	#ifdef __APPLE__
+	rsrcfilenamelength = filenamelength + 17;
+	rsrcfilename = (char *)malloc(rsrcfilenamelength);
+	if(rsrcfilename == NULL)
+		return -1;
+			
+	// Append the OS X POSIX-safe filename to access the resource fork
+	strncpy(&rsrcfilename[0],&filename[0],filenamelength);
+	strncpy(&rsrcfilename[filenamelength],"/..namedfork/rsrc",17);
+	#endif
+
 	// Set up the output filename...
 	if(extractMode & EXTRACT_MODE)
 	{		
@@ -346,20 +364,62 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 			return -1;
 	}
 	
+	printf("----------------------------------------------------\n");
+	printf("Reading icns family from %s...\n",filename);
+	
+	#ifdef __APPLE__
+	// If we're on an apple system, we want to try
+	// reading the resource fork first...
+	
+	// hide all internal errors while we try to read the resource fork
+	icns_set_print_errors(0);
+
+	inFile = fopen( rsrcfilename, "r" );
+	
+	if ( inFile != NULL ) {
+		error = icns_read_family_from_rsrc(inFile,&iconFamily);
+		if(error == ICNS_STATUS_OK)
+			printf(" Using icon from HFS+ resource fork...\n");
+		fclose(inFile);
+		inFile = NULL;
+	} else {
+		error = ICNS_STATUS_IO_READ_ERR;
+	}
+	
+	// Turn them back on if we wanted them
+	icns_set_print_errors(PRINT_ICNS_ERRORS);
+	
+	// If we had an error, it was from trying to read the resource fork, so try the data file
+	if(error != ICNS_STATUS_OK)
+	{
+		inFile = fopen( filename, "r" );
+		
+		if ( inFile == NULL ) {
+			fprintf (stderr, "Unable to open file %s!\n",filename);
+			goto cleanup;
+		}
+
+		error = icns_read_family_from_file(inFile,&iconFamily);
+			
+		fclose(inFile);
+	}
+	
+	#else
+	// On all other systems, read just the file
+
 	inFile = fopen( filename, "r" );
 	
 	if ( inFile == NULL ) {
 		fprintf (stderr, "Unable to open file %s!\n",filename);
 		goto cleanup;
 	}
-	
-	printf("----------------------------------------------------\n");
-	printf("Reading icns family from %s...\n",filename);
-	
+
 	error = icns_read_family_from_file(inFile,&iconFamily);
 		
 	fclose(inFile);
-		
+
+	#endif
+			
 	if(error) {
 		fprintf (stderr, "Unable to read icns family from file %s!\n",filename);
 		goto cleanup;
@@ -512,6 +572,13 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	
 cleanup:
 	
+	
+	#ifdef __APPLE__
+	if(rsrcfilename != NULL) {
+		free(rsrcfilename);
+		rsrcfilename = NULL;
+	}
+	#endif
 	if(iconFamily != NULL) {
 		free(iconFamily);
 		iconFamily = NULL;

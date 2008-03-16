@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.
 /*  These should really be set from the Makefile */
 
 // Enable debugging messages?
-// #define	ICNS_DEBUG
+// #define	ICNS_DEBUG	1
 
 // Enable supprt for 256x256 and 512x512 icons
 // Use either Jasper or OpenJPEG, but not both
@@ -188,6 +188,7 @@ static const icns_type_t  ICNS_NULL_TYPE                 = {{ 0 , 0 , 0 , 0 }};
 // icns_io.c
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn);
 int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut);
+int icns_read_family_from_rsrc(FILE *rsrcFile,icns_family_t **iconFamilyOut);
 int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut,icns_byte_t **dataPtrOut);
 int icns_import_family_data(icns_uint32_t dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
 

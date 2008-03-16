@@ -226,7 +226,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 		}
 		else
 		{
-			icns_print_err("icns_find_family_in_mac_resource: Unable to allocate memory block of size: %d!\n",(int)dataSize);
+			icns_print_err("icns_read_family_from_file: Unable to allocate memory block of size: %d!\n",(int)dataSize);
 			error = ICNS_STATUS_NO_MEMORY;
 			goto exception;
 		}
@@ -248,7 +248,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 			#endif
 			if((error = icns_parse_family_data(dataSize,dataPtr,iconFamilyOut)))
 			{
-				icns_print_err("icns_parse_family_data: Error parsing icon family data!\n");
+				icns_print_err("icns_read_family_from_file: Error parsing icon family data!\n");
 				*iconFamilyOut = NULL;	
 			}
 			else // Success!
@@ -267,7 +267,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 			#endif
 			if((error = icns_find_family_in_mac_resource(dataSize,dataPtr,iconFamilyOut)))
 			{
-				icns_print_err("icns_parse_family_data: Error reading macintosh resource file!\n");
+				icns_print_err("icns_read_family_from_file: Error reading macintosh resource file!\n");
 				*iconFamilyOut = NULL;	
 			}
 		}
@@ -281,7 +281,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 			#endif
 			if((error = icns_read_macbinary_resource_fork(dataSize,dataPtr,NULL,NULL,&resourceSize,&resourceData)))
 			{
-				icns_print_err("icns_parse_family_data: Error reading macbinary resource fork!\n");
+				icns_print_err("icns_read_family_from_file: Error reading macbinary resource fork!\n");
 				*iconFamilyOut = NULL;	
 			}
 			
@@ -289,7 +289,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 			{
 				if((error = icns_find_family_in_mac_resource(resourceSize,resourceData,iconFamilyOut)))
 				{
-					icns_print_err("icns_parse_family_data: Error reading icns data from macbinary resource fork!\n");
+					icns_print_err("icns_read_family_from_file: Error reading icns data from macbinary resource fork!\n");
 					*iconFamilyOut = NULL;	
 				}
 			}
@@ -303,7 +303,94 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 		// All attempts failed
 		else
 		{
-			icns_print_err("icns_parse_family_data: Error reading icns file - all parsing methods failed!\n");
+			icns_print_err("icns_read_family_from_file: Error reading icns file - all parsing methods failed!\n");
+			*iconFamilyOut = NULL;
+			error = ICNS_STATUS_INVALID_DATA;
+		}
+
+	}
+	
+exception:
+	
+	if(dataPtr != NULL)
+	{
+		free(dataPtr);
+		dataPtr = NULL;
+	}
+	
+	return error;
+}
+
+/***************************** icns_read_family_from_rsrc **************************/
+
+int icns_read_family_from_rsrc(FILE *dataFile,icns_family_t **iconFamilyOut)
+{
+	int	      error = ICNS_STATUS_OK;
+	icns_uint32_t dataSize = 0;
+	void          *dataPtr = NULL;
+	
+	if ( dataFile == NULL )
+	{
+		icns_print_err("icns_read_family_from_rsrc: NULL file pointer!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if ( iconFamilyOut == NULL )
+	{
+		icns_print_err("icns_read_family_from_rsrc: NULL icns family ref!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(fseek(dataFile,0,SEEK_END) == 0)
+	{
+		dataSize = ftell(dataFile);
+		rewind(dataFile);
+		
+		dataPtr = (void *)malloc(dataSize);
+
+		if ( (error == 0) && (dataPtr != NULL) )
+		{
+			if(fread( dataPtr, sizeof(char), dataSize, dataFile) != dataSize)
+			{
+				free( dataPtr );
+				dataPtr = NULL;
+				dataSize = 0;
+				error = ICNS_STATUS_IO_READ_ERR;
+				icns_print_err("icns_read_family_from_rsrc: Error occured reading file!\n");
+				goto exception;
+			}
+		}
+		else
+		{
+			icns_print_err("icns_read_family_from_rsrc: Unable to allocate memory block of size: %d!\n",(int)dataSize);
+			error = ICNS_STATUS_NO_MEMORY;
+			goto exception;
+		}
+	}
+	else
+	{
+		error = ICNS_STATUS_IO_READ_ERR;
+		icns_print_err("icns_read_family_from_rsrc: Error occured seeking to end of file!\n");
+		goto exception;
+	}
+	
+	if(error == 0)
+	{
+		if(icns_rsrc_header_check(dataSize,dataPtr))
+		{
+			#ifdef ICNS_DEBUG
+			printf("Trying to find icns data in resource file...\n");
+			#endif
+			if((error = icns_find_family_in_mac_resource(dataSize,dataPtr,iconFamilyOut)))
+			{
+				icns_print_err("icns_read_family_from_rsrc: Error reading macintosh resource file!\n");
+				*iconFamilyOut = NULL;	
+			}
+		}
+		// All attempts failed
+		else
+		{
+			icns_print_err("icns_read_family_from_rsrc: Error reading rsrc file - all parsing methods failed!\n");
 			*iconFamilyOut = NULL;
 			error = ICNS_STATUS_INVALID_DATA;
 		}
@@ -727,7 +814,7 @@ int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *res
 			}
 			
 			// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
-			ICNS_READ_UNALIGNED_BE(resItemDataOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+5),sizeof( 3));
+			ICNS_READ_UNALIGNED_BE(resItemDataOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+5), 3);
 			#ifdef ICNS_DEBUG
 			printf("    data offset is: %d (0x%08X)\n",resItemDataOffset,resItemDataOffset);
 			printf("    actual offset is: %d (0x%08X)\n",resHeadDataOffset+resItemDataOffset,resHeadDataOffset+resItemDataOffset);
