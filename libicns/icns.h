@@ -193,6 +193,7 @@ int icns_import_family_data(icns_uint32_t dataSize,icns_byte_t *data,icns_family
 
 // icns_family.c
 int icns_create_family(icns_family_t **iconFamilyOut);
+int icns_count_elements_in_family(icns_family_t *iconFamily, icns_sint32_t *elementTotal);
 
 // icns_element.c
 int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,icns_element_t **iconElementOut);
@@ -224,5 +225,7 @@ int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t
 icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType);
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
 void icns_set_print_errors(icns_bool_t shouldPrint);
+icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);
+icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB);
 
 #endif

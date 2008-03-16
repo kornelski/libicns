@@ -181,6 +181,10 @@ int icns_import_family_data(icns_uint32_t dataSize,unsigned char *data,icns_fami
 Creating an new icon family
 int icns_create_family(icns_family_t **iconFamilyOut);
 
+-------------------------------------------------------------------------------
+Counting the number of elements in an icon family
+int icns_count_elements_in_family(icns_family_t *iconFamily, icns_sint32_t *elementTotal)
+
 ===============================================================================
 Part IV: Manipulating elements of the icon family
 
@@ -248,3 +252,8 @@ icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
 -------------------------------------------------------------------------------
 To enable or disable the printing of error messages during runtime
 void icns_set_print_errors(icns_bool_t shouldPrint);
+
+-------------------------------------------------------------------------------
+Comparing icns_type_t data
+icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);
+icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB);

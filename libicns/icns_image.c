@@ -427,7 +427,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 			icns_sint32_t	*rleDataPtr = NULL;
 			rleDataSize = iconDataSize;
 			rleDataPtr = (icns_sint32_t*)(imageOut->imageData);
-			icns_decode_rle24_data(rawDataSize,(icns_sint32_t*)rawDataPtr,&rleDataSize,&rleDataPtr);
+			icns_decode_rle24_data(rawDataSize,(icns_sint32_t*)rawDataPtr,(icns_sint32_t*)(&rleDataSize),&rleDataPtr);
 		}
 		else
 		{

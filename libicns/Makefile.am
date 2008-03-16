@@ -1,7 +1,7 @@
 
 lib_LTLIBRARIES = libicns.la
 
-libicns_la_LDFLAGS = -version-info 1:0:0
+libicns_la_LDFLAGS = -version-info 2:0:1
 
 libicns_la_SOURCES = \
   icns_debug.c \

@@ -64,3 +64,48 @@ int icns_create_family(icns_family_t **iconFamilyOut)
 }
 
 
+/***************************** icns_count_elements_in_family **************************/
+
+int icns_count_elements_in_family(icns_family_t *iconFamily, icns_sint32_t *elementTotal)
+{
+	icns_type_t            iconFamilyType = ICNS_NULL_TYPE;
+	icns_size_t            iconFamilySize = 0;
+	icns_uint32_t          dataOffset = 0;
+	icns_uint32_t          elementCount = 0;
+
+	if(iconFamily == NULL)
+	{
+		icns_print_err("icns_count_elements_in_family: icns family is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+
+	if(elementTotal == NULL)
+	{
+		icns_print_err("icns_count_elements_in_family: element count ref is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+
+	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize),sizeof( icns_size_t));
+	
+	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
+	
+	while( dataOffset < iconFamilySize )
+	{
+		icns_element_t	       *iconElement = NULL;
+		icns_size_t            elementSize = 0;
+
+		iconElement = ((icns_element_t*)(((char*)iconFamily)+dataOffset));
+		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize),sizeof( icns_size_t));
+		
+		elementCount++;
+
+		dataOffset += elementSize;
+	}
+
+	*elementTotal = elementCount;
+
+	return ICNS_STATUS_OK;
+}
+
+

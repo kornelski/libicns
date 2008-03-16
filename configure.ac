@@ -1,10 +1,23 @@
 #         -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(libicns, 0.5.4, mathew@eisbox.net)
+AC_INIT(libicns, 0.5.5, mathew@eisbox.net)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([libicns/icns.h])
 AM_MAINTAINER_MODE
+
+# To enable debugging mode
+CFLAGS="${CFLAGS=}"
+AC_MSG_CHECKING(whether to enable debugging)
+debug_default="yes"
+AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging
+                       [default=$debug_default]],, enable_debug=$debug_default)
+if test "x$enable_debug" = "xyes"; then
+         CFLAGS="$CFLAGS -g -DDEBUG"
+AC_MSG_RESULT(yes)
+else
+AC_MSG_RESULT(no)
+fi
 
 # Stuff for the config.h.in file
 AC_CONFIG_HEADERS(config.h)

@@ -59,6 +59,9 @@ am_libicns_la_OBJECTS = icns_debug.lo icns_element.lo icns_family.lo \
 	icns_image.lo icns_io.lo icns_jp2.lo icns_rle24.lo \
 	icns_utils.lo
 libicns_la_OBJECTS = $(am_libicns_la_OBJECTS)
+libicns_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libicns_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -189,6 +192,7 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libicns.la
+libicns_la_LDFLAGS = -version-info 2:0:1
 libicns_la_SOURCES = \
   icns_debug.c \
   icns_element.c \
@@ -270,7 +274,7 @@ clean-libLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libicns.la: $(libicns_la_OBJECTS) $(libicns_la_DEPENDENCIES) 
-	$(LINK) -rpath $(libdir) $(libicns_la_OBJECTS) $(libicns_la_LIBADD) $(LIBS)
+	$(libicns_la_LINK) -rpath $(libdir) $(libicns_la_OBJECTS) $(libicns_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

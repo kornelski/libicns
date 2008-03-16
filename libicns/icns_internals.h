@@ -130,8 +130,6 @@ void icns_opj_info_callback(const char *msg, void *client_data);
 #endif
 
 // icns_utils.c
-icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);
-icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB);
 void icns_print_err(const char *template, ...);
 
 

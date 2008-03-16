@@ -196,7 +196,7 @@ EXTRA_DIST = \
   $(man_MANS)
 
 AM_CPPFLAGS = \
-  -I$(top_srcdir)
+  -I$(top_srcdir)/libicns/
 
 AM_CFLAGS = -Wall
 all: all-am
