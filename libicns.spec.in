@@ -42,7 +42,7 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
-%doc APIDOCS AUTHORS COPYING CHANGELOG DEVNOTES TODO
+%doc AUTHORS COPYING CHANGELOG TODO
 %{_mandir}/*/*
 %{_bindir}/*
 
