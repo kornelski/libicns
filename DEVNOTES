@@ -7,11 +7,35 @@ This file is indented for those wishing to contribute to libicns
 -------------------------------------------------------------------------------
 To develop an application using libicns, please see the file APIDOCS
 ===============================================================================
-1) Jasper vs OpenJPEG
-2) Versioning Notes
-3) Naming Conventions
-4) Endianness issues
-5) icns data format
+1) Preprocessor constants
+2) Debugging
+3) Jasper vs OpenJPEG
+4) Versioning Notes
+5) Naming Conventions
+6) Endianness issues
+7) icns data format
+===============================================================================
+Preprocessor constants
+
+These are generally expected to be defined by the makefile, but can
+be hardcoded into icns.h if necessary
+
+To enable debugging messages
+#define	ICNS_DEBUG 1
+
+To enable libjasper support for 256x256 and 512x512 icons
+#define	ICNS_JASPER
+
+To enable libopenjpeg support for 256x256 and 512x512 icons
+#define	ICNS_OPENJPEG
+===============================================================================
+Debugging
+
+Normal error messages will be displayed by libicns even without debugging
+enabled, however, enabling ICNS_DEBUG will enable an _EXTENSIVE_ amount
+of detailed debugging messages that should help solve any problems within
+libicns.
+
 ===============================================================================
 Jasper vs OpenJPEG
 
