@@ -1,5 +1,5 @@
 ===============================================================================
-README for libicns 0.1.0 - February 18th, 2008
+README for libicns 0.5.5 - February 18th, 2008
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
 
 This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ You should be able to get the latest version at http://sf.net/projects/icns
 libicns is a library for manipulation of the Mac OS icns resource format, also
 known as the IconFamily resource type. It can read and write files from the
 Mac OS X icns format, as well as read from Mac OS resource files and macbinary
-encoded Mac OS resource forks. As of version 0.1.0, it can fully manipulate
+encoded Mac OS resource forks. As of release 0.5.5, it can fully manipulate
 any 128x128 and smaller 32-bit icons, and has partial support for manipulating
 8-bit, 4-bit, and 1-bit icons. It also has read-only support for 256x256 and
 512x512 icons within the icon family.
@@ -54,10 +54,10 @@ Please see the Makefile for alternative possibilities
 ===============================================================================
 Using icns2png
 
-./icns2png OmniWeb.icns
-Converting OmniWeb.icns to OmniWeb.png...
+./icns2png -x OmniWeb.icns
+Converting OmniWeb.icns to OmniWeb_128x128x32.png...
 
-This will result in a file OmniWeb.png with a 128x128 icon from OmniWeb.icns.
+This will result in a file OmniWeb_128x128x32.png with a 128x128 icon from OmniWeb.icns.
 
 Run ./icns2png --help for more detailed information.
 
