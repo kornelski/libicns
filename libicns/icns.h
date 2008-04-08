@@ -28,32 +28,6 @@ Boston, MA 02111-1307, USA.
 #ifndef _ICNS_H_
 #define	_ICNS_H_
 
-/*  Compile-time variables   */
-/*  These should really be set from the Makefile */
-
-// Enable debugging messages?
-// #define	ICNS_DEBUG	1
-
-// Enable supprt for 256x256 and 512x512 icons
-// Use either Jasper or OpenJPEG, but not both
-// #define	ICNS_JASPER
-// #define	ICNS_OPENJPEG
-
-/* Make sure we're not using both libraries */
-#if defined(ICNS_JASPER) && defined(ICNS_OPENJPEG)
-	#error "Must use either Jasper or OpenJPEG, but not both!"
-#endif
-
-/*  Include Jasper headers   */
-#ifdef ICNS_JASPER
-#include <jasper/jasper.h>
-#endif
-
-/*  Include OpenJPEG headers   */
-#ifdef ICNS_OPENJPEG
-#include <openjpeg.h>
-#endif
-
 /* basic data types */
 typedef uint8_t         icns_bool_t;
 
