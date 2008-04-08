@@ -136,16 +136,15 @@ int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 {
 	unsigned long	dataInCount = 0;
 	unsigned long 	dataInChanSize = 0;
+	icns_byte_t	*rgbaDataPtr = NULL;
 	icns_sint8_t	*dataTemp = NULL;
 	unsigned long	dataTempCount = 0;
-	icns_sint32_t	dataValue = 0;
+	icns_uint8_t	colorOffset = 0;
 	icns_uint8_t	dataByte = 0;
 	icns_uint8_t	*dataRun = NULL;
 	icns_bool_t	runType = 0;
 	icns_uint8_t	runLength = 0; // Runs will never go over 130, one byte is ok
 	int		runCount = 0;
-	icns_uint32_t	myshift = 0;
-	icns_uint32_t	mymask = 0;
 	
 	if(dataPtrIn == NULL)
 	{
@@ -206,31 +205,31 @@ int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 	}
 	memset(dataRun,0,140);
 	
+	// Set the data ptr
+	rgbaDataPtr = (icns_byte_t *)dataPtrIn;
+	
 	// There's always going to be 4 channels in this
 	// so we want our counter to increment through
 	// channels, not bytes....
 	dataInChanSize = dataSizeIn / 4;
 	
-	myshift = 24;
-	mymask = 0xFF000000;
-	
 	// Move forward 4 bytes - who knows why this should be
 	dataTempCount = 4;
 	
-	while(myshift > 0)
+	// Data is stored in red run, green run,blue run
+	// So we compress from pixel format RGBA
+	// RED:   byte[0], byte[4], byte[8]  ...
+	// GREEN: byte[1], byte[5], byte[9]  ...
+	// BLUE:  byte[2], byte[6], byte[10] ...
+	// ALPHA: byte[3], byte[7], byte[11] do nothing with these bytes
+	for(colorOffset = 0; colorOffset < 3; colorOffset++)
 	{
 		int	dataSum = 0;
 		
 		runCount = 0;
 		
-		// Next Color Byte
-		myshift -= 8;
-		
-		// Right shift mask 8 bits to prevent overwriting our other colors
-		mymask >>= 8;
-		
 		// Set the first byte of the run...
-		dataRun[0] = (icns_uint8_t)((*dataPtrIn & mymask) >> myshift);
+		dataRun[0] = *(rgbaDataPtr+colorOffset);
 		
 		// Start with a runlength of 1 for the first byte
 		runLength = 1;
@@ -241,8 +240,7 @@ int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 		// Start one byte ahead
 		for(dataInCount = 1; dataInCount < dataInChanSize; dataInCount++)
 		{
-			dataValue = *(dataPtrIn+dataInCount);
-			dataByte = (icns_uint8_t)((dataValue & mymask) >> myshift);	// Red Channel
+			dataByte = *(rgbaDataPtr+colorOffset+(dataInCount*4));
 			
 			if(runLength < 2)
 			{
@@ -383,10 +381,22 @@ int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 			
 			runCount++;
 		}
-		
 	}
 	
 	free(dataRun);
+	
+	// This block is for the final encoded data
+	(*dataPtrOut) = (icns_uint8_t *)malloc(dataTempCount);
+	if((*dataPtrOut) == NULL)
+	{
+		icns_print_err("icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",dataTempCount);
+		free(dataTemp);
+		return ICNS_STATUS_NO_MEMORY;
+	}
+	
+	*dataSizeOut = dataTempCount;
+	memcpy( (*dataPtrOut), dataTemp, dataTempCount);
+
 	free(dataTemp);
 	
 	return ICNS_STATUS_OK;

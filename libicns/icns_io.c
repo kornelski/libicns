@@ -111,7 +111,6 @@ static inline void icns_write_be(void *outp, void *inp, int size)
 	case 4:
 		{
 		uint32_t v = *((uint32_t *)inp);
-		printf("Value: 0x%08X\n",v);
 		b[0] = v >> 24;
 		b[1] = v >> 16;
 		b[2] = v >> 8;
@@ -184,7 +183,6 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 	blockCount = dataSize / blockSize;
 	
 	blocksWritten = fwrite ( dataPtr , blockSize , blockCount , dataFile );
-	printf("Wrote %d of %d %d-byte blocks...\n",blocksWritten,blockCount,blockSize);
 	
 	if(blocksWritten < blockCount)
 	{
@@ -195,7 +193,6 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 	blockSize = dataSize - (blockCount * blockSize);
 	blocksWritten = fwrite ( dataPtr + (blockCount * blockSize) , blockSize , 1 , dataFile );
 	
-	printf("Wrote %d of 1 %d-byte blocks...\n",blocksWritten,blockSize);
 	if(blocksWritten != 1)
 	{
 		icns_print_err("icns_write_family_to_file: Error writing icns to file!\n");

@@ -541,9 +541,43 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 		imageDataSize = newDataSize;
 		imageDataPtr = newDataPtr;
 	}
+	else if(icns_types_equal(iconType,ICNS_48x48_32BIT_DATA) || \
+	icns_types_equal(iconType,ICNS_32x32_32BIT_DATA) || \
+	icns_types_equal(iconType,ICNS_16x16_32BIT_DATA) )
+	{
+		unsigned long	dataCount = 0;
+		unsigned long	pixelCount = 0;
+		icns_byte_t	*swapPtr = NULL;
+		icns_argb_t	*pixelPtr = NULL;
+		
+		newDataSize = imageIn->imageDataSize;
+		newDataPtr = (icns_byte_t *)malloc(newDataSize);
+		if(newDataPtr == NULL)
+		{
+			icns_print_err("icns_update_element_with_image_or_mask: Unable to allocate memory block of size: %d!\n",newDataSize);
+			error = ICNS_STATUS_NO_MEMORY;
+			goto exception;
+		}
+		
+		memcpy(newDataPtr,imageIn->imageData,newDataSize);
+
+		pixelCount = imageIn->imageWidth * imageIn->imageHeight;
+		#ifdef ICNS_DEBUG
+			printf("Converting %d pixels from rgba to argb\n",(int)pixelCount);
+		#endif
+		swapPtr = newDataPtr;
+		for(dataCount = 0; dataCount < pixelCount; dataCount++)
+		{
+			pixelPtr = (icns_argb_t *)(swapPtr + (dataCount * 4));
+			*((icns_rgba_t *)pixelPtr) = ICNS_ARGB_TO_RGBA( *((icns_argb_t *)pixelPtr) );
+		}
+		
+		imageDataSize = newDataSize;
+		imageDataPtr = newDataPtr;
+	}
 	else if(icns_types_equal(iconType,ICNS_128X128_32BIT_DATA))
 	{
-		newDataSize = imageDataSize;
+		newDataSize = imageIn->imageDataSize;
 		
 		// Note: icns_encode_rle24_data allocates memory that must be freed later
 		if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)(imageIn->imageData),(icns_sint32_t*)(&newDataSize),(icns_sint32_t**)(&newDataPtr))))
@@ -552,6 +586,7 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 			error = ICNS_STATUS_INVALID_DATA;
 		}
 		
+		imageDataSize = newDataSize;
 		imageDataPtr = newDataPtr;
 	}
 	// Note that ICNS_NNxNN_1BIT_DATA == ICNS_NNxNN_1BIT_MASK
