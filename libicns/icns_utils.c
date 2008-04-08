@@ -329,6 +329,244 @@ icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	return iconInfo;
 }
 
+icns_type_t	icns_get_type_with_image_info(icns_icon_image_info_t iconInfo)
+{
+	// Give our best effort to returning a type from the given information
+	// But there is only so much we can't work with...
+	if( (iconInfo.isImage == 0) && (iconInfo.isMask == 0) )
+		return ICNS_NULL_TYPE;
+	
+	if( (iconInfo.iconWidth == 0) || (iconInfo.iconHeight == 0) )
+	{
+		// For some really small sizes, we can tell from just the data size...
+		switch(iconInfo.iconRawDataSize)
+		{
+		case 24:
+			// Data is too small to have both
+			if( (iconInfo.isImage == 1) && (iconInfo.isMask == 1) )
+				return ICNS_NULL_TYPE;
+			if( iconInfo.isImage == 1 )
+				return ICNS_16x12_1BIT_DATA;
+			if( iconInfo.isMask == 1 )
+				return ICNS_16x12_1BIT_MASK;
+			break;
+		case 32:
+			// Data is too small to have both
+			if( (iconInfo.isImage == 1) && (iconInfo.isMask == 1) )
+				return ICNS_NULL_TYPE;
+			if( iconInfo.isImage == 1 )
+				return ICNS_16x16_1BIT_DATA;
+			if( iconInfo.isMask == 1 )
+				return ICNS_16x16_1BIT_MASK;
+			break;
+		default:
+			return ICNS_NULL_TYPE;
+		}
+	}
+	
+	// We need the bit depth to determine the type for sizes < 128
+	if( (iconInfo.iconBitDepth == 0) && (iconInfo.iconWidth < 128 || iconInfo.iconHeight < 128) )
+	{
+		if(iconInfo.iconPixelDepth == 0 || iconInfo.iconChannels == 0)
+			return ICNS_NULL_TYPE;
+		else
+			iconInfo.iconBitDepth = iconInfo.iconPixelDepth * iconInfo.iconChannels;
+	}
+	
+	// Special case for these mini icons
+	if(iconInfo.iconWidth == 16 && iconInfo.iconHeight == 12)
+	{
+		switch(iconInfo.iconBitDepth)
+		{
+		case 1:
+			if(iconInfo.isImage == 1)
+				return ICNS_16x12_1BIT_DATA;
+			if(iconInfo.isMask == 1)
+				return ICNS_16x12_1BIT_MASK;
+			break;
+		case 4:
+			return ICNS_16x12_4BIT_DATA;
+			break;
+		case 8:
+			return ICNS_16x12_8BIT_DATA;
+			break;
+		default:
+			return ICNS_NULL_TYPE;
+			break;
+		}
+	}
+	
+	// Width must equal hieght from here on...
+	if(iconInfo.iconWidth != iconInfo.iconHeight)
+		return ICNS_NULL_TYPE;
+	
+	
+	switch(iconInfo.iconWidth)
+	{
+	case 16:
+		switch(iconInfo.iconBitDepth)
+		{
+		case 1:
+			if(iconInfo.isImage == 1)
+				return ICNS_16x16_1BIT_DATA;
+			if(iconInfo.isMask == 1)
+				return ICNS_16x16_1BIT_MASK;
+			break;
+		case 4:
+			return ICNS_16x16_4BIT_DATA;
+			break;
+		case 8:
+			if(iconInfo.isImage == 1)
+				return ICNS_16x16_8BIT_DATA;
+			if(iconInfo.isMask == 1)
+				return ICNS_16x16_8BIT_MASK;
+			break;
+		case 32:
+			return ICNS_16x16_32BIT_DATA;
+			break;
+		default:
+			return ICNS_NULL_TYPE;
+			break;
+		}
+		break;
+	case 32:
+		switch(iconInfo.iconBitDepth)
+		{
+		case 1:
+			if(iconInfo.isImage == 1)
+				return ICNS_32x32_1BIT_DATA;
+			if(iconInfo.isMask == 1)
+				return ICNS_32x32_1BIT_MASK;
+			break;
+		case 4:
+			return ICNS_32x32_4BIT_DATA;
+			break;
+		case 8:
+			if(iconInfo.isImage == 1)
+				return ICNS_32x32_8BIT_DATA;
+			if(iconInfo.isMask == 1)
+				return ICNS_32x32_8BIT_MASK;
+			break;
+		case 32:
+			return ICNS_32x32_32BIT_DATA;
+			break;
+		default:
+			return ICNS_NULL_TYPE;
+			break;
+		}
+		break;
+	case 48:
+		switch(iconInfo.iconBitDepth)
+		{
+		case 1:
+			if(iconInfo.isImage == 1)
+				return ICNS_48x48_1BIT_DATA;
+			if(iconInfo.isMask == 1)
+				return ICNS_48x48_1BIT_MASK;
+			break;
+		case 4:
+			return ICNS_48x48_4BIT_DATA;
+			break;
+		case 8:
+			if(iconInfo.isImage == 1)
+				return ICNS_48x48_8BIT_DATA;
+			if(iconInfo.isMask == 1)
+				return ICNS_48x48_8BIT_MASK;
+			break;
+		case 32:
+			return ICNS_48x48_32BIT_DATA;
+			break;
+		default:
+			return ICNS_NULL_TYPE;
+			break;
+		}
+		break;
+	case 128:
+		if(iconInfo.isImage == 1 || iconInfo.iconBitDepth == 32)
+			return ICNS_128X128_32BIT_DATA;
+		if(iconInfo.isMask == 1 || iconInfo.iconBitDepth == 8)
+			return ICNS_128X128_8BIT_MASK;
+		break;
+	case 256:
+		return ICNS_256x256_32BIT_ARGB_DATA;
+		break;
+	case 512:
+		return ICNS_512x512_32BIT_ARGB_DATA;
+		break;
+		
+	}
+	
+	return ICNS_NULL_TYPE;
+}
+
+icns_type_t	icns_get_type_from_image(icns_image_t iconImage)
+{
+	icns_icon_image_info_t		iconInfo;
+	
+	iconInfo.iconWidth = iconImage.imageWidth;
+	iconInfo.iconHeight = iconImage.imageHeight;
+	iconInfo.iconChannels = iconImage.imageChannels;
+	iconInfo.iconPixelDepth = iconImage.imagePixelDepth;
+	iconInfo.iconBitDepth = iconInfo.iconPixelDepth * iconInfo.iconChannels;
+	iconInfo.iconRawDataSize = iconImage.imageDataSize;
+	
+	if(iconInfo.iconBitDepth == 1)
+	{
+		int	flatSize = ((iconInfo.iconWidth * iconInfo.iconHeight) / 8);
+		if(iconInfo.iconRawDataSize == (flatSize * 2) )
+		{
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 1;
+		}
+		else
+		{
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
+		}
+	}
+	else
+	{
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
+	}
+	
+	return icns_get_type_with_image_info(iconInfo);
+}
+
+icns_type_t	icns_get_type_from_mask(icns_image_t iconImage)
+{
+	icns_icon_image_info_t		iconInfo;
+	
+	iconInfo.iconWidth = iconImage.imageWidth;
+	iconInfo.iconHeight = iconImage.imageHeight;
+	iconInfo.iconChannels = iconImage.imageChannels;
+	iconInfo.iconPixelDepth = iconImage.imagePixelDepth;
+	iconInfo.iconBitDepth = iconInfo.iconPixelDepth * iconInfo.iconChannels;
+	iconInfo.iconRawDataSize = iconImage.imageDataSize;
+	
+	if(iconInfo.iconBitDepth == 1)
+	{
+		int	flatSize = ((iconInfo.iconWidth * iconInfo.iconHeight) / 8);
+		if(iconInfo.iconRawDataSize == (flatSize * 2) )
+		{
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 1;
+		}
+		else
+		{
+		iconInfo.isImage = 0;
+		iconInfo.isMask = 1;
+		}
+	}
+	else
+	{
+		iconInfo.isImage = 0;
+		iconInfo.isMask = 1;
+	}
+	
+	return icns_get_type_with_image_info(iconInfo);
+}
+
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB)
 {
 	if(memcmp(&typeA, &typeB, sizeof(icns_type_t)) == 0)

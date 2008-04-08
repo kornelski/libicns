@@ -199,8 +199,11 @@ int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t
 // icns_utils.c
 icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType);
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
-void icns_set_print_errors(icns_bool_t shouldPrint);
+icns_type_t icns_get_type_with_image_info(icns_icon_image_info_t iconInfo);
+icns_type_t icns_get_type_from_image(icns_image_t iconImage);
+icns_type_t icns_get_type_from_mask(icns_image_t iconImage);
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);
 icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB);
+void icns_set_print_errors(icns_bool_t shouldPrint);
 
 #endif

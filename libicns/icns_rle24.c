@@ -197,14 +197,14 @@ int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 	memset(dataTemp,0,dataSizeIn);
 	
 	// This block is for a run of RLE encoded data
-	dataRun = (icns_uint8_t *)malloc(128);
+	dataRun = (icns_uint8_t *)malloc(140);
 	if(dataRun == NULL)
 	{
-		icns_print_err("icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",128);
+		icns_print_err("icns_encode_rle24_data: Unable to allocate memory block of size: %d!\n",140);
 		free(dataTemp);
 		return ICNS_STATUS_NO_MEMORY;
 	}
-	memset(dataRun,0,128);
+	memset(dataRun,0,140);
 	
 	// There's always going to be 4 channels in this
 	// so we want our counter to increment through

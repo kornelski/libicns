@@ -86,7 +86,6 @@ static inline void icns_read_be(void *outp, void *inp, int size)
 static inline void icns_write_be(void *outp, void *inp, int size)
 {
 	icns_byte_t	b[8] = {0,0,0,0,0,0,0,0};
-	memcpy(&b, inp, size);
 	
 	if(outp == NULL)
 		return;
@@ -105,45 +104,59 @@ static inline void icns_write_be(void *outp, void *inp, int size)
 	case 2:
 		{
 		uint16_t v = *((uint16_t *)inp);
-		b[0] = v << 8;
+		b[0] = v >> 8;
 		b[1] = v;
 		}
 		break;
 	case 4:
 		{
 		uint32_t v = *((uint32_t *)inp);
-		b[0] = v << 24;
-		b[1] = v << 16;
-		b[2] = v << 8;
+		printf("Value: 0x%08X\n",v);
+		b[0] = v >> 24;
+		b[1] = v >> 16;
+		b[2] = v >> 8;
 		b[3] = v;
 		}
 		break;
 	case 8:
 		{
 		uint64_t v = *((uint64_t *)inp);
-		b[0] = v << 56;
-		b[1] = v << 48;
-		b[2] = v << 40;
-		b[3] = v << 32;
-		b[4] = v << 24;
-		b[5] = v << 16;
-		b[6] = v << 8;
+		b[0] = v >> 56;
+		b[1] = v >> 48;
+		b[2] = v >> 40;
+		b[3] = v >> 32;
+		b[4] = v >> 24;
+		b[5] = v >> 16;
+		b[6] = v >> 8;
 		b[7] = v;
 		}
 		break;
 	default:
 		break;
 	}
+	
+	//#ifdef ICNS_DEBUG
+	int i = 0;
+	printf("Writing %d bytes: ",size);
+	for(i = 0; i < size; i++)
+		printf("0x%02X ",b[i]);
+	printf("\n");
+	//#endif
+	
+	memcpy(outp, &b, size);
 }
 
 /***************************** icns_write_family_to_file **************************/
 
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 {
+	int		error = ICNS_STATUS_OK;
 	icns_size_t	resourceSize = 0;
 	icns_size_t	blockSize = 0;
-	icns_uint32_t	dataOutTotal = 0;
-	icns_uint32_t	dataOutBlock = 0;
+	icns_uint32_t	blockCount = 0;
+	icns_uint32_t	blocksWritten = 0;
+	icns_uint32_t	dataSize = 0;
+	icns_byte_t	*dataPtr = NULL;
 	
 	if ( dataFile == NULL )
 	{
@@ -157,29 +170,39 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	ICNS_WRITE_UNALIGNED_BE(&resourceSize, (iconFamilyIn->resourceSize), sizeof(icns_size_t));
-	blockSize = 1024;
+	error = icns_export_family_data(iconFamilyIn,&dataSize,&dataPtr);
 	
-	while( (resourceSize-dataOutTotal) > blockSize)
+	if(error != ICNS_STATUS_OK)
+		return error;
+	
+	#ifdef ICNS_DEBUG
+	printf("Writing icon family data to file...\n");
+	printf("  total data size: %d (0x%08X)\n",(int)dataSize,dataSize);
+	#endif
+	
+	blockSize = 1024;
+	blockCount = dataSize / blockSize;
+	
+	blocksWritten = fwrite ( dataPtr , blockSize , blockCount , dataFile );
+	printf("Wrote %d of %d %d-byte blocks...\n",blocksWritten,blockCount,blockSize);
+	
+	if(blocksWritten < blockCount)
 	{
-		dataOutBlock = fwrite ( ((char *)iconFamilyIn) + dataOutTotal , blockSize , 1 , dataFile );
-		if(dataOutBlock != blockSize)
-		{
 			icns_print_err("icns_write_family_to_file: Error writing icns to file!\n");
 			return ICNS_STATUS_IO_WRITE_ERR;
-		}
-		dataOutTotal += dataOutBlock;
 	}
 	
-	blockSize = (resourceSize-dataOutTotal);
+	blockSize = dataSize - (blockCount * blockSize);
+	blocksWritten = fwrite ( dataPtr + (blockCount * blockSize) , blockSize , 1 , dataFile );
 	
-	dataOutBlock = fwrite ( ((char *)iconFamilyIn) + dataOutTotal , blockSize , 1 , dataFile );
-	if(dataOutBlock != blockSize)
+	printf("Wrote %d of 1 %d-byte blocks...\n",blocksWritten,blockSize);
+	if(blocksWritten != 1)
 	{
 		icns_print_err("icns_write_family_to_file: Error writing icns to file!\n");
 		return ICNS_STATUS_IO_WRITE_ERR;
 	}
-	dataOutTotal += dataOutBlock;
+	
+	free(dataPtr);
 	
 	return ICNS_STATUS_OK;
 }
@@ -430,9 +453,9 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	#ifdef ICNS_DEBUG
+	//#ifdef ICNS_DEBUG
 	printf("Writing icns family to data...\n");
-	#endif
+	//#endif
 	
 	// Check the data type
 	if(icns_types_not_equal(iconFamily->resourceType,ICNS_FAMILY_TYPE))
@@ -458,10 +481,10 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut
 		dataSize = iconFamily->resourceSize;
 	}
 	
-	#ifdef ICNS_DEBUG
+	//#ifdef ICNS_DEBUG
 	printf("  data type is '%c%c%c%c'\n",dataType.c[0],dataType.c[1],dataType.c[2],dataType.c[3]);
 	printf("  data size is %d\n",dataSize);
-	#endif
+	//#endif
 	
 	// Allocate a new block of memory for the outgoing data
 	dataPtr = (icns_byte_t *)malloc(dataSize);
@@ -495,10 +518,10 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut
 			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
 			ICNS_READ_UNALIGNED(elementSize, dataPtr+dataOffset+4,sizeof(icns_size_t));
 			
-			#ifdef ICNS_DEBUG
+			//#ifdef ICNS_DEBUG
 			printf("  checking element type... type is '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
 			printf("  checking element size... size is %d\n",elementSize);
-			#endif
+			//#endif
 			
 			if(dataOffset+elementSize > dataSize)
 			{
@@ -653,10 +676,10 @@ int icns_parse_family_data(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_fami
 			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
 			ICNS_READ_UNALIGNED_BE(elementSize, dataPtr+dataOffset+4,sizeof(icns_size_t));
 			
-			#ifdef ICNS_DEBUG
+			//#ifdef ICNS_DEBUG
 			printf("  checking element type... type is '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
 			printf("  checking element size... size is %d\n",elementSize);
-			#endif
+			//#endif
 			
 			if(dataOffset+elementSize > resourceSize)
 			{

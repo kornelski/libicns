@@ -117,9 +117,15 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		return ICNS_STATUS_DATA_NOT_FOUND;
 	}
 	
-	// Load mask element then image
+	// Load mask element then image...
 	error = icns_get_element_from_family(iconFamily,maskType,&maskElement);
 	
+	// Note that we could arguably recover from not having a mask
+	// by creating a dummy blank mask. However, the icns data type
+	// should always have the corresponding mask present. This
+	// function was designed to retreive a VALID image... There are
+	// other API functions better used if the goal is editing, data
+	// recovery, etc.
 	if(error) {
 		icns_print_err("icns_get_image32_with_mask_from_family: Unable to load mask element from icon family!\n");
 		goto cleanup;
