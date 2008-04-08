@@ -135,13 +135,13 @@ static inline void icns_write_be(void *outp, void *inp, int size)
 		break;
 	}
 	
-	//#ifdef ICNS_DEBUG
+	#ifdef ICNS_DEBUG
 	int i = 0;
 	printf("Writing %d bytes: ",size);
 	for(i = 0; i < size; i++)
 		printf("0x%02X ",b[i]);
 	printf("\n");
-	//#endif
+	#endif
 	
 	memcpy(outp, &b, size);
 }
@@ -453,9 +453,9 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	//#ifdef ICNS_DEBUG
+	#ifdef ICNS_DEBUG
 	printf("Writing icns family to data...\n");
-	//#endif
+	#endif
 	
 	// Check the data type
 	if(icns_types_not_equal(iconFamily->resourceType,ICNS_FAMILY_TYPE))
@@ -481,10 +481,10 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut
 		dataSize = iconFamily->resourceSize;
 	}
 	
-	//#ifdef ICNS_DEBUG
+	#ifdef ICNS_DEBUG
 	printf("  data type is '%c%c%c%c'\n",dataType.c[0],dataType.c[1],dataType.c[2],dataType.c[3]);
 	printf("  data size is %d\n",dataSize);
-	//#endif
+	#endif
 	
 	// Allocate a new block of memory for the outgoing data
 	dataPtr = (icns_byte_t *)malloc(dataSize);
@@ -518,10 +518,10 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut
 			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
 			ICNS_READ_UNALIGNED(elementSize, dataPtr+dataOffset+4,sizeof(icns_size_t));
 			
-			//#ifdef ICNS_DEBUG
+			#ifdef ICNS_DEBUG
 			printf("  checking element type... type is '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
 			printf("  checking element size... size is %d\n",elementSize);
-			//#endif
+			#endif
 			
 			if(dataOffset+elementSize > dataSize)
 			{
@@ -676,10 +676,10 @@ int icns_parse_family_data(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_fami
 			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
 			ICNS_READ_UNALIGNED_BE(elementSize, dataPtr+dataOffset+4,sizeof(icns_size_t));
 			
-			//#ifdef ICNS_DEBUG
+			#ifdef ICNS_DEBUG
 			printf("  checking element type... type is '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
 			printf("  checking element size... size is %d\n",elementSize);
-			//#endif
+			#endif
 			
 			if(dataOffset+elementSize > resourceSize)
 			{

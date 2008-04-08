@@ -443,7 +443,7 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	while(((dataOffset+8) < iconFamily->resourceSize) && (error == 0))
 	{
 		icns_element_t	       iconElement;
-		icns_icon_image_info_t iconInfo;
+		icns_icon_info_t iconInfo;
 		icns_size_t            iconDataSize;
 		icns_size_t            iconDimSize = 0;
 		

@@ -3,4 +3,5 @@ TODO
 1) Finish API documentation, in txt and html format
 2) Finish support for 256x256 and 512x512 in icns_new_element_from_image
 3) Create a test program for icns write support
+4) Make various routines more efficient
 

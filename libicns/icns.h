@@ -81,7 +81,7 @@ typedef struct icns_image_t
 
 /* used for getting information about various types */
 /* not part of the actual icns data format */
-typedef struct icns_icon_image_info_t
+typedef struct icns_icon_info_t
 {
   icns_type_t           iconType;         // type of icon (or mask)
   icns_bool_t           isImage;          // is this type an image
@@ -92,7 +92,7 @@ typedef struct icns_icon_image_info_t
   icns_uint16_t         iconPixelDepth;   // number of bits-per-pixel
   icns_uint16_t         iconBitDepth;     // overall bit depth = iconPixelDepth * iconChannels
   icns_uint64_t         iconRawDataSize;  // bytes = width * height * depth / bits-per-pixel
-} icns_icon_image_info_t;
+} icns_icon_info_t;
 
 /*  icns element type constants */
 
@@ -197,9 +197,9 @@ int icns_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *
 int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);
 
 // icns_utils.c
-icns_icon_image_info_t icns_get_image_info_for_type(icns_type_t iconType);
+icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType);
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
-icns_type_t icns_get_type_with_image_info(icns_icon_image_info_t iconInfo);
+icns_type_t icns_get_type_with_image_info(icns_icon_info_t iconInfo);
 icns_type_t icns_get_type_from_image(icns_image_t iconImage);
 icns_type_t icns_get_type_from_mask(icns_image_t iconImage);
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);

@@ -68,11 +68,11 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType),sizeof( icns_type_t));
 	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize),sizeof( icns_size_t));
 	
-	//#ifdef ICNS_DEBUG
+	#ifdef ICNS_DEBUG
 	printf("Looking for icon element of type: '%c%c%c%c'\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
 	printf("  icon family type check: '%c%c%c%c'\n",iconFamilyType.c[0],iconFamilyType.c[1],iconFamilyType.c[2],iconFamilyType.c[3]);
 	printf("  icon family size check: %d\n",iconFamilySize);
-	//#endif
+	#endif
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
@@ -89,11 +89,11 @@ int icns_get_element_from_family(icns_family_t *iconFamily,icns_type_t iconType,
 		ICNS_READ_UNALIGNED(elementType, &(iconElement->elementType),sizeof( icns_type_t));
 		ICNS_READ_UNALIGNED(elementSize, &(iconElement->elementSize),sizeof( icns_size_t));
 		
-		//#ifdef ICNS_DEBUG
+		#ifdef ICNS_DEBUG
 		printf("element data...\n");
 		printf("  type: '%c%c%c%c'%s\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3],(icns_types_equal(elementType,iconType) ? " - match!" : " "));
 		printf("  size: %d\n",(int)elementSize);
-		//#endif
+		#endif
 		
 		if( (elementSize < 8) || ((dataOffset+elementSize) > iconFamilySize) )
 		{
@@ -161,9 +161,9 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	//#ifdef ICNS_DEBUG
+	#ifdef ICNS_DEBUG
 	printf("Setting element in icon family...\n");
-	//#endif
+	#endif
 	
 	if(icns_types_not_equal(iconFamily->resourceType,ICNS_FAMILY_TYPE))
 	{
@@ -174,10 +174,10 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	ICNS_READ_UNALIGNED(iconFamilyType, &(iconFamily->resourceType),sizeof( icns_type_t));
 	ICNS_READ_UNALIGNED(iconFamilySize, &(iconFamily->resourceSize),sizeof( icns_size_t));
 	
-	//#ifdef ICNS_DEBUG
+	#ifdef ICNS_DEBUG
 	printf("  family type '%c%c%c%c'\n",iconFamilyType.c[0],iconFamilyType.c[1],iconFamilyType.c[2],iconFamilyType.c[3]);
 	printf("  family size: %d (0x%08X)\n",(int)iconFamilySize,iconFamilySize);
-	//#endif
+	#endif
 	
 	if(newIconElement == NULL)
 	{
@@ -189,10 +189,10 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	ICNS_READ_UNALIGNED(newElementType, &(newIconElement->elementType),sizeof( icns_type_t));
 	ICNS_READ_UNALIGNED(newElementSize, &(newIconElement->elementSize),sizeof( icns_size_t));
 	
-	//#ifdef ICNS_DEBUG
+	#ifdef ICNS_DEBUG
 	printf("  element type '%c%c%c%c'\n",newElementType.c[0],newElementType.c[1],newElementType.c[2],newElementType.c[3]);
 	printf("  element size: %d (0x%08X)\n",(int)newElementSize,newElementSize);
-	//#endif
+	#endif
 	
 	dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 	
@@ -213,10 +213,10 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	else
 		newIconFamilySize = iconFamilySize + newElementSize;
 	
-	//#ifdef ICNS_DEBUG
+	#ifdef ICNS_DEBUG
 	printf("  new family type 'icns'\n");
 	printf("  new family size: %d (0x%08X)\n",(int)newIconFamilySize,newIconFamilySize);
-	//#endif
+	#endif
 	
 	newIconFamily = malloc(newIconFamilySize);
 	
@@ -457,7 +457,7 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 {
 	int		        error = ICNS_STATUS_OK;
 	icns_type_t             iconType;
-	icns_icon_image_info_t  iconInfo;
+	icns_icon_info_t  iconInfo;
 	
 	if(imageIn == NULL)
 	{
@@ -672,11 +672,11 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 		newElement->elementType = newElementType;
 		newElement->elementSize = newElementSize;
 		
-		//#ifdef ICNS_DEBUG
+		#ifdef ICNS_DEBUG
 		printf(" updated element data...\n");
 		printf("  type: '%c%c%c%c'\n",newElementType.c[0],newElementType.c[1],newElementType.c[2],newElementType.c[3]);
 		printf("  size: %d\n",(int)newElementSize);
-		//#endif		
+		#endif		
 		
 		// Copy in the image data
 		memcpy(newElement->elementData,imageDataPtr,imageDataSize);

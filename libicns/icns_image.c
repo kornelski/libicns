@@ -643,7 +643,7 @@ int icns_get_mask_from_element(icns_element_t *maskElement,icns_image_t *imageOu
 
 int icns_init_image_for_type(icns_type_t iconType,icns_image_t *imageOut)
 {
-	icns_icon_image_info_t iconInfo;
+	icns_icon_info_t iconInfo;
 	
 	if(imageOut == NULL)
 	{
