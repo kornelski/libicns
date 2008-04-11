@@ -583,6 +583,14 @@ cleanup:
 		free(iconFamily);
 		iconFamily = NULL;
 	}
+	if(prefilename != NULL) {
+		free(prefilename);
+		prefilename = NULL;
+	}
+	if(outfilename != NULL) {
+		free(outfilename);
+		outfilename = NULL;
+	}
 	
 	return error;
 }

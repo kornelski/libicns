@@ -189,8 +189,8 @@ int icns_init_image(icns_uint32_t iconWidth,icns_uint32_t iconHeight,icns_uint32
 int icns_free_image(icns_image_t *imageIn);
 
 // icns_rle24.c
-int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut);
-int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut);
+int icns_decode_rle24_data(icns_uint32_t rawDataSize, icns_byte_t *rawDataPtr,icns_uint32_t expectedPixelCount, icns_uint32_t *dataSizeOut, icns_byte_t **dataPtrOut);
+int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_byte_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_byte_t **dataPtrOut);
 
 // icns_jp2.c
 int icns_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *imageOut);

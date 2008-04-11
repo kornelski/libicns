@@ -9,11 +9,9 @@ AM_MAINTAINER_MODE
 # To enable debugging mode
 CFLAGS="${CFLAGS=}"
 AC_MSG_CHECKING(whether to enable debugging)
-debug_default="yes"
-AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging
-                       [default=$debug_default]],, enable_debug=$debug_default)
+AC_ARG_ENABLE(debug, [  --enable-debug=[yes/no] turn on debugging [default=no]],, enable_debug=no)
 if test "x$enable_debug" = "xyes"; then
-         CFLAGS="$CFLAGS -g -DDEBUG"
+         CFLAGS="$CFLAGS -g -DDEBUG -DICNS_DEBUG"
 AC_MSG_RESULT(yes)
 else
 AC_MSG_RESULT(no)

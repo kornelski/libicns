@@ -30,21 +30,26 @@ Boston, MA 02111-1307, USA.
 //***************************** icns_decode_rle24_data ****************************//
 // Decode a rgb 24 bit rle encoded data stream into 32 bit argb (alpha is ignored)
 
-int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut)
+int icns_decode_rle24_data(icns_uint32_t rawDataSize, icns_byte_t *rawDataPtr,icns_uint32_t expectedPixelCount, icns_uint32_t *dataSizeOut, icns_byte_t **dataPtrOut)
 {
-	icns_uint8_t	runLength = 0;
-	icns_byte_t	colorValue = 0;
 	icns_uint8_t	colorOffset = 0;
-	unsigned long	dataOffset = 0;
-	unsigned long	pixelOffset = 0;
-	unsigned long	i = 0;
-	icns_byte_t	*rawDataPtr = NULL;
+	icns_byte_t	colorValue = 0;
+	icns_uint8_t	runLength = 0;
+	icns_uint32_t	dataOffset = 0;
+	icns_uint32_t	pixelOffset = 0;
+	icns_uint32_t	i = 0;
 	icns_byte_t	*destIconData = NULL;	// Decompressed Raw Icon Data
-	unsigned long	destIconPixelCount = 0;
+	icns_uint32_t	destIconDataSize = 0;
 	
-	if(dataPtrIn == NULL)
+	if(rawDataPtr == NULL)
 	{
 		icns_print_err("icns_decode_rle24_data: rle decoder data in ptr is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(dataSizeOut == NULL)
+	{
+		icns_print_err("icns_decode_rle24_data: rle decoder data out size ref is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
@@ -54,37 +59,51 @@ int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	if(*dataPtrOut == NULL)
-	{
-		icns_print_err("icns_decode_rle24_data: rle decoder data out ptr ref is NULL!\n");
-		return ICNS_STATUS_NULL_PARAM;
-	}
-	
-	rawDataPtr = (icns_byte_t *)dataPtrIn;
-	destIconData = (icns_byte_t *)(*dataPtrOut);
-	
-	// There's always going to be 4 channels in this
-	// and we want our counter to increment through
-	// pixels, not bytes....
-	destIconPixelCount = (*dataSizeOut) / 4;
+	// Calculate required data storage (pixels * 4 channels)
+	destIconDataSize = expectedPixelCount * 4;
 	
 	#ifdef ICNS_DEBUG
-		printf("Decoding %d bytes of data into %d RGB pixels\n",(int)dataSizeIn,(int)destIconPixelCount);
+		printf("Compressed RLE data size is %d\n",(int)rawDataSize);
+		printf("Decompressed will be %d bytes (%d pixels)\n",(int)destIconDataSize,(int)expectedPixelCount);
 	#endif
 	
+	if( (*dataSizeOut != destIconDataSize) || (*dataPtrOut == NULL) )
+	{
+		if(*dataPtrOut != NULL)
+			free(*dataPtrOut);
+		
+		// Allocate the block for the decoded memory and set to 0
+		destIconData = (icns_byte_t *)malloc(destIconDataSize);
+		if(!destIconData)
+		{
+			icns_print_err("icns_decode_rle24_data: Unable to allocate memory block of size: %d ($s:%m)!\n",(int)destIconDataSize);
+			return ICNS_STATUS_NO_MEMORY;
+		}
+		memset(destIconData,0,destIconDataSize);
+	}
+	else
+	{
+		destIconData = *dataPtrOut;
+	}
+	
+	#ifdef ICNS_DEBUG
+		printf("Decoding RLE data into RGB pixels...\n");
+	#endif
+
 	// What's this??? In the 128x128 icons, we need to start 4 bytes
-	// ahead. There see to be a NULL padding here for some reason. If
-	// we don't, the red channel will be off by 2 pixels
-	if( *((icns_uint32_t*)dataPtrIn) == 0x00000000 )
+	// ahead. There is often a NULL padding here for some reason. If
+	// we don't, the red channel will be off by 2 pixels, or worse
+	if( *((icns_uint32_t*)rawDataPtr) == 0x00000000 )
 	{
 		#ifdef ICNS_DEBUG
 		printf("4 byte null padding found in rle data!\n");
 		#endif
 		dataOffset = 4;
 	}
-	
-	for(i = 0; i < destIconPixelCount; i++)
-		destIconData[i] = 0x00000000;
+	else
+	{
+		dataOffset = 0;
+	}
 	
 	// Data is stored in red run, green run,blue run
 	// So we decompress to pixel format RGBA
@@ -95,17 +114,16 @@ int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 	for(colorOffset = 0; colorOffset < 3; colorOffset++)
 	{
 		pixelOffset = 0;
-		while((pixelOffset < destIconPixelCount) && (dataOffset < dataSizeIn))
+		while((pixelOffset < expectedPixelCount) && (dataOffset < rawDataSize))
 		{
 			if( (rawDataPtr[dataOffset] & 0x80) == 0)
 			{
 				// Top bit is clear - run of various values to follow
 				runLength = (0xFF & rawDataPtr[dataOffset++]) + 1; // 1 <= len <= 128
 				
-				for(i = 0; (i < runLength) && (pixelOffset < destIconPixelCount) ; i++) {
-					destIconData[(pixelOffset * 4) + colorOffset] = rawDataPtr[dataOffset];
+				for(i = 0; (i < runLength) && (pixelOffset < expectedPixelCount) && (dataOffset < rawDataSize); i++) {
+					destIconData[(pixelOffset * 4) + colorOffset] = rawDataPtr[dataOffset++];
 					pixelOffset++;
-					dataOffset++;
 				}
 			}
 			else
@@ -116,7 +134,7 @@ int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 				// Set the value to the color shifted to the correct bit offset
 				colorValue = rawDataPtr[dataOffset++];
 				
-				for(i = 0; (i < runLength) && (pixelOffset < destIconPixelCount); i++) {
+				for(i = 0; (i < runLength) && (pixelOffset < expectedPixelCount); i++) {
 					destIconData[(pixelOffset * 4) + colorOffset] = colorValue;
 					pixelOffset++;
 				}
@@ -124,7 +142,8 @@ int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 		}
 	}
 	
-	destIconData = NULL;
+	*dataSizeOut = destIconDataSize;
+	*dataPtrOut = destIconData;
 	
 	return ICNS_STATUS_OK;
 }
@@ -132,7 +151,7 @@ int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 //***************************** icns_encode_rle24_data *******************************************//
 // Encode an 32 bit argb data stream into a 24 bit rgb rle encoded data stream (alpha is ignored)
 
-int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut)
+int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_byte_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_byte_t **dataPtrOut)
 {
 	unsigned long	dataInCount = 0;
 	unsigned long 	dataInChanSize = 0;
@@ -268,7 +287,7 @@ int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,ic
 					if((dataByte == dataRun[runLength-1])&&(dataByte == dataRun[runLength-2]))
 					{
 						// Set the RL byte
-						*(dataTemp+dataTempCount) = runLength - 1;
+						*(dataTemp+dataTempCount) = runLength - 3;
 						dataTempCount++;
 						// Copy 0 to runLength-2 bytes to the RLE data here
 						memcpy( dataTemp+dataTempCount , dataRun , runLength - 2 );

@@ -560,16 +560,15 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 		}
 		
 		memcpy(newDataPtr,imageIn->imageData,newDataSize);
-
-		pixelCount = imageIn->imageWidth * imageIn->imageHeight;
+		pixelCount = imageIn->imageWidth * imageIn->imageHeight;		
 		#ifdef ICNS_DEBUG
 			printf("Converting %d pixels from rgba to argb\n",(int)pixelCount);
 		#endif
 		swapPtr = newDataPtr;
 		for(dataCount = 0; dataCount < pixelCount; dataCount++)
 		{
-			pixelPtr = (icns_argb_t *)(swapPtr + (dataCount * 4));
-			*((icns_rgba_t *)pixelPtr) = ICNS_ARGB_TO_RGBA( *((icns_argb_t *)pixelPtr) );
+			pixelPtr = (icns_rgba_t *)(swapPtr + (dataCount * 4));
+			*((icns_argb_t *)pixelPtr) = ICNS_RGBA_TO_ARGB( *((icns_rgba_t *)pixelPtr) );
 		}
 		
 		imageDataSize = newDataSize;
@@ -580,7 +579,7 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 		newDataSize = imageIn->imageDataSize;
 		
 		// Note: icns_encode_rle24_data allocates memory that must be freed later
-		if((error = icns_encode_rle24_data(imageIn->imageDataSize,(icns_sint32_t*)(imageIn->imageData),(icns_sint32_t*)(&newDataSize),(icns_sint32_t**)(&newDataPtr))))
+		if( (error = icns_encode_rle24_data(imageIn->imageDataSize,imageIn->imageData,&newDataSize,&newDataPtr)) )
 		{
 			icns_print_err("icns_update_element_with_image_or_mask: Error rle encoding image data.\n");
 			error = ICNS_STATUS_INVALID_DATA;
