@@ -329,7 +329,7 @@ icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	return iconInfo;
 }
 
-icns_type_t	icns_get_type_with_image_info(icns_icon_info_t iconInfo)
+icns_type_t	icns_get_type_from_image_info(icns_icon_info_t iconInfo)
 {
 	// Give our best effort to returning a type from the given information
 	// But there is only so much we can't work with...
@@ -530,7 +530,7 @@ icns_type_t	icns_get_type_from_image(icns_image_t iconImage)
 		iconInfo.isMask = 0;
 	}
 	
-	return icns_get_type_with_image_info(iconInfo);
+	return icns_get_type_from_image_info(iconInfo);
 }
 
 icns_type_t	icns_get_type_from_mask(icns_image_t iconImage)
@@ -564,7 +564,7 @@ icns_type_t	icns_get_type_from_mask(icns_image_t iconImage)
 		iconInfo.isMask = 1;
 	}
 	
-	return icns_get_type_with_image_info(iconInfo);
+	return icns_get_type_from_image_info(iconInfo);
 }
 
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB)

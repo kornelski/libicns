@@ -154,6 +154,7 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 	icns_size_t	blockSize = 0;
 	icns_uint32_t	blockCount = 0;
 	icns_uint32_t	blocksWritten = 0;
+	icns_uint32_t	dataWritten = 0;
 	icns_uint32_t	dataSize = 0;
 	icns_byte_t	*dataPtr = NULL;
 	
@@ -190,8 +191,9 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 			return ICNS_STATUS_IO_WRITE_ERR;
 	}
 	
+	dataWritten = (blockCount * blockSize);
 	blockSize = dataSize - (blockCount * blockSize);
-	blocksWritten = fwrite ( dataPtr + (blockCount * blockSize) , blockSize , 1 , dataFile );
+	blocksWritten = fwrite ( dataPtr + dataWritten , blockSize , 1 , dataFile );
 	
 	if(blocksWritten != 1)
 	{
