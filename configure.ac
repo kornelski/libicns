@@ -3,7 +3,7 @@
 AC_PREREQ(2.59)
 AC_INIT(libicns, 0.5.7, mathew@eisbox.net)
 AM_INIT_AUTOMAKE
-AC_CONFIG_SRCDIR([libicns/icns.h])
+AC_CONFIG_SRCDIR([src/icns.h])
 AM_MAINTAINER_MODE
 
 # To enable debugging mode
@@ -59,6 +59,6 @@ AC_SUBST(PNG_LIBS, "-lpng -lz -lm")
 ], [-lz -lm])
 AC_CHECK_HEADERS([png.h libpng/png.h libpng10/png.h libpng12/png.h])
 
-AC_CONFIG_FILES([Makefile libicns.spec icnsutils/Makefile libicns/Makefile libicns/libicns.pc])
+AC_CONFIG_FILES([Makefile libicns.spec icnsutils/Makefile src/Makefile src/libicns.pc])
 AC_OUTPUT
 

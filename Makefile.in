@@ -182,7 +182,7 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = libicns icnsutils
+SUBDIRS = src icnsutils
 EXTRA_DIST = \
   samples/test1.icns \
   samples/test2.rsrc \

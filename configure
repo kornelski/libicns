@@ -732,7 +732,7 @@ PACKAGE_VERSION='0.5.7'
 PACKAGE_STRING='libicns 0.5.7'
 PACKAGE_BUGREPORT='mathew@eisbox.net'
 
-ac_unique_file="libicns/icns.h"
+ac_unique_file="src/icns.h"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -21875,7 +21875,7 @@ fi
 done
 
 
-ac_config_files="$ac_config_files Makefile libicns.spec icnsutils/Makefile libicns/Makefile libicns/libicns.pc"
+ac_config_files="$ac_config_files Makefile libicns.spec icnsutils/Makefile src/Makefile src/libicns.pc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -22473,8 +22473,8 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "libicns.spec") CONFIG_FILES="$CONFIG_FILES libicns.spec" ;;
     "icnsutils/Makefile") CONFIG_FILES="$CONFIG_FILES icnsutils/Makefile" ;;
-    "libicns/Makefile") CONFIG_FILES="$CONFIG_FILES libicns/Makefile" ;;
-    "libicns/libicns.pc") CONFIG_FILES="$CONFIG_FILES libicns/libicns.pc" ;;
+    "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
+    "src/libicns.pc") CONFIG_FILES="$CONFIG_FILES src/libicns.pc" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

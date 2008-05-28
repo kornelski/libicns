@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = libicns icnsutils
+SUBDIRS = src icnsutils
 
 .PHONY: rpm
 
