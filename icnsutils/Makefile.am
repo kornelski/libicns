@@ -8,7 +8,7 @@ icontainer2icns_SOURCES = \
 
 icns2png_LDADD = \
   @PNG_LIBS@ \
-  ../libicns/libicns.la
+  ../src/libicns.la
 
 man_MANS = \
   icns2png.1
@@ -17,6 +17,6 @@ EXTRA_DIST = \
   $(man_MANS)
 
 AM_CPPFLAGS = \
-  -I$(top_srcdir)/libicns/
+  -I$(top_srcdir)/src/
 
 AM_CFLAGS = -Wall

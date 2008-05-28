@@ -47,7 +47,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_icns2png_OBJECTS = icns2png.$(OBJEXT)
 icns2png_OBJECTS = $(am_icns2png_OBJECTS)
-icns2png_DEPENDENCIES = ../libicns/libicns.la
+icns2png_DEPENDENCIES = ../src/libicns.la
 am_icontainer2icns_OBJECTS = icontainer2icns.$(OBJEXT)
 icontainer2icns_OBJECTS = $(am_icontainer2icns_OBJECTS)
 icontainer2icns_LDADD = $(LDADD)
@@ -189,7 +189,7 @@ icontainer2icns_SOURCES = \
 
 icns2png_LDADD = \
   @PNG_LIBS@ \
-  ../libicns/libicns.la
+  ../src/libicns.la
 
 man_MANS = \
   icns2png.1
@@ -198,7 +198,7 @@ EXTRA_DIST = \
   $(man_MANS)
 
 AM_CPPFLAGS = \
-  -I$(top_srcdir)/libicns/
+  -I$(top_srcdir)/src/
 
 AM_CFLAGS = -Wall
 all: all-am
