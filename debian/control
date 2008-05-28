@@ -1,0 +1,21 @@
+Source: icns
+Priority: extra
+Maintainer: Mathew Eis <mathew@eisbox.net>
+Build-Depends: debhelper (>= 6), autotools-dev
+Standards-Version: 3.7.3
+Section: libs
+Homepage: <insert the upstream URL, if relevant>
+
+Package: icns-dev
+Section: libdevel
+Architecture: any
+Depends: icnsBROKEN (= ${binary:Version})
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
+
+Package: icnsBROKEN
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
