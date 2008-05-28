@@ -1,1 +1,1 @@
-libicns 0.5.7 icns (>> 0.5.7-0), icns (<< 0.5.7-99)
+liblibicns 0.5.7 libicns (>> 0.5.7-0), libicns (<< 0.5.7-99)

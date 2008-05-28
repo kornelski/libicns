@@ -1,4 +1,4 @@
-Source: icns
+Source: libicns
 Priority: extra
 Maintainer: Mathew Eis <mathew@eisbox.net>
 Build-Depends: debhelper (>= 6), autotools-dev
@@ -6,14 +6,14 @@ Standards-Version: 3.7.3
 Section: libs
 Homepage: <insert the upstream URL, if relevant>
 
-Package: icns-dev
+Package: libicns-dev
 Section: libdevel
 Architecture: any
-Depends: icnsBROKEN (= ${binary:Version})
+Depends: libicnsBROKEN (= ${binary:Version})
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
 
-Package: icnsBROKEN
+Package: libicnsBROKEN
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}

@@ -12,22 +12,22 @@
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/icns
-NAME=icns
-DESC=icns
+DAEMON=/usr/sbin/libicns
+NAME=libicns
+DESC=libicns
 
 test -x $DAEMON || exit 0
 
-LOGDIR=/var/log/icns
+LOGDIR=/var/log/libicns
 PIDFILE=/var/run/$NAME.pid
 DODTIME=1                   # Time to wait for the server to die, in seconds
                             # If this value is set too low you might not
                             # let some servers to die gracefully and
                             # 'restart' will not work
 
-# Include icns defaults if available
-if [ -f /etc/default/icns ] ; then
-	. /etc/default/icns
+# Include libicns defaults if available
+if [ -f /etc/default/libicns ] ; then
+	. /etc/default/libicns
 fi
 
 set -e

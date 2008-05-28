@@ -1,4 +1,4 @@
 #
-# Regular cron jobs for the icns package
+# Regular cron jobs for the libicns package
 #
-0 4	* * *	root	icns_maintenance
+0 4	* * *	root	libicns_maintenance

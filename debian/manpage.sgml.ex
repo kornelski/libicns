@@ -26,8 +26,8 @@ manpage.1: manpage.sgml
   <!ENTITY dhsection   "<manvolnum>SECTION</manvolnum>">
   <!ENTITY dhemail     "<email>mathew@eisbox.net</email>">
   <!ENTITY dhusername  "Mathew Eis">
-  <!ENTITY dhucpackage "<refentrytitle>ICNS</refentrytitle>">
-  <!ENTITY dhpackage   "icns">
+  <!ENTITY dhucpackage "<refentrytitle>LIBICNS</refentrytitle>">
+  <!ENTITY dhpackage   "libicns">
 
   <!ENTITY debian      "<productname>Debian</productname>">
   <!ENTITY gnu         "<acronym>GNU</acronym>">

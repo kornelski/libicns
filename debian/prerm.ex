@@ -1,5 +1,5 @@
 #!/bin/sh
-# prerm script for icns
+# prerm script for libicns
 #
 # see: dh_installdeb(1)
 
