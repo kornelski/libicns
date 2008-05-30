@@ -1,12 +1,12 @@
 Source: libicns
-Priority: extra
+Priority: optional
 Maintainer: Mathew Eis <mathew@eisbox.net>
 Build-Depends: debhelper (>= 6), autotools-dev
 Standards-Version: 3.7.3
 Section: libs
 Homepage: http://sourceforge.net/projects/icns
 
-Package: libicns-dev
+Package: libicns1-dev
 Section: libdevel
 Architecture: any
 Depends: libicns (= ${binary:Version})
@@ -16,10 +16,10 @@ Description: libicns development files
  and write files for the Mac OS X icns format, as well as read from
  Mac OS resource files and macbinary encoded Mac OS resource forks.
 
-Package: libicns
+Package: libicns1
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}
 Description: A library for manipulation of the Mac OS icns format
  libicns is a library for manipulation of the Mac OS icns resource
  format, also known as the IconFamily resource type. It can read
@@ -29,7 +29,7 @@ Description: A library for manipulation of the Mac OS icns format
 Package: icnsutils
 Section: graphics
 Architecture: any
-Depends: libicns (>= ${binary:Version}), libpng12-0
+Depends: ${shlibs:Depends}, libpng12-0
 Description: Utilities for manipulating Mac OS icns files
  icnsutils includes icns2png and png2icns, two utilies used to
  extract png images from icns files, and create icns files from
