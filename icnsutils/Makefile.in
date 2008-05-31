@@ -32,7 +32,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = icns2png$(EXEEXT) icontainer2icns$(EXEEXT)
+bin_PROGRAMS = icns2png$(EXEEXT) icontainer2icns$(EXEEXT) \
+	png2icns$(EXEEXT)
 subdir = icnsutils
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -51,6 +52,9 @@ icns2png_DEPENDENCIES = ../src/libicns.la
 am_icontainer2icns_OBJECTS = icontainer2icns.$(OBJEXT)
 icontainer2icns_OBJECTS = $(am_icontainer2icns_OBJECTS)
 icontainer2icns_LDADD = $(LDADD)
+am_png2icns_OBJECTS = png2icns.$(OBJEXT)
+png2icns_OBJECTS = $(am_png2icns_OBJECTS)
+png2icns_DEPENDENCIES = ../src/libicns.la
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -63,8 +67,10 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(icns2png_SOURCES) $(icontainer2icns_SOURCES)
-DIST_SOURCES = $(icns2png_SOURCES) $(icontainer2icns_SOURCES)
+SOURCES = $(icns2png_SOURCES) $(icontainer2icns_SOURCES) \
+	$(png2icns_SOURCES)
+DIST_SOURCES = $(icns2png_SOURCES) $(icontainer2icns_SOURCES) \
+	$(png2icns_SOURCES)
 man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(man_MANS)
@@ -105,6 +111,7 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+JP2000_LIBS = @JP2000_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -187,12 +194,21 @@ icns2png_SOURCES = \
 icontainer2icns_SOURCES = \
   icontainer2icns.c
 
+png2icns_SOURCES = \
+  png2icns.c
+
 icns2png_LDADD = \
   @PNG_LIBS@ \
   ../src/libicns.la
 
+png2icns_LDADD = \
+  @PNG_LIBS@ \
+  ../src/libicns.la
+
 man_MANS = \
-  icns2png.1
+  icns2png.1 \
+  icontainer2icns.1 \
+  png2icns.1
 
 EXTRA_DIST = \
   $(man_MANS)
@@ -268,6 +284,9 @@ icns2png$(EXEEXT): $(icns2png_OBJECTS) $(icns2png_DEPENDENCIES)
 icontainer2icns$(EXEEXT): $(icontainer2icns_OBJECTS) $(icontainer2icns_DEPENDENCIES) 
 	@rm -f icontainer2icns$(EXEEXT)
 	$(LINK) $(icontainer2icns_OBJECTS) $(icontainer2icns_LDADD) $(LIBS)
+png2icns$(EXEEXT): $(png2icns_OBJECTS) $(png2icns_DEPENDENCIES) 
+	@rm -f png2icns$(EXEEXT)
+	$(LINK) $(png2icns_OBJECTS) $(png2icns_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -277,6 +296,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/icns2png.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/icontainer2icns.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/png2icns.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

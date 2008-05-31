@@ -3,7 +3,7 @@ Wed, 28 May 2008 02:34:52 -0700.
 
 It was downloaded from http://sourceforge.net/projects/icns
 
-Upstream Author(s): 
+Upstream Author: 
 
     Mathew Eis <mathew@eisbox.net>
 
@@ -28,8 +28,8 @@ License:
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 On Debian systems, the complete text of the GNU General
-Public License can be found in `/usr/share/common-licenses/GPL'.
+Public License can be found in `/usr/share/common-licenses/GPL-2'.
 
 The Debian packaging is (C) 2008, Mathew Eis <mathew@eisbox.net> and
-is licensed under the GPL, see above.
+is licensed under the GPLv2+, see above.
 

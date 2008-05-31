@@ -1,6 +1,6 @@
 libicns (0.5.7-1) unstable; urgency=low
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release (Closes: #481804)
 
  -- Mathew Eis <mathew@eisbox.net>  Wed, 28 May 2008 02:34:52 -0700
 
