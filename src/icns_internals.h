@@ -56,6 +56,9 @@ Boston, MA 02111-1307, USA.
 #include <openjpeg.h>
 #endif
 
+// We do not want to expose any of the internal stuff
+#pragma GCC visibility push(hidden)
+
 /* icns structures */
 
 typedef struct icns_rgba_t
@@ -158,6 +161,6 @@ void icns_opj_info_callback(const char *msg, void *client_data);
 // icns_utils.c
 void icns_print_err(const char *template, ...);
 
-
+#pragma GCC visibility pop
 
 #endif /* _ICNS_INTERNALS_H_ */
