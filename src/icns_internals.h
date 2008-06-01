@@ -120,7 +120,7 @@ accesses, as well as those that don't support it
 
 
 /* global variables */
-extern icns_bool_t gShouldPrintErrors;
+icns_bool_t gShouldPrintErrors;
 
 /* icns function prototypes */
 
