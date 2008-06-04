@@ -22021,13 +22021,13 @@ _ACEOF
 
 else
 
-    { echo "$as_me:$LINENO: checking for jas_init in -ljasper1" >&5
-echo $ECHO_N "checking for jas_init in -ljasper1... $ECHO_C" >&6; }
-if test "${ac_cv_lib_jasper1_jas_init+set}" = set; then
+    { echo "$as_me:$LINENO: checking for jas_init in -ljasper" >&5
+echo $ECHO_N "checking for jas_init in -ljasper... $ECHO_C" >&6; }
+if test "${ac_cv_lib_jasper_jas_init+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-ljasper1  $LIBS"
+LIBS="-ljasper  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -22068,23 +22068,23 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_jasper1_jas_init=yes
+  ac_cv_lib_jasper_jas_init=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_jasper1_jas_init=no
+	ac_cv_lib_jasper_jas_init=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_jasper1_jas_init" >&5
-echo "${ECHO_T}$ac_cv_lib_jasper1_jas_init" >&6; }
-if test $ac_cv_lib_jasper1_jas_init = yes; then
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_jasper_jas_init" >&5
+echo "${ECHO_T}$ac_cv_lib_jasper_jas_init" >&6; }
+if test $ac_cv_lib_jasper_jas_init = yes; then
 
-    JP2000_LIBS="-ljasper1"
+    JP2000_LIBS="-ljasper"
 
     cat >>confdefs.h <<\_ACEOF
 #define ICNS_JASPER 1

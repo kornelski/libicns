@@ -567,7 +567,7 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 		swapPtr = newDataPtr;
 		for(dataCount = 0; dataCount < pixelCount; dataCount++)
 		{
-			pixelPtr = (icns_rgba_t *)(swapPtr + (dataCount * 4));
+			pixelPtr = (icns_argb_t *)(swapPtr + (dataCount * 4));
 			*((icns_argb_t *)pixelPtr) = ICNS_RGBA_TO_ARGB( *((icns_rgba_t *)pixelPtr) );
 		}
 		
@@ -579,7 +579,7 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 		newDataSize = imageIn->imageDataSize;
 		
 		// Note: icns_encode_rle24_data allocates memory that must be freed later
-		if( (error = icns_encode_rle24_data(imageIn->imageDataSize,imageIn->imageData,&newDataSize,&newDataPtr)) )
+		if( (error = icns_encode_rle24_data(imageIn->imageDataSize,imageIn->imageData,(icns_uint32_t *)(&newDataSize),&newDataPtr)) )
 		{
 			icns_print_err("icns_update_element_with_image_or_mask: Error rle encoding image data.\n");
 			error = ICNS_STATUS_INVALID_DATA;

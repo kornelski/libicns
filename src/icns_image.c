@@ -430,13 +430,21 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 		if(rawDataSize < imageOut->imageDataSize)
 		{
 			icns_uint32_t	pixelCount = 0;
+			icns_size_t	decodedDataSize = imageOut->imageDataSize;
+			icns_byte_t	*decodedImageData = imageOut->imageData;
+
 			pixelCount = imageOut->imageWidth * imageOut->imageHeight;
-			error = icns_decode_rle24_data(rawDataSize,rawDataPtr,pixelCount,&(imageOut->imageDataSize),&(imageOut->imageData));
+			error = icns_decode_rle24_data(rawDataSize,rawDataPtr,pixelCount,&decodedDataSize,&decodedImageData);
 			if(error)
 			{
 				icns_print_err("icns_get_image_from_element: Error decoding RLE data!\n");
 				icns_free_image(imageOut);
 				return error;
+			}
+			else
+			{
+				imageOut->imageDataSize = decodedDataSize;
+				imageOut->imageData = decodedImageData;
 			}
 		}
 		else

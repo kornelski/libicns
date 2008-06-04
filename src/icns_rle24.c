@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.
 //***************************** icns_decode_rle24_data ****************************//
 // Decode a rgb 24 bit rle encoded data stream into 32 bit argb (alpha is ignored)
 
-int icns_decode_rle24_data(icns_uint32_t rawDataSize, icns_byte_t *rawDataPtr,icns_uint32_t expectedPixelCount, icns_uint32_t *dataSizeOut, icns_byte_t **dataPtrOut)
+int icns_decode_rle24_data(icns_size_t rawDataSize, icns_byte_t *rawDataPtr,icns_size_t expectedPixelCount, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
 {
 	icns_uint8_t	colorOffset = 0;
 	icns_byte_t	colorValue = 0;
@@ -151,7 +151,7 @@ int icns_decode_rle24_data(icns_uint32_t rawDataSize, icns_byte_t *rawDataPtr,ic
 //***************************** icns_encode_rle24_data *******************************************//
 // Encode an 32 bit argb data stream into a 24 bit rgb rle encoded data stream (alpha is ignored)
 
-int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_byte_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_byte_t **dataPtrOut)
+int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
 {
 	unsigned long	dataInCount = 0;
 	unsigned long 	dataInChanSize = 0;

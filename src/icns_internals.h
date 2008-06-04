@@ -136,12 +136,12 @@ int icns_new_element_from_image_or_mask(icns_image_t *imageIn,icns_type_t iconTy
 int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isMask,icns_element_t **iconElement);
 
 // icns_io.c
-int icns_parse_family_data(icns_uint32_t dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
-int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *resData, icns_family_t **dataOut);
-int icns_read_macbinary_resource_fork(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,icns_uint32_t *parsedResSizeOut,icns_byte_t **parsedResDataOut);
-icns_bool_t icns_icns_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr);
-icns_bool_t icns_rsrc_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr);
-icns_bool_t icns_macbinary_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr);
+int icns_parse_family_data(icns_size_t dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
+int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resData, icns_family_t **dataOut);
+int icns_read_macbinary_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,icns_size_t *parsedResSizeOut,icns_byte_t **parsedResDataOut);
+icns_bool_t icns_icns_header_check(icns_size_t dataSize,icns_byte_t *dataPtr);
+icns_bool_t icns_rsrc_header_check(icns_size_t dataSize,icns_byte_t *dataPtr);
+icns_bool_t icns_macbinary_header_check(icns_size_t dataSize,icns_byte_t *dataPtr);
 
 // icns_jp2.c
 #ifdef ICNS_JASPER

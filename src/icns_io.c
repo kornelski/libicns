@@ -150,12 +150,11 @@ static inline void icns_write_be(void *outp, void *inp, int size)
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 {
 	int		error = ICNS_STATUS_OK;
-	icns_size_t	resourceSize = 0;
 	icns_size_t	blockSize = 0;
-	icns_uint32_t	blockCount = 0;
-	icns_uint32_t	blocksWritten = 0;
-	icns_uint32_t	dataWritten = 0;
-	icns_uint32_t	dataSize = 0;
+	icns_size_t	blockCount = 0;
+	icns_size_t	blocksWritten = 0;
+	icns_size_t	dataWritten = 0;
+	icns_size_t	dataSize = 0;
 	icns_byte_t	*dataPtr = NULL;
 	
 	if ( dataFile == NULL )
@@ -296,7 +295,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 		// Attempt 3 - try to import from an 'icns' resource in a macbinary resource fork
 		else if(icns_macbinary_header_check(dataSize,dataPtr))
 		{
-			icns_uint32_t	resourceSize;
+			icns_size_t	resourceSize;
 			icns_byte_t	*resourceData;
 			#ifdef ICNS_DEBUG
 			printf("Trying to find icns data in macbinary resource fork...\n");
@@ -433,7 +432,7 @@ exception:
 
 /***************************** icns_export_family_data **************************/
 
-int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut,icns_byte_t **dataPtrOut)
+int icns_export_family_data(icns_family_t *iconFamily,icns_size_t *dataSizeOut,icns_byte_t **dataPtrOut)
 {
 	int		error = ICNS_STATUS_OK;
 	icns_type_t	dataType = ICNS_NULL_TYPE;
@@ -557,7 +556,7 @@ exception:
 
 /***************************** icns_import_family_data **************************/
 
-int icns_import_family_data(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
+int icns_import_family_data(icns_size_t dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int error = ICNS_STATUS_OK;
 	icns_byte_t *iconFamilyData;
@@ -604,7 +603,7 @@ int icns_import_family_data(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_fam
 
 /***************************** icns_parse_family_data **************************/
 
-int icns_parse_family_data(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
+int icns_parse_family_data(icns_size_t dataSize,icns_byte_t *dataPtr,icns_family_t **iconFamilyOut)
 {
 	int		error = ICNS_STATUS_OK;
 	icns_type_t	resourceType = ICNS_NULL_TYPE;
@@ -707,7 +706,7 @@ exception:
 
 /***************************** icns_find_family_in_mac_resource **************************/
 
-int icns_find_family_in_mac_resource(icns_uint32_t resDataSize, icns_byte_t *resData, icns_family_t **dataOut)
+int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resData, icns_family_t **dataOut)
 {
 	icns_bool_t	error = ICNS_STATUS_OK;
 	icns_bool_t	found = 0;
@@ -916,7 +915,7 @@ exception:
 // Parses a MacBinary file resource fork
 // Returns the resource fork type, creator, size, and data
 
-int icns_read_macbinary_resource_fork(icns_uint32_t dataSize,icns_byte_t *dataPtr,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,icns_uint32_t *parsedResSizeOut,icns_byte_t **parsedResDataOut)
+int icns_read_macbinary_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,icns_size_t *parsedResSizeOut,icns_byte_t **parsedResDataOut)
 {
 	// This code is based off information from the MacBinaryIII specification at
 	// http://web.archive.org/web/*/www.lazerware.com/formats/macbinary/macbinary_iii.html
@@ -1060,7 +1059,7 @@ int icns_read_macbinary_resource_fork(icns_uint32_t dataSize,icns_byte_t *dataPt
 }
 
 //**************** icns_icns_header_check *******************//
-icns_bool_t icns_icns_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr)
+icns_bool_t icns_icns_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
 {
 	icns_type_t	resourceType = ICNS_NULL_TYPE;
 	icns_size_t	resourceSize = 0;
@@ -1085,7 +1084,7 @@ icns_bool_t icns_icns_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr)
 }
 
 //**************** icns_rsrc_header_check *******************//
-icns_bool_t icns_rsrc_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr)
+icns_bool_t icns_rsrc_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
 {
 	icns_sint32_t	resHeadDataOffset = 0;
 	icns_sint32_t	resHeadMapOffset = 0;
@@ -1112,7 +1111,7 @@ icns_bool_t icns_rsrc_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr)
 }
 
 //**************** icns_macbinary_header_check *******************//
-icns_bool_t icns_macbinary_header_check(icns_uint32_t dataSize,icns_byte_t *dataPtr)
+icns_bool_t icns_macbinary_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
 {
 	icns_bool_t	isValid = 0;
 	icns_type_t	dataType = ICNS_NULL_TYPE;

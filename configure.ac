@@ -68,8 +68,8 @@ AC_DEFINE(ICNS_OPENJPEG,1)
   AC_SUBST(JP2000_LIBS, "-lopenjpeg2")
   AC_DEFINE(ICNS_OPENJPEG,1)
   ], [
-    AC_CHECK_LIB(jasper1, jas_init, [
-    AC_SUBST(JP2000_LIBS, "-ljasper1")
+    AC_CHECK_LIB(jasper, jas_init, [
+    AC_SUBST(JP2000_LIBS, "-ljasper")
     AC_DEFINE(ICNS_JASPER,1)
     ], [
       AC_MSG_WARN([libopenjpeg or libjasper jp2000 codec libraries not found])

@@ -163,8 +163,8 @@ static const icns_type_t  ICNS_NULL_TYPE                 = {{ 0 , 0 , 0 , 0 }};
 int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn);
 int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut);
 int icns_read_family_from_rsrc(FILE *rsrcFile,icns_family_t **iconFamilyOut);
-int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut,icns_byte_t **dataPtrOut);
-int icns_import_family_data(icns_uint32_t dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
+int icns_export_family_data(icns_family_t *iconFamily,icns_size_t *dataSizeOut,icns_byte_t **dataPtrOut);
+int icns_import_family_data(icns_size_t dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
 
 // icns_family.c
 int icns_create_family(icns_family_t **iconFamilyOut);
@@ -189,8 +189,8 @@ int icns_init_image(icns_uint32_t iconWidth,icns_uint32_t iconHeight,icns_uint32
 int icns_free_image(icns_image_t *imageIn);
 
 // icns_rle24.c
-int icns_decode_rle24_data(icns_uint32_t rawDataSize, icns_byte_t *rawDataPtr,icns_uint32_t expectedPixelCount, icns_uint32_t *dataSizeOut, icns_byte_t **dataPtrOut);
-int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_byte_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_byte_t **dataPtrOut);
+int icns_decode_rle24_data(icns_size_t rawDataSize, icns_byte_t *rawDataPtr,icns_size_t expectedPixelCount, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);
+int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);
 
 // icns_jp2.c
 int icns_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *imageOut);

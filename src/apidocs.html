@@ -332,8 +332,8 @@ int icns_read_family_from_rsrc(FILE *rsrcFile,icns_family_t **iconFamilyOut);<BR
 <BR>
 <FONT SIZE="+1"><B>Reading and writing to memory</B></FONT>
 <P>
-int icns_export_family_data(icns_family_t *iconFamily,icns_uint32_t *dataSizeOut,unsigned char **dataPtrOut);<BR>
-int icns_import_family_data(icns_uint32_t dataSize,unsigned char *data,icns_family_t **iconFamilyOut);<BR>
+int icns_export_family_data(icns_family_t *iconFamily,icns_size_t *dataSizeOut,unsigned char **dataPtrOut);<BR>
+int icns_import_family_data(icns_size_t dataSize,unsigned char *data,icns_family_t **iconFamilyOut);<BR>
 </P>
 
 <BR>
@@ -416,8 +416,8 @@ int icns_free_image(icns_image_t *imageIn);<BR>
 <BR><BR>
 <FONT SIZE="+1"><B>Decoding and encoding 3 channel RLE data</B></FONT>
 <P>
-int icns_decode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut);<BR>
-int icns_encode_rle24_data(icns_uint32_t dataSizeIn, icns_sint32_t *dataPtrIn,icns_uint32_t *dataSizeOut, icns_sint32_t **dataPtrOut);<BR>
+int icns_decode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);<BR>
+int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);<BR>
 </P>
 
 <BR>
