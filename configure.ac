@@ -1,7 +1,7 @@
 #         -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(libicns, 0.5.7, mathew@eisbox.net)
+AC_INIT(libicns, 0.5.8, mathew@eisbox.net)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/icns.h])
 AM_MAINTAINER_MODE
