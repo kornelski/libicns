@@ -1,7 +1,7 @@
 Source: libicns
 Priority: optional
 Maintainer: Mathew Eis <mathew@eisbox.net>
-Build-Depends: debhelper (>= 6), autotools-dev
+Build-Depends: debhelper (>= 6), autotools-dev, libpng12-dev, libjasper-dev
 Standards-Version: 3.7.3
 Section: libs
 Homepage: http://icns.sourceforge.net/
@@ -23,7 +23,7 @@ Description: libicns development files
 Package: libicns1
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: library for manipulation of the Mac OS icns format
  libicns is a library for manipulation of the Mac OS icns resource
  format, also known as the IconFamily resource type. It can read
