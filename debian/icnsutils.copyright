@@ -11,14 +11,11 @@ Copyright:
 
     Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
     Copyright (C) 2008 Julien BLACHE <jb@jblache.org>
-    Copyright (C) 2007 Lyonel Vincent <lyonel@ezix.org> 
     Copyright (C) 2005 Thomas Lübking <baghira-style@gmx.net>
-    Copyright (C) 2004 Brion Vibber <brion@pobox.com> 
-    Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com> 
 
 License:
 
-    libicns and its utility programs (with the exception of png2icns) are
+    icns2png, icontainer2icns, and their respective manpages are
     free software; you can redistribute them and/or modify them under
     the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation; either version 2 of the License,

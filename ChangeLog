@@ -1,7 +1,31 @@
+0.5.8  (Current)
+# Sourceforge SVN rev 135 - Current
+# libicns version 2.3.1 (per libtool) - (NOTE: fix to 2.3.1 at SVN rev 137)
+- Fixed licensing issues with FSF address
+- Fixed incorrect libicns/libtool versioning
+
+0.5.7  ()
+# Sourceforge SVN rev 118 - 134
+# libicns version 2.0.1 - (NOTE: should have changed to 2.2.1)
+- Updated to use autoconf 2.61, automake 1.10
+- Added debain packaging to SVN tree (NOTE: Maintainer use only!)
+- Moved libicns/ to src/ for more conventional structure
+- Added png2icns utility
+- Added confgure check for libjasper and/or libopenjpeg
+- Added manpages for png2icns and icontainer2icns
+- Prevented libicns from exporting internal-only symbols
+- Fixed some compiler errors regarding pointers
+
 0.5.6  (Current)
+# Sourceforge SVN rev 109 - 117
+# libicns version 2.0.1 (per libtool) - (NOTE: should have changed to 2.1.1)
+- Several write support bugfixes (write support was broken up to this point)
+- Minor code clarifications
+- Updated icns2png manpage
+
 
 0.5.5  (03/17/2008)
-# Sourceforge SVN rev 108
+# Sourceforge SVN rev 102 - 108
 # libicns version 2.0.1 (per libtool)
 - Converted project to use GNU automake and friends
 - Converted all files to UTF-8
@@ -11,29 +35,29 @@
 - Added HTML API documentation
 
 0.5.2  (03/11/2008)
-# Sourceforge SVN rev 101
+# Sourceforge SVN rev 93 - 101
 - Restructured code tree to seperate icns2png from libicns
 - Minor bugfixes
 
 0.5.1  (03/07/2008)
-# Sourceforge SVN rev 92
+# Sourceforge SVN rev 88 - 92
 - Added Jasper JP2 decoder
 - Minor bugfixes
 
 0.5.0  (03/05/2008)
-# Sourceforge SVN rev 87
+# Sourceforge SVN rev 75 - 87
 - Added basic API documentation
 - Dramatially enhanced handling of endian issues
 - Added some minor debug checks
 - Changed data types to use stdint.h
 
 0.4.1  (02/28/2008)
-# Sourceforge SVN rev 74
+# Sourceforge SVN rev 72 - 74
 - Fixed libtool issue under Darwin
 - Several minor bugfixes
 
 0.3.0  (02/26/2008)
-# Sourceforge SVN rev 71
+# Sourceforge SVN rev 63 - 71
 - Fixed numerous bugs
 - Split icns.c into manageable portions
 - Added function to retrieve image with mask from icon family
