@@ -27,6 +27,8 @@ Boston, MA 02110-1301, USA.
 
 #include "icns.h"
 
+#include "config.h"
+
 #ifndef _ICNS_INTERNALS_H_
 #define	_ICNS_INTERNALS_H_
 

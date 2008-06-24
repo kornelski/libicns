@@ -11,10 +11,12 @@ png2icns_SOURCES = \
 
 icns2png_LDADD = \
   @PNG_LIBS@ \
+  @JP2000_LIBS@ \
   ../src/libicns.la
 
 png2icns_LDADD = \
   @PNG_LIBS@ \
+  @JP2000_LIBS@ \
   ../src/libicns.la
 
 man_MANS = \
