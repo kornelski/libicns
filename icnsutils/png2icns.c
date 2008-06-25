@@ -224,15 +224,6 @@ add_png_to_family(icns_family_t **iconFamily, char *pngname)
 
   printf("Using icns type '%s', mask '%s' for '%s'\n", iconStr, maskStr, pngname);
 
-  icns_init_image_for_type(maskType, &icnsMask);
-
-  while ((iconDataOffset < icnsImage.imageDataSize) && (maskDataOffset < icnsMask.imageDataSize))
-    {
-      icnsMask.imageData[maskDataOffset] = icnsImage.imageData[iconDataOffset+3];
-      iconDataOffset += 4; /* move to the next alpha byte */
-      maskDataOffset += 1; /* move to the next byte */
-    }
-
   icnsErr = icns_new_element_from_image(&icnsImage, iconType, &iconElement);
 
   if (iconElement != NULL)
@@ -242,6 +233,17 @@ add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	  icns_set_element_in_family(iconFamily, iconElement);
 	}
       free(iconElement);
+    }
+
+if(icns_types_not_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA) && icns_types_not_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA))
+{
+  icns_init_image_for_type(maskType, &icnsMask);
+
+  while ((iconDataOffset < icnsImage.imageDataSize) && (maskDataOffset < icnsMask.imageDataSize))
+    {
+      icnsMask.imageData[maskDataOffset] = icnsImage.imageData[iconDataOffset+3];
+      iconDataOffset += 4; /* move to the next alpha byte */
+      maskDataOffset += 1; /* move to the next byte */
     }
 
   icnsErr = icns_new_element_from_mask(&icnsMask, maskType, &maskElement);
@@ -254,6 +256,7 @@ add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	}
       free(maskElement);
     }
+}
 
   free(buffer);
 

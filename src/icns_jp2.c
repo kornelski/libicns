@@ -211,6 +211,10 @@ int icns_jas_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image
 	// JP2 components, i.e. channels in icns case
 	imageChannels = jas_image_numcmpts(image);
 
+	#ifdef ICNS_DEBUG
+	printf("%d components in jp2 data\n",imageChannels);
+	#endif
+
 	// There should be 4 of these
 	if( imageChannels != 4)
 	{
@@ -313,6 +317,15 @@ exception:
 int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
 {
 	int error = ICNS_STATUS_OK;
+	jas_stream_t  *imagestream = NULL;
+	jas_image_t   *jasimage = NULL;
+	jas_matrix_t  *bufs[4] = {NULL,NULL,NULL,NULL};
+	jas_image_cmptparm_t cmptparms[4];
+	icns_sint32_t c = 0;
+	icns_sint32_t xpos = 0;
+	icns_sint32_t ypos = 0;
+	icns_sint32_t height = 0;
+	icns_sint32_t width = 0;
 	
 	if(image == NULL)
 	{
@@ -331,10 +344,134 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 		icns_print_err("icns_jas_image_to_jp2: Data ref is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
+
+	if(image->imageChannels != 4)
+	{
+		icns_print_err("icns_jas_image_to_jp2: number if channels in input image should be 4!\n");
+		return ICNS_STATUS_INVALID_DATA;
 	
-	icns_print_err("icns_jas_image_to_jp2: libicns doesn't support writing jp2 images with libjasper yet!\n");
-	error = ICNS_STATUS_UNSUPPORTED;
+	}
+
+	if(image->imagePixelDepth != 8)
+	{
+		// Maybe support 64/128-bit images (16/32-bits per channel) in the future?
+		icns_print_err("icns_jas_image_to_jp2: jp2 images currently need to be 8 bits per pixel per channel!\n");
+		return ICNS_STATUS_INVALID_DATA;
 	
+	}
+
+	// Set these NULL for now
+	*dataSizeOut = 0;
+	*dataPtrOut = NULL;
+	
+	// Apple JP2 icns format seems to be as follows:
+	//	JP	- JP2 Signature
+	//	FTYP	- File Type
+	//	JP2	- JP2 Header
+	//		IHDR
+	//		COLR
+	//			METH = 1
+	//			EnumCS = sRGB
+	//		CDEF
+	//	JP2C	- JPEG 2000 Codestream
+	//	So far everything looks OK, except we may have a problem with the CDEF
+	// 	not coming in. If this becomes an issue, see libjasper jp2_enc.c lines 252-301
+
+	width = image->imageWidth;
+	height = image->imageHeight;
+	
+	// Set up the component parameters
+	for (c = 0; c < 4; c++) {
+		cmptparms[c].tlx = 0;
+		cmptparms[c].tly = 0;
+		cmptparms[c].hstep = 1;
+		cmptparms[c].vstep = 1;
+		cmptparms[c].width = width;
+		cmptparms[c].height = height;
+		cmptparms[c].prec = 8;
+		cmptparms[c].sgnd = false;
+	}
+
+	// Initialize Jasper
+	jas_init();
+	
+	// Allocate a new japser image
+	if (!(jasimage = jas_image_create(4, cmptparms, JAS_CLRSPC_UNKNOWN)))
+	{
+		icns_print_err("icns_jas_image_to_jp2: could not allocate new jasper image! (Likely out of memory)\n");
+		return ICNS_STATUS_NO_MEMORY;
+	}
+
+	// Set up the image components
+	jas_image_setclrspc(jasimage, JAS_CLRSPC_SRGB);
+	jas_image_setcmpttype(jasimage, 0, JAS_IMAGE_CT_RGB_R);
+	jas_image_setcmpttype(jasimage, 1, JAS_IMAGE_CT_RGB_G);
+	jas_image_setcmpttype(jasimage, 2, JAS_IMAGE_CT_RGB_B);
+	jas_image_setcmpttype(jasimage, 3, JAS_IMAGE_CT_OPACITY);
+
+	// Allocate the matrix buffers
+	for (c = 0; c < 4; c++)
+	{
+		if ((bufs[c] = jas_matrix_create(image->imageHeight, image->imageWidth)) == NULL)
+		{
+			icns_print_err("icns_jas_image_to_jp2: Unable to create image matix! (No memory)\n");
+			error = ICNS_STATUS_NO_MEMORY;
+			goto exception;
+		}
+	}
+	
+	// Write each channel component to the jasper image
+	for(c = 0; c < 4; c++)
+	{
+		for(ypos = 0; ypos < height; ypos++)
+		    for(xpos = 0; xpos < width; xpos++)
+		        jas_matrix_set(bufs[c], ypos, xpos, (int)((image->imageData)+(((4*ypos*width)+xpos))+c));
+
+		jas_image_writecmpt(jasimage, c, 0, 0, width, height, bufs[c]);
+	}
+	
+	// Create a new in-memory stream - Jasper will allocate and grow this as needed
+	imagestream = jas_stream_memopen( NULL, 0);
+	
+	// Write the image to the stream
+	if (jas_image_encode(jasimage, imagestream, jas_image_strtofmt("jp2"),NULL)) {
+		icns_print_err("icns_jas_image_to_jp2: Unable to encode jp2 data!\n");
+		error = ICNS_STATUS_INVALID_DATA;
+		goto exception;
+	}
+	
+	jas_stream_flush(imagestream);
+
+	// Offload the stream to our memory buffers
+	*dataSizeOut = jas_stream_length(imagestream);
+
+	#ifdef ICNS_DEBUG
+	printf("Compressed jp2 data size is %d\n",*dataSizeOut);
+	#endif
+
+	*dataPtrOut = (icns_byte_t *)malloc(*dataSizeOut);
+	if(!(*dataPtrOut))
+	{
+		icns_print_err("icns_jas_image_to_jp2: Unable to allocate memory block of size: %d ($s:%m)!\n",(int)*dataSizeOut);
+		return ICNS_STATUS_NO_MEMORY;
+	}
+	
+	jas_stream_rewind(imagestream);
+	jas_stream_read(imagestream,*dataPtrOut,*dataSizeOut);
+
+	jas_stream_close(imagestream);
+	
+exception:
+	
+	for(c = 0; c < 4; c++) {
+		if(bufs[c] != NULL)
+			jas_matrix_destroy(bufs[c]);
+	}
+	
+	jas_image_destroy(jasimage);
+	jas_image_clearfmts();
+	jas_cleanup();
+		
 	return error;
 }
 

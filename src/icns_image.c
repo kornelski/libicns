@@ -686,6 +686,36 @@ int icns_init_image(icns_uint32_t iconWidth,icns_uint32_t iconHeight,icns_uint32
 	unsigned long	iconDataSize = 0;
 	unsigned long	iconDataRowSize = 0;
 
+	if(imageOut == NULL)
+	{
+		icns_print_err("icns_init_image: Icon image structure is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+
+	if(iconWidth == 0)
+	{
+		icns_print_err("icns_init_image: icon width is 0!\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+
+	if(iconHeight == 0)
+	{
+		icns_print_err("icns_init_image: icon height is 0!\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+
+	if(iconChannels == 0)
+	{
+		icns_print_err("icns_init_image: icon channels is 0!\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+
+	if(iconPixelDepth == 0)
+	{
+		icns_print_err("icns_init_image: icon pixel depth is 0!\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+
 	iconBitDepth = iconPixelDepth * iconChannels;
 	iconDataRowSize = iconWidth * iconBitDepth / ICNS_BYTE_BITS;
 	iconDataSize = iconHeight * iconDataRowSize;
