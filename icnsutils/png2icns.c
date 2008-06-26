@@ -308,5 +308,8 @@ int main(int argc, char **argv)
 
   fclose(icnsfile);
 
+  if(iconFamily != NULL)
+	free(iconFamily);
+
   return 0;
 }

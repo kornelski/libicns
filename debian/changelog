@@ -1,3 +1,11 @@
+libicns (0.5.9-1) unstable; urgency=low
+
+  * Fixed configure to link against jasper/openjpeg (Closes: #487463)
+  * Several minor bugfixes
+  * Added write support for 256x256, 512x512
+
+ -- Mathew Eis <mathew@eisbox.net>  Wed, 25 Jun 2008 19:07:24 -0700
+
 libicns (0.5.8-1) unstable; urgency=low
 
   * Initial release (Closes: #481804)

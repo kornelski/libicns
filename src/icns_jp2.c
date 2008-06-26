@@ -228,6 +228,13 @@ int icns_jas_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image
 	imageHeight = jas_image_cmptheight(image, 0);
 	imagePixelDepth = jas_image_cmptprec(image, 0);
 	
+	#ifdef ICNS_DEBUG
+	for(c = 0; c < 4; c++)
+	{
+		printf("component %d type: %d\n",c,jas_image_cmpttype(image, c));
+	}
+	#endif
+
 	imageDataSize = imageHeight * imageWidth * imageChannels * (imagePixelDepth / ICNS_BYTE_BITS);
 	imageOut->imageWidth = imageWidth;
 	imageOut->imageHeight = imageHeight;
@@ -322,8 +329,8 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 	jas_matrix_t  *bufs[4] = {NULL,NULL,NULL,NULL};
 	jas_image_cmptparm_t cmptparms[4];
 	icns_sint32_t c = 0;
-	icns_sint32_t xpos = 0;
-	icns_sint32_t ypos = 0;
+	icns_sint32_t x = 0;
+	icns_sint32_t y = 0;
 	icns_sint32_t height = 0;
 	icns_sint32_t width = 0;
 	
@@ -410,26 +417,45 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 	jas_image_setcmpttype(jasimage, 3, JAS_IMAGE_CT_OPACITY);
 
 	// Allocate the matrix buffers
-	for (c = 0; c < 4; c++)
+	for(c = 0; c < 4; c++)
 	{
-		if ((bufs[c] = jas_matrix_create(image->imageHeight, image->imageWidth)) == NULL)
+		if ((bufs[c] = jas_matrix_create(height, width)) == NULL)
 		{
 			icns_print_err("icns_jas_image_to_jp2: Unable to create image matix! (No memory)\n");
 			error = ICNS_STATUS_NO_MEMORY;
 			goto exception;
 		}
 	}
-	
+		
+	// Copy all the image data into the jasper matrices
+	for (y=0; y<height; y++)
+	{
+		icns_rgba_t *src_pixel;
+		int		offset = 0;
+		
+		for (x=0; x<width; x++)
+		{
+			offset = y*width*4+x*4;
+			src_pixel = (icns_rgba_t *)&((image->imageData)[offset]);
+
+			jas_matrix_set(bufs[0], y, x, src_pixel->r);
+			jas_matrix_set(bufs[1], y, x, src_pixel->g);
+			jas_matrix_set(bufs[2], y, x, src_pixel->b);
+			jas_matrix_set(bufs[3], y, x, src_pixel->a);
+		}
+	}
+
 	// Write each channel component to the jasper image
 	for(c = 0; c < 4; c++)
 	{
-		for(ypos = 0; ypos < height; ypos++)
-		    for(xpos = 0; xpos < width; xpos++)
-		        jas_matrix_set(bufs[c], ypos, xpos, (int)((image->imageData)+(((4*ypos*width)+xpos))+c));
-
-		jas_image_writecmpt(jasimage, c, 0, 0, width, height, bufs[c]);
+		if(jas_image_writecmpt(jasimage, c, 0, 0, width, height, bufs[c]))
+		{
+			icns_print_err("icns_jas_image_to_jp2: Unable to write data for component #%d!\n",c);
+			error = ICNS_STATUS_INVALID_DATA;
+			goto exception;
+		}
 	}
-	
+
 	// Create a new in-memory stream - Jasper will allocate and grow this as needed
 	imagestream = jas_stream_memopen( NULL, 0);
 	
