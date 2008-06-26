@@ -3,6 +3,8 @@ lib_LTLIBRARIES = libicns.la
 
 libicns_la_LDFLAGS = -version-info 2:4:1
 
+libicns_la_LIBADD = @JP2000_LIBS@
+
 libicns_la_SOURCES = \
   icns_debug.c \
   icns_element.c \

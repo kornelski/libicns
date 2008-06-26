@@ -54,7 +54,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgconfigdir)" \
 	"$(DESTDIR)$(libicns_includedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libicns_la_LIBADD =
+libicns_la_DEPENDENCIES =
 am_libicns_la_OBJECTS = icns_debug.lo icns_element.lo icns_family.lo \
 	icns_image.lo icns_io.lo icns_jp2.lo icns_rle24.lo \
 	icns_utils.lo
@@ -196,6 +196,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libicns.la
 libicns_la_LDFLAGS = -version-info 2:4:1
+libicns_la_LIBADD = @JP2000_LIBS@
 libicns_la_SOURCES = \
   icns_debug.c \
   icns_element.c \
