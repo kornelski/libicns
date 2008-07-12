@@ -9,7 +9,7 @@ Homepage: http://icns.sourceforge.net/
 Package: libicns-dev
 Section: libdevel
 Architecture: any
-Depends: libicns1 (= ${binary:Version})
+Depends: libicns1 (= ${binary:Version}), ${misc:Depends}
 Description: libicns development files
  libicns is a library for manipulation of
  the Mac OS icns resource format, also known as the IconFamily
@@ -33,7 +33,7 @@ Description: library for manipulation of the Mac OS icns format
 Package: icnsutils
 Section: graphics
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: utilities for manipulating Mac OS icns files
  icnsutils includes icns2png and png2icns, two utilies used to
  extract PNG images from icns files, and create icns files from
