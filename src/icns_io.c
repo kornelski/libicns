@@ -80,6 +80,52 @@ static inline void icns_read_be(void *outp, void *inp, int size)
 	}
 }
 
+#define ICNS_READ_UNALIGNED_LE(val, addr, size)    icns_read_le(&(val), (addr), (size))
+static inline void icns_read_le(void *outp, void *inp, int size)
+{
+	icns_byte_t	b[8] = {0,0,0,0,0,0,0,0};
+		
+	if(outp == NULL)
+		return;
+	
+	if(inp == NULL)
+		return;
+
+	memcpy(&b, inp, size);
+
+	#ifdef ICNS_DEBUG
+	int i = 0;
+	printf("Reading %d bytes: ",size);
+	for(i = 0; i < size; i++)
+		printf("0x%02X ",b[i]);
+	printf("\n");
+	#endif
+		
+	switch(size)
+	{
+	case 1:
+		*((uint8_t *)(outp)) = b[0];
+		break;
+	case 2:
+		*((uint16_t *)(outp)) = b[0]|b[1]<< 8;
+		break;
+	case 4:
+		*((uint32_t *)(outp)) = b[0]|b[1]<<8| b[2]<<16|b[3]<<24;
+		break;
+	case 8:
+		*((uint64_t *)(outp)) = b[0]|b[1]<<8| b[2]<<16|b[3]<<24| (uint64_t)b[4]<<32|(uint64_t)b[5]<<40| (uint64_t)b[6]<<48|(uint64_t)b[7]<<56;
+		break;
+	
+	// This is a special case needed by icns_read_macbinary_resource_fork
+	case 3:
+		*((uint32_t *)(outp)) = ((uint16_t)b[0]|(uint16_t)b[1]<<8|(uint16_t)b[2]<<16) & 0x00FFFFFF;
+		break;
+	
+	default:
+		break;
+	}
+}
+
 /***************************** ICNS_WRITE_UNALIGNED_BE **************************/
 /* NOTE: only accessible to icns_io.c */
 #define ICNS_WRITE_UNALIGNED_BE(addr, val, size)    icns_write_be((addr), &(val), (size))
@@ -280,19 +326,31 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 				dataPtr = NULL;
 			}
 		}
-		// Attempt 2 - try to import from an 'icns' resource in a macintosh resource file
-		else if(icns_rsrc_header_check(dataSize,dataPtr))
+		// Attempt 2 - try to import from an 'icns' resource in a big endian macintosh resource file
+		else if(icns_rsrc_header_check(dataSize,dataPtr,ICNS_BE_RSRC))
 		{
 			#ifdef ICNS_DEBUG
 			printf("Trying to find icns data in resource file...\n");
 			#endif
-			if((error = icns_find_family_in_mac_resource(dataSize,dataPtr,iconFamilyOut)))
+			if((error = icns_find_family_in_mac_resource(dataSize,dataPtr,ICNS_BE_RSRC,iconFamilyOut)))
 			{
 				icns_print_err("icns_read_family_from_file: Error reading macintosh resource file!\n");
 				*iconFamilyOut = NULL;	
 			}
 		}
-		// Attempt 3 - try to import from an 'icns' resource in a macbinary resource fork
+		// Attempt 3 - try to import from an 'icns' resource in a little endian macintosh resource file
+		else if(icns_rsrc_header_check(dataSize,dataPtr,ICNS_LE_RSRC))
+		{
+			#ifdef ICNS_DEBUG
+			printf("Trying to find icns data in resource file...\n");
+			#endif
+			if((error = icns_find_family_in_mac_resource(dataSize,dataPtr,ICNS_LE_RSRC,iconFamilyOut)))
+			{
+				icns_print_err("icns_read_family_from_file: Error reading macintosh resource file!\n");
+				*iconFamilyOut = NULL;	
+			}
+		}
+		// Attempt 4 - try to import from an 'icns' resource in a macbinary resource fork
 		else if(icns_macbinary_header_check(dataSize,dataPtr))
 		{
 			icns_size_t	resourceSize;
@@ -308,7 +366,36 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 			
 			if(error == 0)
 			{
-				if((error = icns_find_family_in_mac_resource(resourceSize,resourceData,iconFamilyOut)))
+				if((error = icns_find_family_in_mac_resource(resourceSize,resourceData,ICNS_BE_RSRC,iconFamilyOut)))
+				{
+					icns_print_err("icns_read_family_from_file: Error reading icns data from macbinary resource fork!\n");
+					*iconFamilyOut = NULL;	
+				}
+			}
+			
+			if(resourceData != NULL)
+			{
+				free(resourceData);
+				resourceData = NULL;
+			}
+		}
+		// Attempt 5 - try to import from an 'icns' resource in a apple encoded resource fork
+		else if(icns_apple_encoded_header_check(dataSize,dataPtr))
+		{
+			icns_size_t	resourceSize;
+			icns_byte_t	*resourceData;
+			#ifdef ICNS_DEBUG
+			printf("Trying to find icns data in apple encoded resource fork...\n");
+			#endif
+			if((error = icns_read_apple_encoded_resource_fork(dataSize,dataPtr,NULL,NULL,&resourceSize,&resourceData)))
+			{
+				icns_print_err("icns_read_family_from_file: Error reading macbinary resource fork!\n");
+				*iconFamilyOut = NULL;	
+			}
+			
+			if(error == 0)
+			{
+				if((error = icns_find_family_in_mac_resource(resourceSize,resourceData,ICNS_BE_RSRC,iconFamilyOut)))
 				{
 					icns_print_err("icns_read_family_from_file: Error reading icns data from macbinary resource fork!\n");
 					*iconFamilyOut = NULL;	
@@ -397,12 +484,25 @@ int icns_read_family_from_rsrc(FILE *dataFile,icns_family_t **iconFamilyOut)
 	
 	if(error == 0)
 	{
-		if(icns_rsrc_header_check(dataSize,dataPtr))
+		// Read from big endian resource file
+		if(icns_rsrc_header_check(dataSize,dataPtr,ICNS_BE_RSRC))
 		{
 			#ifdef ICNS_DEBUG
-			printf("Trying to find icns data in resource file...\n");
+			printf("Trying to find icns data in big endian mac resource file...\n");
 			#endif
-			if((error = icns_find_family_in_mac_resource(dataSize,dataPtr,iconFamilyOut)))
+			if((error = icns_find_family_in_mac_resource(dataSize,dataPtr,ICNS_BE_RSRC,iconFamilyOut)))
+			{
+				icns_print_err("icns_read_family_from_rsrc: Error reading macintosh resource file!\n");
+				*iconFamilyOut = NULL;	
+			}
+		}
+		// Read from little endian resource file
+		else if(icns_rsrc_header_check(dataSize,dataPtr,ICNS_LE_RSRC))
+		{
+			#ifdef ICNS_DEBUG
+			printf("Trying to find icns data in little endian mac resource file...\n");
+			#endif
+			if((error = icns_find_family_in_mac_resource(dataSize,dataPtr,ICNS_LE_RSRC,iconFamilyOut)))
 			{
 				icns_print_err("icns_read_family_from_rsrc: Error reading macintosh resource file!\n");
 				*iconFamilyOut = NULL;	
@@ -706,7 +806,7 @@ exception:
 
 /***************************** icns_find_family_in_mac_resource **************************/
 
-int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resData, icns_family_t **dataOut)
+int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resData, icns_rsrc_endian_t fileEndian, icns_family_t **dataOut)
 {
 	icns_bool_t	error = ICNS_STATUS_OK;
 	icns_bool_t	found = 0;
@@ -740,10 +840,17 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 	}
 	
 	// Load Resource Header to if we are dealing with a raw resource fork.
-	ICNS_READ_UNALIGNED_BE(resHeadDataOffset, (resData+0),sizeof( icns_sint32_t));
-	ICNS_READ_UNALIGNED_BE(resHeadMapOffset, (resData+4),sizeof( icns_sint32_t));
-	ICNS_READ_UNALIGNED_BE(resHeadDataSize, (resData+8),sizeof( icns_sint32_t));
-	ICNS_READ_UNALIGNED_BE(resHeadMapSize, (resData+12),sizeof( icns_sint32_t));
+	if(fileEndian == ICNS_BE_RSRC) {
+		ICNS_READ_UNALIGNED_BE(resHeadDataOffset, (resData+0),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_BE(resHeadMapOffset, (resData+4),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_BE(resHeadDataSize, (resData+8),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_BE(resHeadMapSize, (resData+12),sizeof( icns_sint32_t));
+	} else if(fileEndian == ICNS_LE_RSRC) {
+		ICNS_READ_UNALIGNED_LE(resHeadDataOffset, (resData+0),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_LE(resHeadMapOffset, (resData+4),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_LE(resHeadDataSize, (resData+8),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_LE(resHeadMapSize, (resData+12),sizeof( icns_sint32_t));
+	}
 	
 	#ifdef ICNS_DEBUG
 	printf("  data offset: %d (0x%08X)\n",resHeadDataOffset,resHeadDataOffset);
@@ -768,10 +875,17 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 	}
 	
 	// Load Resource Map
-	ICNS_READ_UNALIGNED_BE(resMapAttributes, (resData+resHeadMapOffset+0+22),sizeof( icns_sint16_t));
-	ICNS_READ_UNALIGNED_BE(resMapTypeOffset, (resData+resHeadMapOffset+2+22),sizeof( icns_sint16_t));
-	ICNS_READ_UNALIGNED_BE(resMapNameOffset, (resData+resHeadMapOffset+4+22),sizeof( icns_sint16_t));
-	ICNS_READ_UNALIGNED_BE(resMapNumTypes, (resData+resHeadMapOffset+6+22),sizeof( icns_sint16_t));
+	if(fileEndian == ICNS_BE_RSRC) {
+		ICNS_READ_UNALIGNED_BE(resMapAttributes, (resData+resHeadMapOffset+0+22),sizeof( icns_sint16_t));
+		ICNS_READ_UNALIGNED_BE(resMapTypeOffset, (resData+resHeadMapOffset+2+22),sizeof( icns_sint16_t));
+		ICNS_READ_UNALIGNED_BE(resMapNameOffset, (resData+resHeadMapOffset+4+22),sizeof( icns_sint16_t));
+		ICNS_READ_UNALIGNED_BE(resMapNumTypes, (resData+resHeadMapOffset+6+22),sizeof( icns_sint16_t));
+	} else 	if(fileEndian == ICNS_LE_RSRC) {
+		ICNS_READ_UNALIGNED_LE(resMapAttributes, (resData+resHeadMapOffset+0+22),sizeof( icns_sint16_t));
+		ICNS_READ_UNALIGNED_LE(resMapTypeOffset, (resData+resHeadMapOffset+2+22),sizeof( icns_sint16_t));
+		ICNS_READ_UNALIGNED_LE(resMapNameOffset, (resData+resHeadMapOffset+4+22),sizeof( icns_sint16_t));
+		ICNS_READ_UNALIGNED_LE(resMapNumTypes, (resData+resHeadMapOffset+6+22),sizeof( icns_sint16_t));
+	}
 	
 	// 0 == 1 here, so fix that
 	resMapNumTypes = resMapNumTypes + 1;
@@ -796,9 +910,14 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 		// Do NOT swap type
 		ICNS_READ_UNALIGNED(resType, (resData+resHeadMapOffset+resMapTypeOffset+2+(count*8)),sizeof( icns_type_t));
 		
-		ICNS_READ_UNALIGNED_BE(resNumItems, (resData+resHeadMapOffset+resMapTypeOffset+6+(count*8)),sizeof( icns_sint16_t));
-		ICNS_READ_UNALIGNED_BE(resOffset, (resData+resHeadMapOffset+resMapTypeOffset+8+(count*8)),sizeof( icns_sint16_t));
-		
+		if(fileEndian == ICNS_BE_RSRC) {
+			ICNS_READ_UNALIGNED_BE(resNumItems, (resData+resHeadMapOffset+resMapTypeOffset+6+(count*8)),sizeof( icns_sint16_t));
+			ICNS_READ_UNALIGNED_BE(resOffset, (resData+resHeadMapOffset+resMapTypeOffset+8+(count*8)),sizeof( icns_sint16_t));
+		} else 	if(fileEndian == ICNS_LE_RSRC) {
+			ICNS_READ_UNALIGNED_LE(resNumItems, (resData+resHeadMapOffset+resMapTypeOffset+6+(count*8)),sizeof( icns_sint16_t));
+			ICNS_READ_UNALIGNED_LE(resOffset, (resData+resHeadMapOffset+resMapTypeOffset+8+(count*8)),sizeof( icns_sint16_t));
+		}
+
 		// 0 == 1 here, so fix that
 		resNumItems = resNumItems + 1;
 		
@@ -819,15 +938,25 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 			
 			found = 1;
 			
-			ICNS_READ_UNALIGNED_BE(resID, (resData+resHeadMapOffset+resMapTypeOffset+resOffset),sizeof( icns_sint16_t));
-			ICNS_READ_UNALIGNED_BE(resNameOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+2),sizeof( icns_sint16_t));
-			ICNS_READ_UNALIGNED_BE(resAttributes, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+4),sizeof( icns_sint8_t));
-			
+			if(fileEndian == ICNS_BE_RSRC) {
+				ICNS_READ_UNALIGNED_BE(resID, (resData+resHeadMapOffset+resMapTypeOffset+resOffset),sizeof( icns_sint16_t));
+				ICNS_READ_UNALIGNED_BE(resNameOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+2),sizeof( icns_sint16_t));
+				ICNS_READ_UNALIGNED_BE(resAttributes, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+4),sizeof( icns_sint8_t));
+			} else	if(fileEndian == ICNS_LE_RSRC) {
+				ICNS_READ_UNALIGNED_LE(resID, (resData+resHeadMapOffset+resMapTypeOffset+resOffset),sizeof( icns_sint16_t));
+				ICNS_READ_UNALIGNED_LE(resNameOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+2),sizeof( icns_sint16_t));
+				ICNS_READ_UNALIGNED_LE(resAttributes, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+4),sizeof( icns_sint8_t));
+			}
+
 			// Read in the resource name, if it exists (-1 indicates it doesn't)
 			if(resNameOffset != -1)
 			{
-				ICNS_READ_UNALIGNED_BE(resNameLength, (resData+resHeadMapOffset+resMapNameOffset+resNameOffset),sizeof( icns_sint8_t));
-				
+				if(fileEndian == ICNS_BE_RSRC) {
+					ICNS_READ_UNALIGNED_BE(resNameLength, (resData+resHeadMapOffset+resMapNameOffset+resNameOffset),sizeof( icns_sint8_t));
+				} else if(fileEndian == ICNS_LE_RSRC) {
+					ICNS_READ_UNALIGNED_LE(resNameLength, (resData+resHeadMapOffset+resMapNameOffset+resNameOffset),sizeof( icns_sint8_t));
+				}
+
 				if(resNameLength > 0)
 					memcpy(&resName[0],(resData+resHeadMapOffset+resMapNameOffset+resNameOffset+1),resNameLength);
 
@@ -835,14 +964,23 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 			}
 			
 			// Read three byte int starting at resHeadMapOffset+resMapTypeOffset+resOffset+5
-			ICNS_READ_UNALIGNED_BE(resItemDataOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+5), 3);
+			if(fileEndian == ICNS_BE_RSRC) {
+				ICNS_READ_UNALIGNED_BE(resItemDataOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+5), 3);
+			} else	if(fileEndian == ICNS_LE_RSRC) {
+				ICNS_READ_UNALIGNED_LE(resItemDataOffset, (resData+resHeadMapOffset+resMapTypeOffset+resOffset+5), 3);
+			}
+			
 			#ifdef ICNS_DEBUG
 			printf("    data offset is: %d (0x%08X)\n",resItemDataOffset,resItemDataOffset);
 			printf("    actual offset is: %d (0x%08X)\n",resHeadDataOffset+resItemDataOffset,resHeadDataOffset+resItemDataOffset);
 			#endif
 
-			ICNS_READ_UNALIGNED_BE(resItemDataSize, (resData+resHeadDataOffset+resItemDataOffset),sizeof( icns_sint32_t));
-			
+			if(fileEndian == ICNS_BE_RSRC) {
+				ICNS_READ_UNALIGNED_BE(resItemDataSize, (resData+resHeadDataOffset+resItemDataOffset),sizeof( icns_sint32_t));
+			} else	if(fileEndian == ICNS_LE_RSRC) {
+				ICNS_READ_UNALIGNED_LE(resItemDataSize, (resData+resHeadDataOffset+resItemDataOffset),sizeof( icns_sint32_t));
+			}
+
 			#ifdef ICNS_DEBUG
 			printf("    data size is: %d\n",resItemDataSize);
 			#endif
@@ -1058,6 +1196,156 @@ int icns_read_macbinary_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,
 	return error;
 }
 
+
+//**************** icns_read_apple_encoded_resource_fork *******************//
+// Parses a resource fork from an Apple Single or Apple Double file
+// Returns the resource fork type, creator, size, and data
+
+int icns_read_apple_encoded_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,icns_size_t *parsedResSizeOut,icns_byte_t **parsedResDataOut)
+{
+	icns_uint32_t magic = 0;
+	icns_byte_t   version[4] = {0,0,0,0};
+	icns_byte_t   filler[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	icns_uint16_t	entries = 0;
+	icns_uint16_t	curEntry = 0;
+	icns_uint32_t	entryID = 0;
+	icns_uint32_t	entryOffset = 0;
+	icns_uint32_t	entryLen = 0;
+	icns_type_t	fileType = ICNS_NULL_TYPE;
+	icns_type_t	fileCreator = ICNS_NULL_TYPE;
+	icns_sint32_t   resourceDataSize = 0;
+	icns_sint32_t   resourceDataStart = 0;
+	icns_byte_t	*resourceDataPtr = NULL;
+
+	if(dataPtr == NULL)
+	{
+		icns_print_err("icns_read_apple_encoded_resource_fork: apple encoded data is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(dataTypeOut != NULL)
+		*dataTypeOut = ICNS_NULL_TYPE;
+	
+	if(dataCreatorOut != NULL)
+		*dataCreatorOut = ICNS_NULL_TYPE;
+	
+	if(parsedResSizeOut == NULL)
+	{
+		icns_print_err("icns_read_apple_encoded_resource_fork: parsedResSizeOut is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	else
+	{
+		*parsedResSizeOut = 0;
+	}
+
+	if(parsedResDataOut == NULL)
+	{
+		icns_print_err("icns_read_apple_encoded_resource_fork: parsedResSizeOut is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	else
+	{
+		*parsedResDataOut = NULL;
+	}
+	
+	if(dataSize < 26)
+	{
+		// AppleSingle/AppleDouble header is 26 bytes - We cannot have a file of a smaller size.
+		icns_print_err("icns_read_apple_encoded_resource_fork: Unable to decode apple encoded data! - Data size too small.\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+
+	ICNS_READ_UNALIGNED_BE(magic, (dataPtr+0),sizeof(icns_uint32_t));
+	ICNS_READ_UNALIGNED(version[0], (dataPtr+4), 4);
+	ICNS_READ_UNALIGNED(filler[0], (dataPtr+8), 16);
+	ICNS_READ_UNALIGNED_BE(entries, (dataPtr+24),sizeof(icns_uint16_t));
+
+	#ifdef ICNS_DEBUG
+	printf("    magic is: 0x%08X\n",magic);
+	printf("    version is: %02X%02X%02X%02X\n",version[0],version[1],version[2],version[3]);
+	printf("    filler is: ");
+	printf("%02X%02X%02X%02X",filler[0],filler[1],filler[2],filler[3]);
+	printf("%02X%02X%02X%02X",filler[4],filler[5],filler[6],filler[7]);
+	printf("%02X%02X%02X%02X",filler[8],filler[9],filler[10],filler[11]);
+	printf("%02X%02X%02X%02X",filler[12],filler[13],filler[14],filler[15]);
+	printf("\n");
+	printf("    entries count: %d\n",entries);
+	#endif
+
+	if (dataSize < (26 + (entries * 12) + 8) )
+	{
+		icns_print_err("icns_read_apple_encoded_resource_fork: Unable to decode apple encoded data! - Data size too small.\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+
+	if((magic != ICNS_APPLE_SINGLE_MAGIC)&&(magic != ICNS_APPLE_DOUBLE_MAGIC))
+	{
+		icns_print_err("icns_read_apple_encoded_resource_fork: Unable to decode apple encoded data! - invalid magic bytes.\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+
+	ICNS_READ_UNALIGNED(fileType, (dataPtr+26+(entries*12)+0),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED(fileCreator, (dataPtr+26+(entries*12)+4),sizeof( icns_type_t));
+
+	// If mac file type is requested, pass it up
+	if(dataTypeOut != NULL)
+		*dataTypeOut = fileType;
+
+	// If mac file creator is requested, pass it up
+	if(dataCreatorOut != NULL)
+		*dataCreatorOut = fileCreator;
+
+	for (curEntry = 0; curEntry < entries; curEntry++)
+	{
+		ICNS_READ_UNALIGNED_BE(entryID, (dataPtr+26+(curEntry*12)+0),sizeof(icns_uint32_t));
+		ICNS_READ_UNALIGNED_BE(entryOffset, (dataPtr+26+(curEntry*12)+4),sizeof(icns_uint32_t));
+		ICNS_READ_UNALIGNED_BE(entryLen, (dataPtr+26+(curEntry*12)+8),sizeof(icns_uint32_t));
+
+		#ifdef ICNS_DEBUG
+		printf("    decoding entry...\n");
+		printf("    entryID is: %d\n",entryID);
+		printf("    entryOffset is: %d\n",entryOffset);
+		printf("    entryLen is: %d",entryLen);
+		#endif
+
+		switch (entryID) {
+		case ICNS_APPLE_ENC_DATA:
+			// Do nothing
+			break;
+		case ICNS_APPLE_ENC_RSRC:
+			resourceDataStart = entryOffset;
+			resourceDataSize = entryLen;
+			break;
+		}
+	}
+
+	if( (resourceDataStart < 38) || (resourceDataStart > dataSize) ) {
+		icns_print_err("icns_read_apple_encoded_resource_fork: Invalid resource data start!\n");
+	       	return ICNS_STATUS_INVALID_DATA;
+	}
+	if( (resourceDataSize < 16) || (resourceDataSize > (dataSize-38))  ) {
+		icns_print_err("icns_read_apple_encoded_resource_fork: Invalid resource data size!\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+
+	resourceDataPtr = (icns_byte_t *)malloc(resourceDataSize);
+
+	if(resourceDataPtr == NULL)
+	{
+		icns_print_err("icns_read_macbinary_resource_fork: Unable to allocate memory block of size: %d!\n",(int)resourceDataSize);
+		return ICNS_STATUS_NO_MEMORY;
+	}
+
+	memcpy(resourceDataPtr,(dataPtr+resourceDataStart),resourceDataSize);
+
+	*parsedResSizeOut = resourceDataSize;
+	*parsedResDataOut = resourceDataPtr;
+
+	return ICNS_STATUS_OK;	
+}
+
+
 //**************** icns_icns_header_check *******************//
 icns_bool_t icns_icns_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
 {
@@ -1084,7 +1372,7 @@ icns_bool_t icns_icns_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
 }
 
 //**************** icns_rsrc_header_check *******************//
-icns_bool_t icns_rsrc_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
+icns_bool_t icns_rsrc_header_check(icns_size_t dataSize,icns_byte_t *dataPtr,icns_rsrc_endian_t fileEndian)
 {
 	icns_sint32_t	resHeadDataOffset = 0;
 	icns_sint32_t	resHeadMapOffset = 0;
@@ -1094,12 +1382,21 @@ icns_bool_t icns_rsrc_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
 	if(dataSize < 16)
 		return 0;
 	
-	// Load Resource Header to if we are dealing with a raw resource fork.
-	ICNS_READ_UNALIGNED_BE(resHeadDataOffset, (dataPtr+0),sizeof( icns_sint32_t));
-	ICNS_READ_UNALIGNED_BE(resHeadMapOffset, (dataPtr+4),sizeof( icns_sint32_t));
-	ICNS_READ_UNALIGNED_BE(resHeadDataSize, (dataPtr+8),sizeof( icns_sint32_t));
-	ICNS_READ_UNALIGNED_BE(resHeadMapSize, (dataPtr+12),sizeof( icns_sint32_t));
-	
+	// Load Resource Header to if we are dealing with a raw little endian resource fork.
+	if(fileEndian == ICNS_BE_RSRC) {
+		ICNS_READ_UNALIGNED_BE(resHeadDataOffset, (dataPtr+0),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_BE(resHeadMapOffset, (dataPtr+4),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_BE(resHeadDataSize, (dataPtr+8),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_BE(resHeadMapSize, (dataPtr+12),sizeof( icns_sint32_t));
+	} else if(fileEndian == ICNS_LE_RSRC) {
+		ICNS_READ_UNALIGNED_LE(resHeadDataOffset, (dataPtr+0),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_LE(resHeadMapOffset, (dataPtr+4),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_LE(resHeadDataSize, (dataPtr+8),sizeof( icns_sint32_t));
+		ICNS_READ_UNALIGNED_LE(resHeadMapSize, (dataPtr+12),sizeof( icns_sint32_t));
+	} else {
+		return 0;
+	}
+
 	// Check to see if file is not a raw resource file
 	if( (resHeadMapOffset+resHeadMapSize != dataSize) || (resHeadDataOffset+resHeadDataSize != resHeadMapOffset) )
 		return 0;
@@ -1182,4 +1479,42 @@ icns_bool_t icns_macbinary_header_check(icns_size_t dataSize,icns_byte_t *dataPt
 	return 1;
 }
 
+//**************** icns_apple_encoded_header_check *******************//
 
+icns_bool_t icns_apple_encoded_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
+{
+	icns_bool_t	isValid = 0;
+	icns_uint32_t magic = 0;
+	icns_byte_t   version[4] = {0,0,0,0};
+	icns_byte_t   filler[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	icns_uint16_t	entries = 0;
+	icns_uint16_t	curEntry = 0;
+	icns_uint32_t	entryID = 0;
+	icns_uint32_t	entryOffset = 0;
+	icns_uint32_t	entryLen = 0;
+
+	icns_sint32_t   resourceDataSize = 0;
+	icns_sint32_t   resourceDataStart = 0;
+	icns_byte_t	*resourceDataPtr = NULL;
+
+	if(dataPtr == NULL)
+		return 0;
+	
+	
+	if(dataSize < 26)
+		return 0;
+
+	ICNS_READ_UNALIGNED_BE(magic, (dataPtr+0),sizeof(icns_uint32_t));
+	ICNS_READ_UNALIGNED(version[0], (dataPtr+4), 4);
+	ICNS_READ_UNALIGNED(filler[0], (dataPtr+8), 16);
+	ICNS_READ_UNALIGNED_BE(entries, (dataPtr+24),sizeof(icns_uint16_t));
+
+
+	if((magic != ICNS_APPLE_SINGLE_MAGIC)&&(magic != ICNS_APPLE_DOUBLE_MAGIC))
+		return 0;
+
+	if (dataSize < (26 + (entries * 12) + 8) )
+		return 0;
+
+	return 1;
+}

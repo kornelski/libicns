@@ -36,7 +36,7 @@ Boston, MA 02110-1301, USA.
 /*  These should really be set from the Makefile */
 
 // Enable debugging messages?
-// #define	ICNS_DEBUG	1
+#define	ICNS_DEBUG	1
 
 // Enable supprt for 256x256 and 512x512 icons
 // Use either Jasper or OpenJPEG, but not both
@@ -90,6 +90,18 @@ typedef struct icns_rgb_t
 
 #define			ICNS_BYTE_BITS	8
 
+typedef enum icns_rsrc_endian_t
+{
+	ICNS_BE_RSRC = 0,
+	ICNS_LE_RSRC = 1
+} icns_rsrc_endian_t;
+
+#define			ICNS_APPLE_SINGLE_MAGIC 0x00051600
+#define			ICNS_APPLE_DOUBLE_MAGIC 0x00051607
+
+#define			ICNS_APPLE_ENC_DATA 1
+#define			ICNS_APPLE_ENC_RSRC 2
+
 /* icns macros */
 
 /*
@@ -139,11 +151,14 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 
 // icns_io.c
 int icns_parse_family_data(icns_size_t dataSize,icns_byte_t *data,icns_family_t **iconFamilyOut);
-int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resData, icns_family_t **dataOut);
+int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resData, icns_rsrc_endian_t fileEndian, icns_family_t **dataOut);
 int icns_read_macbinary_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,icns_size_t *parsedResSizeOut,icns_byte_t **parsedResDataOut);
+int icns_read_apple_encoded_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,icns_type_t *dataTypeOut, icns_type_t *dataCreatorOut,icns_size_t *parsedResSizeOut,icns_byte_t **parsedResDataOut);
 icns_bool_t icns_icns_header_check(icns_size_t dataSize,icns_byte_t *dataPtr);
-icns_bool_t icns_rsrc_header_check(icns_size_t dataSize,icns_byte_t *dataPtr);
+icns_bool_t icns_rsrc_header_check(icns_size_t dataSize,icns_byte_t *dataPtr,icns_rsrc_endian_t fileEndian);
 icns_bool_t icns_macbinary_header_check(icns_size_t dataSize,icns_byte_t *dataPtr);
+icns_bool_t icns_apple_encoded_header_check(icns_size_t dataSize,icns_byte_t *dataPtr);
+
 
 // icns_jp2.c
 #ifdef ICNS_JASPER
@@ -163,6 +178,7 @@ void icns_opj_info_callback(const char *msg, void *client_data);
 // icns_utils.c
 void icns_print_err(const char *template, ...);
 
+// Stop hiding symbols
 #pragma GCC visibility pop
 
 #endif /* _ICNS_INTERNALS_H_ */
