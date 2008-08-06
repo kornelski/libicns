@@ -19,53 +19,176 @@ Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.
 */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+/*
+Extract icns files from an icontainer archive
+iContainer format is a binary object tree - likely
+encoded by the Mac OS X NSArchiver
+Specifically, we are after the blocks of NSData
+containing the icns files
+
+The following is a VERY rough layout of the iContainer archive, version 3
+
+NSMutableDictionary:NSDictionary:NSObject = (
+{
+  NSString "iconOrder" = NSMutableArray:NSArray(internal-unique-candyBar-ID-1,internal-unique-candyBar-ID-2)
+  ContainerVersion = 3
+  // May contain any of the following:
+  CustomIcon = NSData {binary-icns-icon}
+  AuthorName = Artiste De Icone
+  AuthorEmail = atriste@artistes.org
+  AuthorURL = http://icns.artistes.org/home/
+  Copyright = 2010 Future Design Studio
+  AuthoringLock = ????
+  BackgroundColor = NSNumber:NSValue {array-of-floats} // NOTE: Content of NSValue unknown
+  PreviewSize = NSNumber:NSValue {some-preview-size} // NOTE: Content of NSValue unknown
+  // Still working on the following
+  // Some kind of array/dictionary?
+  {
+    Name = iMovie
+    Type = IcnsFile
+    IcnsData = {Raw-icns-data} ??
+    // May additionally contain some of the following:
+    Author = Artiste De Icone
+    URL = http://icns.artistes.org/home/
+    Copyright = 2010 Future Design Studio
+  }
+  {
+    ...
+  }
+}
+
+Then, there also appears to be an largely different archive, version 50 (0x32)
+Reversal of this format is still a work in progress...
+
+NSMutableDictionary:NSDictionary:NSObject = (
+{
+  NSString "Copyright" = 2010 Future Design Studio
+
+  Icons = {
+    internal-unique-candyBar-ID-6 = {
+      Type = IcnsData
+      Name = my-icon-name
+      NSData {raw-icon-data}
+    }
+  }
+}
+
+
+*/
 
 #define	ARCHIVE_TYPE_UNKNOWN	0
 #define	ARCHIVE_TYPE_BE		1
 #define	ARCHIVE_TYPE_LE		2
 
-// --> find icns data[i]
-// --> data[i-9] - data[i-1] = "[######]" (id)
-// --> data[i-58] - data[i-58+x] = "name"
+typedef struct _LL {
+	struct _LL	*prev;
+	struct _LL	*next;
+	char	*str;
+	char	*data;
+} _Stack, *Stack;
 
-static inline unsigned short clamp(short s) {
-	if (s < 0) return 118 + s;
-	if (s > 117) return s - 118;
-	return s;
-}
-
-static inline int isChar(char c) {
-	if (c > 'z') return 0;
-	if (c < 'a') return (c == '_');
-	return -1;
-}
-
-unsigned char decodeData(FILE *stream,int depth,unsigned char classDataLen)
+Stack	NewStack(void)
 {
-	char		spaces[256] = {0};
-	int		s = 0;
-	unsigned char	classDataBuf[256] = {0};
+	_Stack	*new = NULL;
+	new = (Stack)malloc(sizeof(_Stack));
+	memset(new,0,sizeof(_Stack));
+	return new;
+}
 
-	for(s = 0; s < depth; s++)
-		spaces[s] = ' ';
-	spaces[depth] = 0;
+void StackPush(Stack *skr,char *str)
+{
+	struct _LL	*new = NULL;
 
-	printf("%sReading %d (0x%0X) bytes of data...\n",spaces,classDataLen,classDataLen);
-	fread ( &classDataBuf[0], sizeof(unsigned char), classDataLen, stream );
-	classDataBuf[classDataLen] = 0;
-	printf("%sData is '%s'\n",spaces,classDataBuf);
+	if(skr == NULL)
+		return;
+	if(*skr == NULL)
+		return;
 
-	return classDataBuf[0];
+	new = NewStack();
+	new->str = str;
+	
+	new->prev = (*skr);
+	(*skr)->next = new;
+	(*skr) = new;
+}
+
+char *StackPop(Stack *skr)
+{
+	char	*str = NULL;
+
+	if(skr == NULL)
+		return NULL;
+	if(*skr == NULL)
+		return NULL;
+	
+	if((*skr)->prev == NULL)
+		return (*skr)->str;
+
+	while((*skr)->next != NULL)
+		*skr = (*skr)->next;
+
+	str = (*skr)->str;
+
+	*skr = (*skr)->prev;
+
+	free((*skr)->next);
+	(*skr)->next = NULL;
+
+	return str;
+}
+
+char *StackPeek(Stack *skr)
+{
+	if(skr == NULL)
+		return NULL;
+	if(*skr == NULL)
+		return NULL;
+	
+	if((*skr)->prev == NULL)
+		return (*skr)->str;
+
+	while((*skr)->next != NULL)
+		*skr = (*skr)->next;
+
+	return (*skr)->str;
+}
+
+char *MakeStr(const char *str)
+{
+	char	*new = NULL;
+	int	len = 0;
+	if(str == NULL)
+		return NULL;
+	len = strlen(str);
+	new = (char *)malloc(len);
+	memcpy(new,str,len);
+	return new;
+}
+
+char *CopyStr(const char *str,int len)
+{
+	char	*new = NULL;
+	if(str == NULL)
+		return NULL;
+	new = (char *)malloc(len);
+	memcpy(new,str,len);
+	return new;
 }
 
 void decodeArchive(FILE *stream,char archiveTypeID)
 {
-	char		spaces[256] = {0};
+	unsigned char	classDataBuf[256] = {0};
+	char		spaces[512] = {0};
 	int		s = 0;
-	int		c;
-	int		r;
+	int		c = 0;
 	int		depth = 0;
+	int		mark = 0;
+
+	Stack		stk = NULL;
+	stk = NewStack();
 
 	while ((c = getc(stream)) != EOF)
 	{
@@ -73,205 +196,214 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 			spaces[s] = ' ';
 		spaces[depth] = 0;
 	
-		if(c == 0x00) {
-			printf("%sEnd item\n",spaces);
-			continue;
+		if( c == 0x84 ) {
+			mark++;
+		} else {
+			mark = 0;
 		}
 
 		if( c == 1)
 		{
-			r = decodeData(stream,depth+1,c);
-			printf("%s-special case for 1 byte of data. ('%c' 0x%0X)\n",spaces,r,r);
-			switch(r)
-			{
-				case '#': // 0x23 - class object
-					printf("%sClass Object [UNHANDLED]\n",spaces);
-					break;
-				case '*': // 0x2A - character string
-					printf("%sCharacter String [UNHANDLED]\n",spaces);
-					break;
-				case '+': // 0x2B - ?? (Related to strings)
-					printf("%sUnknown - part of NSString? [UNHANDLED]\n",spaces);
-					break;
-				case '3': // 0x33 - ??
-					printf("%sUnknown - 3 [UNHANDLED]\n",spaces);
-					break;
-				case ':': // 0x3A - method selector
-					printf("%sMethod selector [UNHANDLED]\n",spaces);
-					break;
-				case '?': // 0x3F - unknown type
-					printf("%sUnknown Type [UNHANDLED]\n",spaces);
-					break;
-				case '@': // 0x40 - object
-					printf("%sObject [UNHANDLED]\n",spaces);
-					break;
-				case 'B': // 0x42 - bool
-					printf("%sBool [UNHANDLED]\n",spaces);
-					break;
-				case 'C': // 0x43 - unsigned char
-					printf("%sUnsigned Char [UNHANDLED]\n",spaces);
-					break;
-				case 'I': // 0x49 - unsigned int
-					printf("%sUnsigned Int [UNHANDLED]\n",spaces);
-					break;
-				case 'L': // 0x4C - unsigned long - note: 32 bits
-					printf("%sUnsigned Long [UNHANDLED]\n",spaces);
-					break;
-				case 'O': // 0x4F - method - out
-					printf("%sMethod Out [UNHANDLED]\n",spaces);
-					break;
-				case 'S': // 0x53 - unsigned short
-					printf("%sUnsigned Short [UNHANDLED]\n",spaces);
-					break;
-				case 'Q': // 0x51 - unsigned long long
-					printf("%sUnsigned Long [UNHANDLED]\n",spaces);
-					break;
-				case 'R': // 0x52 - method - byref
-					printf("%sMethod ByRef [UNHANDLED]\n",spaces);
-					break;
-				case 'V': // 0x56 - method - one way
-					printf("%sMethod One Way [UNHANDLED]\n",spaces);
-					break;
-				case '^': // 0x5E - pointer to type
-					  // Note, followed by type?
-					printf("%sPointer to Type [UNHANDLED]\n",spaces);
-					break;
-				case 'b': // 0x62 - bit field
-					  // Note, followed by NUM bits?
-					printf("%sBit Feild [UNHANDLED]\n",spaces);
-					break;
-				case 'c': // 0x63 - char
-					printf("%sChar [UNHANDLED]\n",spaces);
-					break;
-				case 'd': // 0x64 - double
-					printf("%sDouble [UNHANDLED]\n",spaces);
-					break;
-				case 'f': // 0x66 - float
-					printf("%sFloat\n",spaces);
-					decodeData(stream,depth+1,8);
-					break;
-				case 'i': // 0x69 - integer
-					printf("%sInteger [UNHANDLED]\n",spaces);
-					break;
-				case 'n': // 0x6B - method - in
-					printf("%sMethod In [UNHANDLED]\n",spaces);
-					break;
-				case 'o': // 0x6C - method - out
-					printf("%sMethod Out [UNHANDLED]\n",spaces);
-					break;
-				case 'l': // 0x6C - long - 32 bits
-					printf("%sLong [UNHANDLED]\n",spaces);
-					break;
-				case 'q': // 0x71 - long long
-					printf("%sLong Long [UNHANDLED]\n",spaces);
-					break;
-				case 'r': // 0x72 - method - const
-					printf("%sMethod Const [UNHANDLED]\n",spaces);
-					break;
-				case 's': // 0x73 - short
-					printf("%sShort [UNHANDLED]\n",spaces);
-					break;
-				case 'v': // 0x76 - void
-					printf("%sVoid [UNHANDLED]\n",spaces);
-					break;
-				case 0x95: // Should this one be here?
-					printf("%sUnknown Type 0x95 [UNHANDLED]\n",spaces);
-					break;
-				default:
-					break;
-			}
+			printf("%sGrab next byte marker...\n",spaces);
+			c = getc(stream);
 		}
-		else if( c < 0x80 )
+		else if( c > 0x00 && c < 0x80 )
 		{
-			decodeData(stream,depth+1,c);
+			printf("%sReading %d (0x%0X) bytes of data...\n",spaces,c,c);
+			fread ( &classDataBuf[0], sizeof(unsigned char), c, stream );
+			classDataBuf[c] = 0;
+			printf("%sData is '%s'\n",spaces,classDataBuf);
+			if(stk->data == NULL)
+				stk->data = CopyStr(&classDataBuf[0],c+1);
+
+			// Go back and get a new character...
+			continue;
 		}
-		else
-		{
-			switch(c) {
-				case 0x83:
-					printf("%sRead 4 bytes ='0x%0X'\n",spaces,c);
-					getc(stream);
-					getc(stream);
-					getc(stream);
-					getc(stream);
-					break;
-				case 0x84:
-					printf("%sSection ='0x%0X'\n",spaces,c);
-					break;
-				case 0x85:
-					printf("%sRead 0x84 0x01 0x69 0xXX: ?='0x%0X'\n",spaces,c);
-					getc(stream);
-					getc(stream);
-					getc(stream);
-					getc(stream);
-					break;
-				case 0x86:
-					depth--;
-					spaces[depth] = 0;
-					printf("%sItem E: ='0x%0X'\n",spaces,c);
-					break;
-				case 0x92:
-					printf("%sObject S1: ='0x%0X'\n",spaces,c);
-					depth++;
-					break;
-				case 0x93:
-					printf("%sObject S2: '0x%0X'\n",spaces,c);
-					depth++;
-					break;
-				case 0x95:
-					printf("%sArray S1: ='0x%0X'\n",spaces,c);
-					break;
-				case 0x96:
-					printf("%sArray S2: ='0x%0X'\n",spaces,c);
-					c = getc(stream);
-					printf("%sArray Key: %d (0x%0X)\n",spaces,c,c);
-					if(c == 0x82) {
-						unsigned char	b[4] = {0,0,0,0};
-						unsigned long	skip = 0;
-						
-						fread ( &b[0], sizeof(char), 4, stream );
-						
-						if(archiveTypeID == ARCHIVE_TYPE_BE) {
-							skip = b[3]|b[2]<<8| b[1]<<16|b[0]<<24;
-						}
 
-						if(archiveTypeID == ARCHIVE_TYPE_LE) {
-							skip = b[0]|b[1]<<8| b[2]<<16|b[3]<<24;
-						}
+		switch(c) {
+			case 0x00:
+				printf("%sPrevious data was Object/Class label\n",spaces);
+				break;
+			case '#': // 0x23 - class object
+				printf("%sClass Object [UNHANDLED]\n",spaces);
+				break;
+			case '*': // 0x2A - character string
+				printf("%sCharacter String [UNHANDLED]\n",spaces);
+				break;
+			case '+': // 0x2B - ?? (Related to strings)
+				printf("%sCString to follow...\n",spaces);
+				break;
+			case '3': // 0x33 - ??
+				printf("%sUnknown - 3 [UNHANDLED]\n",spaces);
+				break;
+			case ':': // 0x3A - method selector
+				printf("%sMethod selector [UNHANDLED]\n",spaces);
+				break;
+			case '?': // 0x3F - unknown type
+				printf("%sUnknown Type [UNHANDLED]\n",spaces);
+				break;
+			case '@': // 0x40 - object
+				printf("%sObject\n",spaces);
+				printf("%s{\n",spaces);
+				//StackPush(&stk,MakeStr("object"));
+				break;
+			case 'B': // 0x42 - bool
+				printf("%sBool [UNHANDLED]\n",spaces);
+				break;
+			case 'C': // 0x43 - unsigned char
+				printf("%sUnsigned Char [UNHANDLED]\n",spaces);
+				break;
+			case 'I': // 0x49 - unsigned int
+				printf("%sUnsigned Int [UNHANDLED]\n",spaces);
+				break;
+			case 'L': // 0x4C - unsigned long - note: 32 bits
+				printf("%sUnsigned Long [UNHANDLED]\n",spaces);
+				break;
+			case 'O': // 0x4F - method - out
+				printf("%sMethod Out [UNHANDLED]\n",spaces);
+				break;
+			case 'S': // 0x53 - unsigned short
+				printf("%sUnsigned Short [UNHANDLED]\n",spaces);
+				break;
+			case 'Q': // 0x51 - unsigned long long
+				printf("%sUnsigned Long [UNHANDLED]\n",spaces);
+				break;
+			case 'R': // 0x52 - method - byref
+				printf("%sMethod ByRef [UNHANDLED]\n",spaces);
+				break;
+			case 'V': // 0x56 - method - one way
+				printf("%sMethod One Way [UNHANDLED]\n",spaces);
+				break;
+			case '^': // 0x5E - pointer to type
+				  // Note, followed by type?
+				printf("%sPointer to Type [UNHANDLED]\n",spaces);
+				break;
+			case 'b': // 0x62 - bit field
+				  // Note, followed by NUM bits?
+				printf("%sBit Feild [UNHANDLED]\n",spaces);
+				break;
+			case 'c': // 0x63 - char
+				printf("%sChar [UNHANDLED]\n",spaces);
+				break;
+			case 'd': // 0x64 - double
+				printf("%sDouble [UNHANDLED]\n",spaces);
+				break;
+			case 'f': // 0x66 - float
+				printf("%sFloat\n",spaces);
+				fread ( &classDataBuf[0], sizeof(unsigned char), 8, stream );
+				break;
+			case 'i': // 0x69 - integer
+				{
+					int	rNum = 0;
+					rNum = getc(stream);
+					printf("%sInteger: %d\n",spaces,rNum);
+				}
+				break;
+			case 'n': // 0x6B - method - in
+				printf("%sMethod In [UNHANDLED]\n",spaces);
+				break;
+			case 'o': // 0x6C - method - out
+				printf("%sMethod Out [UNHANDLED]\n",spaces);
+				break;
+			case 'l': // 0x6C - long - 32 bits
+				printf("%sLong [UNHANDLED]\n",spaces);
+				break;
+			case 'q': // 0x71 - long long
+				printf("%sLong Long [UNHANDLED]\n",spaces);
+				break;
+			case 'r': // 0x72 - method - const
+				printf("%sMethod Const [UNHANDLED]\n",spaces);
+				break;
+			case 's': // 0x73 - short
+				printf("%sShort [UNHANDLED]\n",spaces);
+				break;
+			case 'v': // 0x76 - void
+				printf("%sVoid [UNHANDLED]\n",spaces);
+				break;
 
-						printf("\n\n%s============= Data of size: %d ===========\n\n",spaces,(int)skip);
-						skip+=10;
-						fseek ( stream, skip, SEEK_CUR );
+
+			case 0x83:
+				printf("%sRead 4 bytes ='0x%0X'\n",spaces,c);
+				getc(stream);
+				getc(stream);
+				getc(stream);
+				getc(stream);
+				break;
+			case 0x84:
+				//printf("%sSection ='0x%0X'\n",spaces,c);
+				printf("%s-mark- %d\n",spaces,mark);
+				break;
+			case 0x85:
+				printf("%sObject S0 ='0x%0X'\n",spaces,c);
+				depth+=2;
+				break;
+			case 0x86:
+				depth-=2;
+				spaces[depth] = 0;
+				printf("%s}\n",spaces);
+				printf("%sItem E: ='0x%0X'\n\n",spaces,c);
+				break;
+			case 0x92:
+				printf("%sItem S1: ='0x%0X'\n",spaces,c);
+				depth+=2;
+				printf("%s{\n",spaces);
+				break;
+			case 0x93:
+				printf("%sItem S2: '0x%0X'\n",spaces,c);
+				break;
+			case 0x95:
+				printf("%sArray S1: ='0x%0X'\n",spaces,c);
+				break;
+			case 0x96:
+				printf("%sArray S2: ='0x%0X'\n",spaces,c);
+				c = getc(stream);
+				printf("%sArray Key: %d (0x%0X)\n",spaces,c,c);
+				if(c == 0x82) {
+					unsigned char	b[4] = {0,0,0,0};
+					unsigned long	skip = 0;
+					
+					fread ( &b[0], sizeof(char), 4, stream );
+					
+					if(archiveTypeID == ARCHIVE_TYPE_BE) {
+						skip = b[3]|b[2]<<8| b[1]<<16|b[0]<<24;
 					}
-					break;
-				case 0x97:
-					printf("%sArray E1: ='0x%0X'\n",spaces,c);
-					break;
-				case 0x98:
-					printf("%sArray E2: ='0x%0X'\n",spaces,c);
-					break;
-				case 0x99:
-					printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
-					break;
-				case 0x9B:
-					printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
-					break;
-				case 0x9D:
-					printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
-					break;
-				case 0x9E:
-					printf("%sPrimitive S: ='0x%0X'\n",spaces,c);
-					break;
-				case 0x9F:
-					printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
-					break;
-				case 0xEF:
-					printf("%sMARKER?: '0x%0X' NOTED\n",spaces,c);
-					break;
-				default:
-					printf("%sUNKNOWN: '0x%0X'\n",spaces,c);
-					break;
-			}
+
+					if(archiveTypeID == ARCHIVE_TYPE_LE) {
+						skip = b[0]|b[1]<<8| b[2]<<16|b[3]<<24;
+					}
+
+					printf("\n%sData of size: %d\n\n",spaces,(int)skip);
+					skip+=10;
+					fseek ( stream, skip, SEEK_CUR );
+				}
+				break;
+			case 0x97:
+				printf("%sArray E1: ='0x%0X'\n",spaces,c);
+				break;
+			case 0x98:
+				printf("%sArray E2: ='0x%0X'\n",spaces,c);
+				break;
+			case 0x99:
+				printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
+				break;
+			case 0x9B:
+				printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
+				break;
+			case 0x9D:
+				printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
+				break;
+			case 0x9E:
+				printf("%sPrimitive S: ='0x%0X'\n",spaces,c);
+				break;
+			case 0x9F:
+				printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
+				break;
+			case 0xEF:
+				printf("%sMARKER?: '0x%0X' NOTED\n",spaces,c);
+				break;
+			default:
+				printf("%sUNKNOWN: '0x%0X'\n",spaces,c);
+				break;
 		}
 	}
 
@@ -287,8 +419,7 @@ int main(int argc, char **argv)
 	char		archiveTypeID = ARCHIVE_TYPE_UNKNOWN;
 	unsigned char	archiveSysBytes[2] = {0,0};
 	unsigned short	archiveSystem = 0;
-
-
+	
 	printf("icontainer2icns, (C) 2005-2008 by Thomas Lübking & Mathew Eis\n\n");
 
 	if (argc < 2) {
