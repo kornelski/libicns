@@ -24,16 +24,21 @@ Boston, MA 02110-1301, USA.
 
 /*
 Extract icns files from an icontainer archive
-iContainer format is a binary object tree - likely
-encoded by the Mac OS X NSArchiver
-Specifically, we are after the blocks of NSData
-containing the icns files
+iContainer format is some kind binary object tree
+It is likely encoded by the Mac OS X NSArchiver
+which, in turn, uses Objective-C type encodings; see
+http://gcc.gnu.org/onlinedocs/gcc-3.0.4/gcc_7.html
 
-The following is a VERY rough layout of the iContainer archive, version 3
+We are after the blocks of NSData containing the icns icons
+
+Note: Doing this in C is a pretty poor implementation; it
+would much better be done in some kind of Objective-C language.
+
+The following is a VERY rough layout of the iContainer tree, version 3
 
 NSMutableDictionary:NSDictionary:NSObject = (
 {
-  NSString "iconOrder" = NSMutableArray:NSArray(internal-unique-candyBar-ID-1,internal-unique-candyBar-ID-2)
+  NSString "iconOrder" = NSMutableArray:NSArray(internal-unique-candyBar-ID-1,internal-unique-candyBar-ID-2,...)
   ContainerVersion = 3
   // May contain any of the following:
   CustomIcon = NSData {binary-icns-icon}
@@ -60,7 +65,7 @@ NSMutableDictionary:NSDictionary:NSObject = (
   }
 }
 
-Then, there also appears to be an largely different archive, version 50 (0x32)
+Then, there also appears to be another tree, version 50 (0x32)
 Reversal of this format is still a work in progress...
 
 NSMutableDictionary:NSDictionary:NSObject = (
@@ -184,8 +189,13 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 	char		spaces[512] = {0};
 	int		s = 0;
 	int		c = 0;
+	int		d = 0;
 	int		depth = 0;
 	int		mark = 0;
+	int		markSet = 0;
+
+	int		nextArrayKey = 0;
+	int		nextDataBuffer = 0;
 
 	Stack		stk = NULL;
 	stk = NewStack();
@@ -197,29 +207,55 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 		spaces[depth] = 0;
 	
 		if( c == 0x84 ) {
+			if(markSet == 0) {
+				mark = 0;
+			}
 			mark++;
+			markSet++;
 		} else {
-			mark = 0;
+			markSet = 0;
+			if(d == 0x92) {
+				printf("%sMissing Marker\n",spaces);
+				depth-=2;
+				spaces[depth] = 0;
+				printf("%s}\n",spaces);
+			}
 		}
 
-		if( c == 1)
+		if(c == 1 && nextDataBuffer == 0)
 		{
 			printf("%sGrab next byte marker...\n",spaces);
 			c = getc(stream);
 		}
-		else if( c > 0x00 && c < 0x80 )
+		else if(c > 0x00 && c < 0x80)
 		{
-			printf("%sReading %d (0x%0X) bytes of data...\n",spaces,c,c);
-			fread ( &classDataBuf[0], sizeof(unsigned char), c, stream );
-			classDataBuf[c] = 0;
-			printf("%sData is '%s'\n",spaces,classDataBuf);
-			if(stk->data == NULL)
-				stk->data = CopyStr(&classDataBuf[0],c+1);
+			printf("%sKey byte: %d (0x%02X)\n",spaces,c,c);
+			if(nextArrayKey == 1)
+			{
+				printf("%sArray Key\n",spaces);
+				c = getc(stream);
+			}
+			else if(mark > 1 || nextDataBuffer == 1)
+			{
+				printf("%sReading %d bytes of data...\n",spaces,c);
+				fread ( &classDataBuf[0], sizeof(unsigned char), c, stream );
+				classDataBuf[c] = 0;
+				printf("%sData is '%s'\n",spaces,classDataBuf);
+				if(stk->data == NULL)
+					stk->data = CopyStr((char*)&classDataBuf[0],c+1);
 
-			// Go back and get a new character...
-			continue;
+				// Go back and get a new character...
+				continue;
+			}
+			else
+			{
+				printf("%sUnknown Key (mark <= 1)\n",spaces);
+			}
 		}
-
+		
+		nextArrayKey = 0;
+		nextDataBuffer = 0;
+		
 		switch(c) {
 			case 0x00:
 				printf("%sPrevious data was Object/Class label\n",spaces);
@@ -232,6 +268,7 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 				break;
 			case '+': // 0x2B - ?? (Related to strings)
 				printf("%sCString to follow...\n",spaces);
+				nextDataBuffer = 1;
 				break;
 			case '3': // 0x33 - ??
 				printf("%sUnknown - 3 [UNHANDLED]\n",spaces);
@@ -251,7 +288,11 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 				printf("%sBool [UNHANDLED]\n",spaces);
 				break;
 			case 'C': // 0x43 - unsigned char
-				printf("%sUnsigned Char [UNHANDLED]\n",spaces);
+				{
+					unsigned char	cVal = 0;
+					cVal = getc(stream);
+					printf("%sUnsigned Char: %c\n",spaces,cVal);
+				}
 				break;
 			case 'I': // 0x49 - unsigned int
 				printf("%sUnsigned Int [UNHANDLED]\n",spaces);
@@ -283,7 +324,11 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 				printf("%sBit Feild [UNHANDLED]\n",spaces);
 				break;
 			case 'c': // 0x63 - char
-				printf("%sChar [UNHANDLED]\n",spaces);
+				{
+					char	cVal = 0;
+					cVal = getc(stream);
+					printf("%sChar: %c\n",spaces,cVal);
+				}
 				break;
 			case 'd': // 0x64 - double
 				printf("%sDouble [UNHANDLED]\n",spaces);
@@ -294,9 +339,9 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 				break;
 			case 'i': // 0x69 - integer
 				{
-					int	rNum = 0;
-					rNum = getc(stream);
-					printf("%sInteger: %d\n",spaces,rNum);
+					int	nVal = 0;
+					nVal = getc(stream);
+					printf("%sInteger: %d\n",spaces,nVal);
 				}
 				break;
 			case 'n': // 0x6B - method - in
@@ -322,46 +367,34 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 				break;
 
 
-			case 0x83:
-				printf("%sRead 4 bytes ='0x%0X'\n",spaces,c);
-				getc(stream);
-				getc(stream);
-				getc(stream);
-				getc(stream);
-				break;
-			case 0x84:
-				//printf("%sSection ='0x%0X'\n",spaces,c);
-				printf("%s-mark- %d\n",spaces,mark);
-				break;
-			case 0x85:
-				printf("%sObject S0 ='0x%0X'\n",spaces,c);
-				depth+=2;
-				break;
-			case 0x86:
-				depth-=2;
-				spaces[depth] = 0;
-				printf("%s}\n",spaces);
-				printf("%sItem E: ='0x%0X'\n\n",spaces,c);
-				break;
-			case 0x92:
-				printf("%sItem S1: ='0x%0X'\n",spaces,c);
-				depth+=2;
-				printf("%s{\n",spaces);
-				break;
-			case 0x93:
-				printf("%sItem S2: '0x%0X'\n",spaces,c);
-				break;
-			case 0x95:
-				printf("%sArray S1: ='0x%0X'\n",spaces,c);
-				break;
-			case 0x96:
-				printf("%sArray S2: ='0x%0X'\n",spaces,c);
-				c = getc(stream);
-				printf("%sArray Key: %d (0x%0X)\n",spaces,c,c);
-				if(c == 0x82) {
-					unsigned char	b[4] = {0,0,0,0};
+			case 0x81: // 2-byte length - data stream indicator
+				{
+					unsigned char	b[2] = {0,0};
 					unsigned long	skip = 0;
 					
+					fread ( &b[0], sizeof(char), 2, stream );
+					
+					if(archiveTypeID == ARCHIVE_TYPE_BE) {
+						skip = b[1]|b[0]<<8;
+					}
+
+					if(archiveTypeID == ARCHIVE_TYPE_LE) {
+						skip = b[0]|b[1]<<8;
+					}
+
+					printf("\n%sMedium data stream of size: %ld\n\n",spaces,skip);
+
+					// Actual Data buffer
+					fseek ( stream, skip, SEEK_CUR );
+				}
+				break;
+			case 0x82: // 4-byte length - data stream indicator
+				{
+					unsigned char	b[4] = {0,0,0,0};
+					unsigned long	skip = 0;
+					char		bufstr[24] = {0};
+					int		idlen = 0;
+
 					fread ( &b[0], sizeof(char), 4, stream );
 					
 					if(archiveTypeID == ARCHIVE_TYPE_BE) {
@@ -372,39 +405,80 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 						skip = b[0]|b[1]<<8| b[2]<<16|b[3]<<24;
 					}
 
-					printf("\n%sData of size: %d\n\n",spaces,(int)skip);
-					skip+=10;
+					printf("\n%sLong data stream of size: %ld\n\n",spaces,skip);
+
+					sprintf(&bufstr[0],"[%ldc]",skip);
+					idlen = strlen(&bufstr[0]);
+
+					c = getc( stream );
+
+					if(c != 0x84) {
+						printf("Read byte not found - expected 0x84 got 0x%02X\n",c);
+					}
+
+					c = getc( stream );
+
+					if(c != idlen) {
+						printf("Data label length mismatch - expected %d got %d\n",idlen,c);
+					}
+
+					// Character size lablel - should match bufstr (excluding NULL byte)
+					fseek ( stream, idlen, SEEK_CUR );
+
+					// Actual Data buffer
 					fseek ( stream, skip, SEEK_CUR );
 				}
 				break;
+			case 0x83:
+				printf("%sRead 4 bytes ='0x%02X'\n",spaces,c);
+				printf("%sUNKNOWN 4-BYTE VALUE\n",spaces);
+				getc(stream);
+				getc(stream);
+				getc(stream);
+				getc(stream);
+				break;
+			case 0x84:
+				//printf("%sSection ='0x%02X'\n",spaces,c);
+				printf("%s-mark- %d\n",spaces,mark);
+				break;
+			case 0x85:
+				printf("%sObject S0 ='0x%02X'\n",spaces,c);
+				depth+=2;
+				break;
+			case 0x86:
+				depth-=2;
+				spaces[depth] = 0;
+				printf("%s}\n",spaces);
+				printf("%sItem E: ='0x%02X'\n\n",spaces,c);
+				break;
+			case 0x92:
+				printf("%sItem S1: ='0x%02X'\n",spaces,c);
+				depth+=2;
+				printf("%s{\n",spaces);
+				break;
+			case 0x93:
+				printf("%sItem S2: '0x%02X'\n",spaces,c);
+				break;
+			case 0x95:
+				printf("%sArray Start: ='0x%02X'\n",spaces,c);
+				break;
+			case 0x96:
+				printf("%sArray Data: ='0x%02X'\n",spaces,c);
+				nextArrayKey = 1;
+				break;
 			case 0x97:
-				printf("%sArray E1: ='0x%0X'\n",spaces,c);
+				printf("%sArray Element: ='0x%02X'\n",spaces,c);
 				break;
 			case 0x98:
-				printf("%sArray E2: ='0x%0X'\n",spaces,c);
-				break;
-			case 0x99:
-				printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
-				break;
-			case 0x9B:
-				printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
-				break;
-			case 0x9D:
-				printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
-				break;
-			case 0x9E:
-				printf("%sPrimitive S: ='0x%0X'\n",spaces,c);
-				break;
-			case 0x9F:
-				printf("%sUNKNOWN: '0x%0X' NOTED\n",spaces,c);
-				break;
-			case 0xEF:
-				printf("%sMARKER?: '0x%0X' NOTED\n",spaces,c);
+				printf("%sData Buffer: ='0x%02X'\n",spaces,c);
+				nextDataBuffer = 1;
 				break;
 			default:
-				printf("%sUNKNOWN: '0x%0X'\n",spaces,c);
+				printf("%sUNKNOWN: '0x%02X'\n",spaces,c);
 				break;
 		}
+
+		d = c;
 	}
 
 }
@@ -481,10 +555,10 @@ int main(int argc, char **argv)
 		printf("Warning: Archive stream version higher then expected - proceeding anyway!");
 	
 	if(archiveFlags[0] != 0x0B)
-		printf("Warning: Byte 0  is 0x%0X (Expected 0x0B) - proceeding anyway!",archiveFlags[0]);
+		printf("Warning: Byte 0  is 0x%02X (Expected 0x0B) - proceeding anyway!",archiveFlags[0]);
 	
 	if(archiveFlags[1] != 0x81)
-		printf("Warning: Byte 13  is 0x%0X (Expected 0x1) - proceeding anyway!",archiveFlags[1]);
+		printf("Warning: Byte 13  is 0x%02X (Expected 0x1) - proceeding anyway!",archiveFlags[1]);
 
 	decodeArchive(icontainer,archiveTypeID);
 	

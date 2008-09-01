@@ -1483,23 +1483,13 @@ icns_bool_t icns_macbinary_header_check(icns_size_t dataSize,icns_byte_t *dataPt
 
 icns_bool_t icns_apple_encoded_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
 {
-	icns_bool_t	isValid = 0;
 	icns_uint32_t magic = 0;
 	icns_byte_t   version[4] = {0,0,0,0};
 	icns_byte_t   filler[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	icns_uint16_t	entries = 0;
-	icns_uint16_t	curEntry = 0;
-	icns_uint32_t	entryID = 0;
-	icns_uint32_t	entryOffset = 0;
-	icns_uint32_t	entryLen = 0;
-
-	icns_sint32_t   resourceDataSize = 0;
-	icns_sint32_t   resourceDataStart = 0;
-	icns_byte_t	*resourceDataPtr = NULL;
-
-	if(dataPtr == NULL)
-		return 0;
 	
+	if(dataPtr == NULL)
+		return 0;	
 	
 	if(dataSize < 26)
 		return 0;

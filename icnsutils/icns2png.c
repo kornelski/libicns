@@ -301,12 +301,12 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	// Set up the output filename...
 	if(extractMode & EXTRACT_MODE)
 	{		
+		unsigned int	outputpathlength = 0;
+		unsigned int	filenamestart = filenamelength;
+		unsigned int	filenameend = filenamelength;
+
 		if(outputPath != NULL)
-		{
-			unsigned int	outputpathlength = 0;
-			unsigned int	filenamestart = filenamelength;
-			unsigned int	filenameend = filenamelength;
-			
+		{	
 			outputpathlength = strlen(outputPath);
 
 			// Create a buffer large enough to hold the worst case
@@ -324,7 +324,8 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 				prefilename[prefilenamelength] = 0;
 			}
 			
-			// Append the output file
+			// Append the output filename
+			// That is, the input filename from the last '/' or start to the last '.' past the last '/'
 			while(filename[filenamestart] != '/' && filenamestart > 0)
 				filenamestart--;
 			if(filenamestart == 0)
@@ -341,20 +342,25 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 		}
 		else
 		{
-			// Create a buffer for the input filename (without the extension)
+			// Create a buffer for the input filename (without the new extension)
 			prefilename = (char *)malloc(filenamelength+1);
 			if(prefilename == NULL)
 				return -1;
 
-			// See if we can find a '.' after the last '/'
-			prefilenamelength = filenamelength;
-			while(filename[prefilenamelength] != '.' && filename[prefilenamelength] != '/' && prefilenamelength > 0)
-				prefilenamelength--;
-			if(prefilenamelength == 0)
-				prefilenamelength = filenamelength;
-			if(filename[prefilenamelength] == '/')
-				prefilenamelength = filenamelength;
-			strncpy(&prefilename[0],&filename[0],prefilenamelength);
+			// Create the output filename
+			// That is, the input filename from the last '/' or start to the last '.' past the last '/'
+			while(filename[filenamestart] != '/' && filenamestart > 0)
+				filenamestart--;
+			if(filenamestart == 0)
+				filenamestart = filenamelength;
+			else
+				filenamestart++;
+			while(filename[filenameend] != '.' && filenameend > filenamestart)
+				filenameend--;
+			if(filenameend == filenamestart)
+				filenameend = filenamelength;
+			strncpy(&prefilename[0],&filename[filenamestart],filenameend - filenamestart);
+			prefilenamelength += (filenameend - filenamestart);
 			prefilename[prefilenamelength] = 0;
 		}
 		
