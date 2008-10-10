@@ -88,101 +88,6 @@ NSMutableDictionary:NSDictionary:NSObject = (
 #define	ARCHIVE_TYPE_BE		1
 #define	ARCHIVE_TYPE_LE		2
 
-typedef struct _LL {
-	struct _LL	*prev;
-	struct _LL	*next;
-	char	*str;
-	char	*data;
-} _Stack, *Stack;
-
-Stack	NewStack(void)
-{
-	_Stack	*new = NULL;
-	new = (Stack)malloc(sizeof(_Stack));
-	memset(new,0,sizeof(_Stack));
-	return new;
-}
-
-void StackPush(Stack *skr,char *str)
-{
-	struct _LL	*new = NULL;
-
-	if(skr == NULL)
-		return;
-	if(*skr == NULL)
-		return;
-
-	new = NewStack();
-	new->str = str;
-	
-	new->prev = (*skr);
-	(*skr)->next = new;
-	(*skr) = new;
-}
-
-char *StackPop(Stack *skr)
-{
-	char	*str = NULL;
-
-	if(skr == NULL)
-		return NULL;
-	if(*skr == NULL)
-		return NULL;
-	
-	if((*skr)->prev == NULL)
-		return (*skr)->str;
-
-	while((*skr)->next != NULL)
-		*skr = (*skr)->next;
-
-	str = (*skr)->str;
-
-	*skr = (*skr)->prev;
-
-	free((*skr)->next);
-	(*skr)->next = NULL;
-
-	return str;
-}
-
-char *StackPeek(Stack *skr)
-{
-	if(skr == NULL)
-		return NULL;
-	if(*skr == NULL)
-		return NULL;
-	
-	if((*skr)->prev == NULL)
-		return (*skr)->str;
-
-	while((*skr)->next != NULL)
-		*skr = (*skr)->next;
-
-	return (*skr)->str;
-}
-
-char *MakeStr(const char *str)
-{
-	char	*new = NULL;
-	int	len = 0;
-	if(str == NULL)
-		return NULL;
-	len = strlen(str);
-	new = (char *)malloc(len);
-	memcpy(new,str,len);
-	return new;
-}
-
-char *CopyStr(const char *str,int len)
-{
-	char	*new = NULL;
-	if(str == NULL)
-		return NULL;
-	new = (char *)malloc(len);
-	memcpy(new,str,len);
-	return new;
-}
-
 void decodeArchive(FILE *stream,char archiveTypeID)
 {
 	unsigned char	classDataBuf[256] = {0};
@@ -196,9 +101,6 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 
 	int		nextArrayKey = 0;
 	int		nextDataBuffer = 0;
-
-	Stack		stk = NULL;
-	stk = NewStack();
 
 	while ((c = getc(stream)) != EOF)
 	{
@@ -241,8 +143,6 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 				fread ( &classDataBuf[0], sizeof(unsigned char), c, stream );
 				classDataBuf[c] = 0;
 				printf("%sData is '%s'\n",spaces,classDataBuf);
-				if(stk->data == NULL)
-					stk->data = CopyStr((char*)&classDataBuf[0],c+1);
 
 				// Go back and get a new character...
 				continue;
@@ -282,7 +182,6 @@ void decodeArchive(FILE *stream,char archiveTypeID)
 			case '@': // 0x40 - object
 				printf("%sObject\n",spaces);
 				printf("%s{\n",spaces);
-				//StackPush(&stk,MakeStr("object"));
 				break;
 			case 'B': // 0x42 - bool
 				printf("%sBool [UNHANDLED]\n",spaces);
