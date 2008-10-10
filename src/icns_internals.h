@@ -137,7 +137,7 @@ accesses, as well as those that don't support it
 
 
 /* global variables */
-icns_bool_t gShouldPrintErrors;
+extern icns_bool_t gShouldPrintErrors;
 
 /* icns function prototypes */
 
