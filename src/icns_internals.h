@@ -36,7 +36,7 @@ Boston, MA 02110-1301, USA.
 /*  These should really be set from the Makefile */
 
 // Enable debugging messages?
-#define	ICNS_DEBUG	1
+// #define	ICNS_DEBUG	1
 
 // Enable supprt for 256x256 and 512x512 icons
 // Use either Jasper or OpenJPEG, but not both

@@ -113,7 +113,6 @@ int icns_decode_rle24_data(icns_size_t rawDataSize, icns_byte_t *rawDataPtr,icns
 	// ALPHA: byte[3], byte[7], byte[11] do nothing with these bytes
 	for(colorOffset = 0; colorOffset < 3; colorOffset++)
 	{
-		printf("CL: %d\n",colorOffset);
 		pixelOffset = 0;
 		while((pixelOffset < expectedPixelCount) && (dataOffset < rawDataSize))
 		{
@@ -121,7 +120,6 @@ int icns_decode_rle24_data(icns_size_t rawDataSize, icns_byte_t *rawDataPtr,icns
 			{
 				// Top bit is clear - run of various values to follow
 				runLength = (0xFF & rawDataPtr[dataOffset++]) + 1; // 1 <= len <= 128
-				printf("RV: %d\n",runLength);
 				for(i = 0; (i < runLength) && (pixelOffset < expectedPixelCount) && (dataOffset < rawDataSize); i++) {
 					destIconData[(pixelOffset * 4) + colorOffset] = rawDataPtr[dataOffset++];
 					pixelOffset++;
@@ -131,7 +129,6 @@ int icns_decode_rle24_data(icns_size_t rawDataSize, icns_byte_t *rawDataPtr,icns
 			{
 				// Top bit is set - run of one value to follow
 				runLength = (0xFF & rawDataPtr[dataOffset++]) - 125; // 3 <= len <= 130
-				printf("RS: %d\n",runLength);
 				// Set the value to the color shifted to the correct bit offset
 				colorValue = rawDataPtr[dataOffset++];
 				
@@ -245,7 +242,6 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 	// ALPHA: byte[3], byte[7], byte[11] do nothing with these bytes
 	for(colorOffset = 0; colorOffset < 3; colorOffset++)
 	{
-		printf("CL: %d\n",colorOffset);
 		runCount = 0;
 		
 		// Set the first byte of the run...
@@ -287,7 +283,6 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 					// same-type run starting with the previous two bytes
 					if((dataByte == dataRun[runLength-1])&&(dataByte == dataRun[runLength-2]))
 					{
-						printf("RV: %d\n",runLength-2);
 						// Set the RL byte
 						*(dataTemp+dataTempCount) = runLength - 3;
 						dataTempCount++;
@@ -319,7 +314,6 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 					}
 					else // They don't match, so we need to start a new run
 					{
-						printf("RS: %d\n",runLength);
 						// Set the RL byte
 						*(dataTemp+dataTempCount) = runLength + 125;
 						dataTempCount++;
@@ -339,7 +333,6 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 				{
 					if(runType == 0)
 					{
-						printf("RV: %d\n",runLength);
 						// Set the RL byte low
 						*(dataTemp+dataTempCount) = runLength - 1;
 						dataTempCount++;
@@ -350,7 +343,6 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 					}
 					else if(runType == 1)
 					{
-						printf("RS: %d\n",runLength);
 						// Set the RL byte high
 						*(dataTemp+dataTempCount) = runLength + 125;
 						dataTempCount++;
@@ -375,7 +367,6 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 		{
 			if(runType == 0)
 			{
-				printf("RV: %d\n",runLength);
 				// Set the RL byte low
 				*(dataTemp+dataTempCount) = runLength - 1;
 				dataTempCount++;
@@ -386,7 +377,6 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 			}
 			else if(runType == 1)
 			{
-				printf("RS: %d\n",runLength);
 				// Set the RL byte high
 				*(dataTemp+dataTempCount) = runLength + 125;
 				dataTempCount++;

@@ -1,18 +1,25 @@
-0.5.9 (Current)
-# Sourceforge SVN rev 138 - Current
+Release 0.6.0  (Current)
+# Sourceforge SVN rev 149 - current
+- libicns version 2.5.1 (per libtool)
+- 
+
+Release 0.5.9  (10/09/2008)
+# Sourceforge SVN rev 138 - 148
 # libicns version 2.4.1 (per libtool)
 - Fixed several small bugs
+- Fixed major bug in RLE compressor
+- Changed icns2png to save extracted files to current directory by default
 - Completed write support for 256x256 & 512x512 via Jasper
 
-0.5.8  (06/12/2008)
+Release 0.5.8  (06/12/2008)
 # Sourceforge SVN rev 135 - 137
 # libicns version 2.3.1 (per libtool) - (NOTE: fix to 2.3.1 at SVN rev 137)
 - Fixed licensing issues with FSF address
 - Fixed incorrect libicns/libtool versioning
 
-0.5.7  (06/10/2008)
+Release 0.5.7  (06/10/2008)
 # Sourceforge SVN rev 118 - 134
-# libicns version 2.0.1 - (NOTE: should have changed to 2.2.1)
+# libicns version 2.0.1 (per libtool) - (NOTE: should have changed to 2.2.1)
 - Updated to use autoconf 2.61, automake 1.10
 - Added debain packaging to SVN tree (NOTE: Maintainer use only!)
 - Moved libicns/ to src/ for more conventional structure
@@ -22,7 +29,7 @@
 - Prevented libicns from exporting internal-only symbols
 - Fixed some compiler errors regarding pointers
 
-0.5.6  (04/10/2008)
+Release 0.5.6  (04/10/2008)
 # Sourceforge SVN rev 109 - 117
 # libicns version 2.0.1 (per libtool) - (NOTE: should have changed to 2.1.1)
 - Several write support bugfixes (write support was broken up to this point)
@@ -30,7 +37,7 @@
 - Updated icns2png manpage
 
 
-0.5.5  (03/17/2008)
+Release 0.5.5  (03/17/2008)
 # Sourceforge SVN rev 102 - 108
 # libicns version 2.0.1 (per libtool)
 - Converted project to use GNU automake and friends
@@ -40,29 +47,29 @@
 - Enhanced icns2png for Mac OS X (accesses resource fork now)
 - Added HTML API documentation
 
-0.5.2  (03/11/2008)
+Release 0.5.2  (03/11/2008)
 # Sourceforge SVN rev 93 - 101
 - Restructured code tree to seperate icns2png from libicns
 - Minor bugfixes
 
-0.5.1  (03/07/2008)
+Release 0.5.1  (03/07/2008)
 # Sourceforge SVN rev 88 - 92
 - Added Jasper JP2 decoder
 - Minor bugfixes
 
-0.5.0  (03/05/2008)
+Release 0.5.0  (03/05/2008)
 # Sourceforge SVN rev 75 - 87
 - Added basic API documentation
 - Dramatially enhanced handling of endian issues
 - Added some minor debug checks
 - Changed data types to use stdint.h
 
-0.4.1  (02/28/2008)
+Release 0.4.1  (02/28/2008)
 # Sourceforge SVN rev 72 - 74
 - Fixed libtool issue under Darwin
 - Several minor bugfixes
 
-0.3.0  (02/26/2008)
+Release 0.3.0  (02/26/2008)
 # Sourceforge SVN rev 63 - 71
 - Fixed numerous bugs
 - Split icns.c into manageable portions
@@ -71,7 +78,7 @@
 - Added routines for accessing unaligned memory
 - Made minor code changes for consistency within libicns
 
-0.1.1  (02/20/2008)
+Release 0.1.1  (02/20/2008)
 # Sourceforge SVN rev 62
 - Fixed dynamic library build issues under OS X
 - Fixed bugs when uncompressing RLE data in sizes < 128
@@ -79,7 +86,7 @@
 - Added changelog
 - Added versioning specifications
 
-0.1.0  (02/18/2008)
+Release 0.1.0  (02/18/2008)
 - first major release of libicns with write support
 - added read support for 1,4,8 bit icons
 - removed all possible Apple copyrighted stuff
@@ -89,7 +96,7 @@
 - added file read/write support using the library directly
 - fixed Mac OS X build
 
-0.0.9  (02/14/2008)
+Release 0.0.9  (02/14/2008)
 - merged in test icns files from original source tree
 - added TODO for libicns developers
 - finished breakdown of libicns and icns2png
@@ -98,31 +105,31 @@
 - established libicns development naming conventions
 - added DEVNOTES
 
-0.0.8  (02/13/2008)
+Release 0.0.8  (02/13/2008)
 - merged forked source trees from chenxio and baghira
 - preliminary split of source into libicns and icns2png
 
-0.0.7  (01/16/2008)
+Release 0.0.7  (01/16/2008)
 - forked by chenxiao.zhao at Google Code
 - added 256x256 and 512x512 support via openjpeg
 - added command-line parameters
 
-0.0.6  (08/30/2007)
+Release 0.0.6  (08/30/2007)
 - forked by baghira at CLI-Apps
 - added "NG" icns support
 - added icontainter2icns utility
 
-0.0.5 (01/28/2003)
+Release 0.0.5 (01/28/2003)
 - Fixed bug in resource fork parsing
 
-0.0.4 (01/23/2003)
+Release 0.0.4 (01/23/2003)
 - Fixed a bug with filenames that was causing segfaults
 
-0.0.3 (12/18/2002)
+Release 0.0.3 (12/18/2002)
 - Much improved parsing of the icons within resource forks and resource files.
 - Much improved MacBinary support.
 - Updated README with unstuff information
 
-0.0.2 (01/11/2002)
+Release 0.0.2 (01/11/2002)
 - Inital public release
 

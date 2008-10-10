@@ -328,9 +328,7 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 			// That is, the input filename from the last '/' or start to the last '.' past the last '/'
 			while(filename[filenamestart] != '/' && filenamestart > 0)
 				filenamestart--;
-			if(filenamestart == 0)
-				filenamestart = filenamelength;
-			else
+			if(filenamestart != 0)
 				filenamestart++;
 			while(filename[filenameend] != '.' && filenameend > filenamestart)
 				filenameend--;
@@ -351,9 +349,7 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 			// That is, the input filename from the last '/' or start to the last '.' past the last '/'
 			while(filename[filenamestart] != '/' && filenamestart > 0)
 				filenamestart--;
-			if(filenamestart == 0)
-				filenamestart = filenamelength;
-			else
+			if(filenamestart != 0)
 				filenamestart++;
 			while(filename[filenameend] != '.' && filenameend > filenamestart)
 				filenameend--;

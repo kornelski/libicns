@@ -118,8 +118,6 @@ static int read_png(FILE *fp, png_bytepp buffer, int32_t *bpp, int32_t *width, i
 	rows = malloc (sizeof(png_bytep) * h);
 	*buffer = malloc(rowsize * h);
 
-	printf("bytes: %d\n",rowsize);
-
 	rows[0] = *buffer;
 	for (row = 1; row < h; row++)
 	{
@@ -169,8 +167,6 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 
 		return FALSE;
 	}
-	
-	printf("read png file:\n bpp: %d\n width: %d\n height: %d\n",bpp,width,height);
 
 	fclose(pngfile);
 
@@ -225,15 +221,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	icns_set_print_errors(1);
 	
 	printf("Using icns type '%s', mask '%s' for '%s'\n", iconStr, maskStr, pngname);
-	/*
-	iconDataOffset = 0;
-	while (iconDataOffset < icnsImage.imageDataSize)
-	{
-		icnsImage.imageData[iconDataOffset+1] = icnsImage.imageData[iconDataOffset];
-		icnsImage.imageData[iconDataOffset+2] = icnsImage.imageData[iconDataOffset];
-		iconDataOffset += 4; // move to the next alpha byte
-	}
-	*/
+
 	icnsErr = icns_new_element_from_image(&icnsImage, iconType, &iconElement);
 	
 	if (iconElement != NULL)
@@ -321,8 +309,10 @@ int main(int argc, char **argv)
 
 	fclose(icnsfile);
 
+	printf("Saved icns file to %s\n",argv[1]);
+
 	if(iconFamily != NULL)
-	free(iconFamily);
+		free(iconFamily);
 
 	return 0;
 }
