@@ -72,8 +72,10 @@ static int read_png(FILE *fp, png_bytepp buffer, int32_t *bpp, int32_t *width, i
 		case PNG_COLOR_TYPE_GRAY:
 			png_set_gray_1_2_4_to_8(png_ptr);
 
-			if (bit_depth == 16)
+			if (bit_depth == 16) {
 				png_set_strip_16(png_ptr);
+				bit_depth = 8;
+			}
 
 			png_set_gray_to_rgb(png_ptr);
 			png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
@@ -82,8 +84,10 @@ static int read_png(FILE *fp, png_bytepp buffer, int32_t *bpp, int32_t *width, i
 		case PNG_COLOR_TYPE_GRAY_ALPHA:
 			png_set_gray_1_2_4_to_8(png_ptr);
 
-			if (bit_depth == 16)
+			if (bit_depth == 16) {
 				png_set_strip_16(png_ptr);
+				bit_depth = 8;
+			}
 
 			png_set_gray_to_rgb(png_ptr);
 			break;
@@ -98,15 +102,21 @@ static int read_png(FILE *fp, png_bytepp buffer, int32_t *bpp, int32_t *width, i
 			break;
 
 		case PNG_COLOR_TYPE_RGB:
-			if (bit_depth == 16)
+			if (bit_depth == 16) {
 				png_set_strip_16(png_ptr);
+				bit_depth = 8;
+			}
 
 			png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
 			break;
 
 		case PNG_COLOR_TYPE_RGB_ALPHA:
-			if (bit_depth == 16)
+			printf("DBG: RGB+A\n");
+			if (bit_depth == 16) {
 				png_set_strip_16(png_ptr);
+				bit_depth = 8;
+			}
+
 			break;
 	}
 
@@ -114,9 +124,13 @@ static int read_png(FILE *fp, png_bytepp buffer, int32_t *bpp, int32_t *width, i
 	*height = h;
 	*bpp = bit_depth * 4;
 
+	png_read_update_info(png_ptr, info);
+
 	rowsize = png_get_rowbytes(png_ptr, info);
 	rows = malloc (sizeof(png_bytep) * h);
-	*buffer = malloc(rowsize * h);
+	*buffer = malloc(rowsize * h + 8);
+
+	printf("DBG: %d x %d  %d x %d\n",rowsize,h,w,bit_depth * 4);
 
 	rows[0] = *buffer;
 	for (row = 1; row < h; row++)
@@ -257,6 +271,8 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 			}
 			free(maskElement);
 		}
+		
+		icns_free_image(&icnsMask);
 	}
 
 	free(buffer);
