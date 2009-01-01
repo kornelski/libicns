@@ -1,3 +1,11 @@
+libicns (0.6.1-1) unstable; urgency=low
+
+  * New upstream release
+    - Fixed bug with exposed global variable - SF Bug 2139996
+    - Fixed bug in png2icns; info was not properly updated after transforms
+
+ -- Mathew Eis <mathew@eisbox.net>  Thu, 31 Dec 2008 17:49:02 -0700
+
 libicns (0.6.0-1) unstable; urgency=low
 
   * New upstream release

@@ -1,7 +1,13 @@
-Release 0.6.0  (Current)
-# Sourceforge SVN rev 149 - current
+Release 0.6.1  (Current)
+# Sourceforge SVN rev 152 - current
 - libicns version 2.5.1 (per libtool)
 - 
+
+Release 0.6.0  (Current)
+# Sourceforge SVN rev 149 - 151
+- libicns version 2.5.1 (per libtool)
+- Fixed bug in with global variable - SF Bug 2139996
+- Fixed bug in png2icns; info was not properly updated after transforms
 
 Release 0.5.9  (10/09/2008)
 # Sourceforge SVN rev 138 - 148
