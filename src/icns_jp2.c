@@ -459,7 +459,6 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 	// Create a new in-memory stream - Jasper will allocate and grow this as needed
 	imagestream = jas_stream_memopen( NULL, 0);
 	
-	// Write the image to the stream
 	if (jas_image_encode(jasimage, imagestream, jas_image_strtofmt("jp2"),NULL)) {
 		icns_print_err("icns_jas_image_to_jp2: Unable to encode jp2 data!\n");
 		error = ICNS_STATUS_INVALID_DATA;
@@ -468,13 +467,14 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 	
 	jas_stream_flush(imagestream);
 
-	// Offload the stream to our memory buffers
-	*dataSizeOut = jas_stream_length(imagestream);
+	// Get the size of the stream - add 34 bytes for cdef
+	*dataSizeOut = jas_stream_length(imagestream)+34;
 
 	#ifdef ICNS_DEBUG
 	printf("Compressed jp2 data size is %d\n",*dataSizeOut);
 	#endif
 
+	// Offload the stream to our memory buffers
 	*dataPtrOut = (icns_byte_t *)malloc(*dataSizeOut);
 	if(!(*dataPtrOut))
 	{
@@ -487,6 +487,148 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 
 	jas_stream_close(imagestream);
 	
+	// Add cdef block
+	{
+		icns_sint32_t	offset = 0;
+		icns_uint32_t	blocksize = 0;
+		icns_uint32_t	blocktype = 0;
+		icns_byte_t	*bytes = NULL;
+		icns_uint32_t	headeroffs = 0;
+		icns_uint32_t	headersize = 0;
+		icns_byte_t	cdef[34];
+		
+		// Initialize CDEF block
+		
+		// big endian block size - 34 bytes
+		cdef[0] = 0x00;
+		cdef[1] = 0x00;
+		cdef[2] = 0x00;
+		cdef[3] = 0x22;
+		
+		// id = 'cdef'
+		cdef[4] = 'c';
+		cdef[5] = 'd';
+		cdef[6] = 'e';
+		cdef[7] = 'f';
+		
+		// component count - 4
+		cdef[8] = 0x00;
+		cdef[9] = 0x04;
+		
+		// component number: 0
+		cdef[10] = 0x00;
+		cdef[11] = 0x00;
+		// component type: 0=color component
+		cdef[12] = 0x00;
+		cdef[13] = 0x00;
+		// component association: 1=color 1 assoc
+		cdef[14] = 0x00;
+		cdef[15] = 0x01;
+		
+		// component number: 3
+		cdef[16] = 0x00;
+		cdef[17] = 0x03;
+		// component type: 1=opacity component
+		cdef[18] = 0x00;
+		cdef[19] = 0x01;
+		// component association: 0=whole image assoc
+		cdef[20] = 0x00;
+		cdef[21] = 0x00;
+		
+		// component number: 1
+		cdef[22] = 0x00;
+		cdef[23] = 0x01;
+		// component type: 0=color component
+		cdef[24] = 0x00;
+		cdef[25] = 0x00;
+		// component association: 2=color 2 assoc
+		cdef[26] = 0x00;
+		cdef[27] = 0x02;
+		
+		// component number: 2
+		cdef[28] = 0x00;
+		cdef[29] = 0x02;
+		// component type: 0=color component
+		cdef[30] = 0x00;
+		cdef[31] = 0x00;
+		// component association: 3=color 3 assoc
+		cdef[32] = 0x00;
+		cdef[33] = 0x03;
+		
+		// skip 12 bytes to pass signature block
+		offset = 12;
+		bytes = *dataPtrOut + offset;
+		
+		// look for jp2h block (0x6A73268)
+		do
+		{
+			blocksize = bytes[3]|bytes[2]<<8|bytes[1]<<16|bytes[0]<<24;
+			offset += 4;
+			bytes = *dataPtrOut + offset;
+			blocktype = bytes[3]|bytes[2]<<8|bytes[1]<<16|bytes[0]<<24;
+			if(blocktype == 0x6A703268) {
+				offset += 4;
+				bytes = *dataPtrOut + offset;
+			} else {
+				offset = offset + (blocksize - 4);
+				bytes = *dataPtrOut + offset;
+			}
+			printf("0x%08X,0x%08X\n",blocksize,blocktype);
+		} while(blocktype != 0x6A703268 && offset < *dataPtrOut);
+		
+		// make sure we found it
+		if(blocktype != 0x6A703268) {
+			icns_print_err("icns_jas_image_to_jp2: Unable to locate jp2h block!\n");
+			error = ICNS_STATUS_INVALID_DATA;
+			goto exception;
+		} else {
+			printf("block found\n");
+		}
+		
+		// keep track of the current header offset and size
+		headeroffs = offset;
+		headersize = blocksize-8;
+		
+		// update the header block size
+		bytes = *dataPtrOut + (headeroffs-8);
+		blocksize += 34;
+		bytes[0] = blocksize >> 24;
+		bytes[1] = blocksize >> 16;
+		bytes[2] = blocksize >> 8;
+		bytes[3] = blocksize;
+		
+		// look for colr block (0x636F6C72)
+		offset = headeroffs;
+		bytes = *dataPtrOut + offset;
+		do
+		{
+			blocksize = bytes[3]|bytes[2]<<8|bytes[1]<<16|bytes[0]<<24;
+			offset += 4;
+			bytes = *dataPtrOut + offset;
+			blocktype = bytes[3]|bytes[2]<<8|bytes[1]<<16|bytes[0]<<24;
+			offset = offset + (blocksize - 4);
+			bytes = *dataPtrOut + offset;
+			printf("0x%08X,0x%08X\n",blocksize,blocktype);
+		} while(blocktype != 0x636F6C72 && offset < headeroffs+headersize);
+		
+		// if we have colr block, place cdef after it
+		// otherwise, place cdef block at start of ihdr
+		if(blocktype != 0x636F6C72) {
+			offset = headeroffs;
+		}
+
+		// shuffle the bytes backwards to make room for the cdef
+		bytes = *dataPtrOut;
+		for(c = (*dataSizeOut)-35; c >= offset; c--) {
+			bytes[c+34] = bytes[c];
+		}
+		
+		// copy in the cdef block
+		for(c = 0; c < 34; c++) {
+			bytes[c+offset] = cdef[c];
+		}
+	}
+
 exception:
 	
 	for(c = 0; c < 4; c++) {
@@ -500,7 +642,6 @@ exception:
 		
 	return error;
 }
-
 
 #endif /* ifdef ICNS_JASPER */
 
