@@ -111,7 +111,6 @@ static int read_png(FILE *fp, png_bytepp buffer, int32_t *bpp, int32_t *width, i
 			break;
 
 		case PNG_COLOR_TYPE_RGB_ALPHA:
-			printf("DBG: RGB+A\n");
 			if (bit_depth == 16) {
 				png_set_strip_16(png_ptr);
 				bit_depth = 8;
@@ -129,8 +128,6 @@ static int read_png(FILE *fp, png_bytepp buffer, int32_t *bpp, int32_t *width, i
 	rowsize = png_get_rowbytes(png_ptr, info);
 	rows = malloc (sizeof(png_bytep) * h);
 	*buffer = malloc(rowsize * h + 8);
-
-	printf("DBG: %d x %d  %d x %d\n",rowsize,h,w,bit_depth * 4);
 
 	rows[0] = *buffer;
 	for (row = 1; row < h; row++)

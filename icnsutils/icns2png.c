@@ -454,99 +454,113 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 		
 		iconDataSize = iconElement.elementSize - 8;
 		
-		iconInfo = icns_get_image_info_for_type(iconElement.elementType);
-		
-		if(iconInfo.iconWidth == iconInfo.iconHeight) {
-			iconDimSize = iconInfo.iconWidth;
-		} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_8BIT_DATA)) {
-			iconDimSize = MINI_SIZE;
-		} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_4BIT_DATA)) {
-			iconDimSize = MINI_SIZE;
-		} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_1BIT_DATA)) {
-			iconDimSize = MINI_SIZE;
-		} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_1BIT_MASK)) {
-			iconDimSize = MINI_SIZE;
-		} else {
-			iconDimSize = -1;
-		}
-		
-		if(extractMode & LIST_MODE)
-		{
-			printf(" ");
+		if(extractMode & LIST_MODE) {
 			// type
-			printf(" '%s'",typeStr);
-			// size
-			printf(" %dx%d",iconInfo.iconWidth,iconInfo.iconHeight);
-			// bit depth
-			printf(" %d-bit",iconInfo.iconBitDepth);
-			if(iconInfo.isImage)
-				printf(" icon");
-			if(iconInfo.isImage && iconInfo.isMask)
-				printf(" with");
-			if(iconInfo.isMask)
-				printf(" mask");
-			if((iconElement.elementSize-8) < iconInfo.iconRawDataSize) {
-				printf(" (%d bytes compressed to %d)",(int)iconInfo.iconRawDataSize,iconDataSize);
-			} else {
-				printf(" (%d bytes)",iconDataSize);
-			}
-			printf("\n");
+			printf("  '%s'",typeStr);
 		}
 		
-		if(extractMode & EXTRACT_MODE)
-		{
-		if(extractIconSize == ALL_SIZES || extractIconSize == iconDimSize)
-		{
-		if(extractIconDepth == ALL_DEPTHS || extractIconDepth == iconInfo.iconBitDepth)
-		{
-		if(iconInfo.isImage)
-		{
-			unsigned int	outfilenamelength = 0;
-			FILE 		*outfile = NULL;
-			icns_image_t	iconImage;
-			
-			memset ( &iconImage, 0, sizeof(icns_image_t) );
-			
-			error = icns_get_image32_with_mask_from_family(iconFamily,iconElement.elementType,&iconImage);
-			
-			if(error)
-			{
-				fprintf (stderr, "Unable to load 32-bit icon image with mask from icon family!\n");
+		if(icns_types_equal(iconElement.elementType,ICNS_ICON_VERSION)) {
+			icns_byte_t	iconBytes[4];
+			icns_uint32_t	iconVersion = 0;
+			if(iconDataSize == 4) {
+				memcpy(&iconBytes[0],(dataPtr+dataOffset+8),4);
+				iconVersion = iconBytes[3]|iconBytes[2]<<8|iconBytes[1]<<16|iconBytes[0]<<24;
 			}
-			else
+			if(extractMode & LIST_MODE) {
+				printf(" value: 0x%08X\n",iconVersion);
+			}
+		} else {
+			iconInfo = icns_get_image_info_for_type(iconElement.elementType);
+			
+			if(iconInfo.iconWidth == iconInfo.iconHeight) {
+				iconDimSize = iconInfo.iconWidth;
+			} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_8BIT_DATA)) {
+				iconDimSize = MINI_SIZE;
+			} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_4BIT_DATA)) {
+				iconDimSize = MINI_SIZE;
+			} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_1BIT_DATA)) {
+				iconDimSize = MINI_SIZE;
+			} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_1BIT_MASK)) {
+				iconDimSize = MINI_SIZE;
+			} else {
+				iconDimSize = -1;
+			}
+			
+			if(extractMode & LIST_MODE)
 			{
-				// Set up the output file name: filename_WWxHHxDD.png
-				outfilenamelength = sprintf(&outfilename[0],"%s_%dx%dx%d.png",prefilename,iconInfo.iconWidth,iconInfo.iconHeight,iconInfo.iconBitDepth);
-				outfilename[outfilenamelength] = 0;
+				// size
+				printf(" %dx%d",iconInfo.iconWidth,iconInfo.iconHeight);
+				// bit depth
+				printf(" %d-bit",iconInfo.iconBitDepth);
+				if(iconInfo.isImage)
+					printf(" icon");
+				if(iconInfo.isImage && iconInfo.isMask)
+					printf(" with");
+				if(iconInfo.isMask)
+					printf(" mask");
+				if((iconElement.elementSize-8) < iconInfo.iconRawDataSize) {
+					printf(" (%d bytes compressed to %d)",(int)iconInfo.iconRawDataSize,iconDataSize);
+				} else {
+					printf(" (%d bytes)",iconDataSize);
+				}
+				printf("\n");
+			}
+			
+			if(extractMode & EXTRACT_MODE)
+			{
+			if(extractIconSize == ALL_SIZES || extractIconSize == iconDimSize)
+			{
+			if(extractIconDepth == ALL_DEPTHS || extractIconDepth == iconInfo.iconBitDepth)
+			{
+			if(iconInfo.isImage)
+			{
+				unsigned int	outfilenamelength = 0;
+				FILE 		*outfile = NULL;
+				icns_image_t	iconImage;
 				
-				outfile = fopen(outfilename,"w");
-				if(!outfile)
+				memset ( &iconImage, 0, sizeof(icns_image_t) );
+				
+				error = icns_get_image32_with_mask_from_family(iconFamily,iconElement.elementType,&iconImage);
+				
+				if(error)
 				{
-					fprintf (stderr, "Unable to open %s for writing!\n",outfilename);
+					fprintf (stderr, "Unable to load 32-bit icon image with mask from icon family!\n");
 				}
 				else
 				{
-					error = WritePNGImage(outfile,&iconImage,NULL);
+					// Set up the output file name: filename_WWxHHxDD.png
+					outfilenamelength = sprintf(&outfilename[0],"%s_%dx%dx%d.png",prefilename,iconInfo.iconWidth,iconInfo.iconHeight,iconInfo.iconBitDepth);
+					outfilename[outfilenamelength] = 0;
 					
-					if(error) {
-						fprintf (stderr, "Error writing PNG image!\n");
-					} else {
-						printf("  Saved '%s' element to %s.\n",typeStr,outfilename);
+					outfile = fopen(outfilename,"w");
+					if(!outfile)
+					{
+						fprintf (stderr, "Unable to open %s for writing!\n",outfilename);
+					}
+					else
+					{
+						error = WritePNGImage(outfile,&iconImage,NULL);
+						
+						if(error) {
+							fprintf (stderr, "Error writing PNG image!\n");
+						} else {
+							printf("  Saved '%s' element to %s.\n",typeStr,outfilename);
+						}
+						
+						if(outfile != NULL) {
+							fclose(outfile);
+							outfile = NULL;
+						}
 					}
 					
-					if(outfile != NULL) {
-						fclose(outfile);
-						outfile = NULL;
-					}
+					extractedCount++;
+					
+					icns_free_image(&iconImage);
 				}
-				
-				extractedCount++;
-				
-				icns_free_image(&iconImage);
 			}
-		}
-		}
-		}
+			}
+			}
+			}
 		}
 		
 		// Move on to the next element

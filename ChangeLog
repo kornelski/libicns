@@ -1,9 +1,19 @@
-Release 0.6.1  (Current)
-# Sourceforge SVN rev 152 - current
-- libicns version 2.5.1 (per libtool)
+Release 0.6.2  (Current)
+# Sourceforge SVN rev 154 - current
+- libicns version 2.6.1 (per libtool)
 - 
 
-Release 0.6.0  (Current)
+Release 0.6.1  (02/05/2008)
+# Sourceforge SVN rev 152 - 153
+- libicns version 2.6.1 (per libtool)
+- Removed debug code from png2icns
+- Added CDEF block to jp2 writing code
+- Modified icns_set_element_in_family to sort newly inserted elements
+- Added icns_type_to_uint32 to libicns internals (for faster type checking)
+- Added icns_get_element_order to libicns internals (for sorting elements)
+- Minor performance improvements
+
+Release 0.6.0  (01/05/2008)
 # Sourceforge SVN rev 149 - 151
 - libicns version 2.5.1 (per libtool)
 - Fixed bug in with global variable - SF Bug 2139996

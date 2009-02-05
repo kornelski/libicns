@@ -91,10 +91,12 @@ typedef struct icns_icon_info_t
   icns_uint8_t          iconChannels;     // number of channels in data
   icns_uint16_t         iconPixelDepth;   // number of bits-per-pixel
   icns_uint16_t         iconBitDepth;     // overall bit depth = iconPixelDepth * iconChannels
-  icns_uint64_t         iconRawDataSize;  // bytes = width * height * depth / bits-per-pixel
+  icns_uint64_t         iconRawDataSize;  // uncompressed bytes = width * height * depth / bits-per-pixel
 } icns_icon_info_t;
 
 /*  icns element type constants */
+
+static const icns_type_t  ICNS_ICON_VERSION              = {{'i','c','n','V'}};
 
 static const icns_type_t  ICNS_512x512_32BIT_ARGB_DATA   = {{'i','c','0','9'}};
 static const icns_type_t  ICNS_256x256_32BIT_ARGB_DATA   = {{'i','c','0','8'}};
@@ -127,8 +129,6 @@ static const icns_type_t  ICNS_16x12_1BIT_DATA           = {{'i','c','m','#'}};
 static const icns_type_t  ICNS_16x12_4BIT_DATA           = {{'i','c','m','4'}};
 static const icns_type_t  ICNS_16x12_1BIT_MASK           = {{'i','c','m','#'}};
 static const icns_type_t  ICNS_16x12_8BIT_DATA           = {{'i','c','m','8'}};
-
-
 
 static const icns_type_t  ICNS_32x32_1BIT_ICON           = {{'I','C','O','N'}};
 

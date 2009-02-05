@@ -1,0 +1,11 @@
+icnsutils (0.6.0-1) unstable; urgency=low
+
+   As of the release of libicns 0.6.0, the default behavior of
+   icns2png when extracting icons is to save the pngs in the
+   current working directory. Prior to the release of 0.6.0, the
+   default behavior was to save the pngs in the same directory as
+   the icns file, NOT the current working directory. PNGs can still
+   be saved to a directory other than the working directory by
+   using the -o switch to choose an output directory.
+
+ -- Mathew Eis <mathew@eisbox.net>  Thu, 09 Oct 2008 19:36:10 -0700

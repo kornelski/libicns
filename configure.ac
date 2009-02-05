@@ -45,18 +45,18 @@ AC_CHECK_LIB(getopt,getopt_long)
 
 # Check for libpng
 AC_CHECK_LIB(png, png_create_read_struct, [
-AC_SUBST(PNG_LIBS, "-lpng -lz -lm")
+AC_SUBST(PNG_LIBS, "-lpng")
 ], [
   AC_CHECK_LIB(png10, png_create_read_struct, [
-  AC_SUBST(PNG_LIBS, "-lpng10 -lz -lm")
+  AC_SUBST(PNG_LIBS, "-lpng10")
   ], [
     AC_CHECK_LIB(png12, png_create_read_struct, [
-    AC_SUBST(PNG_LIBS, "-lpng12 -lz -lm")
+    AC_SUBST(PNG_LIBS, "-lpng12")
     ], [
       AC_MSG_ERROR([cannot find required library png])
-    ], [-lz -lm])
-  ], [-lz -lm])
-], [-lz -lm])
+    ], [])
+  ], [])
+], [])
 AC_CHECK_HEADERS([png.h libpng/png.h libpng10/png.h libpng12/png.h])
 
 # Check for libopenjpeg and libjasper

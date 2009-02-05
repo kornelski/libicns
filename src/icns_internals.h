@@ -88,7 +88,6 @@ typedef struct icns_rgb_t
 
 /* icns constants */
 
-#define			ICNS_BYTE_BITS	8
 
 typedef enum icns_rsrc_endian_t
 {
@@ -96,11 +95,58 @@ typedef enum icns_rsrc_endian_t
 	ICNS_LE_RSRC = 1
 } icns_rsrc_endian_t;
 
-#define			ICNS_APPLE_SINGLE_MAGIC 0x00051600
-#define			ICNS_APPLE_DOUBLE_MAGIC 0x00051607
+#define	ICNS_BYTE_BITS	                  8
 
-#define			ICNS_APPLE_ENC_DATA 1
-#define			ICNS_APPLE_ENC_RSRC 2
+#define ICNS_ID_ICON_VERSION              0x69636E56
+
+#define ICNS_ID_512x512_32BIT_ARGB_DATA   0x69633039
+#define ICNS_ID_256x256_32BIT_ARGB_DATA   0x69633038
+
+#define ICNS_ID_128X128_32BIT_DATA        0x69743332
+#define ICNS_ID_128X128_8BIT_MASK         0x74386D6B
+
+#define ICNS_ID_48x48_1BIT_DATA           0x69636823
+#define ICNS_ID_48x48_4BIT_DATA           0x69636834
+#define ICNS_ID_48x48_8BIT_DATA           0x69636838
+#define ICNS_ID_48x48_32BIT_DATA          0x69683332
+#define ICNS_ID_48x48_1BIT_MASK           0x69636823
+#define ICNS_ID_48x48_8BIT_MASK           0x68386D6B
+
+#define ICNS_ID_32x32_1BIT_DATA           0x49434E23
+#define ICNS_ID_32x32_4BIT_DATA           0x69636C34
+#define ICNS_ID_32x32_8BIT_DATA           0x69636C38
+#define ICNS_ID_32x32_32BIT_DATA          0x696C3332
+#define ICNS_ID_32x32_1BIT_MASK           0x49434E23
+#define ICNS_ID_32x32_8BIT_MASK           0x6C386D6B
+
+#define ICNS_ID_16x16_1BIT_DATA           0x69637323
+#define ICNS_ID_16x16_4BIT_DATA           0x69637334
+#define ICNS_ID_16x16_8BIT_DATA           0x69637338
+#define ICNS_ID_16x16_32BIT_DATA          0x69733332
+#define ICNS_ID_16x16_1BIT_MASK           0x69637323
+#define ICNS_ID_16x16_8BIT_MASK           0x73386D6B
+
+#define ICNS_ID_16x12_1BIT_DATA           0x69636D23
+#define ICNS_ID_16x12_4BIT_DATA           0x69636D34
+#define ICNS_ID_16x12_1BIT_MASK           0x69636D23
+#define ICNS_ID_16x12_8BIT_DATA           0x69636D38
+
+#define ICNS_ID_32x32_1BIT_ICON           0x49434F4E
+
+#define ICNS_ID_NULL_DATA                 0x00000000
+#define ICNS_ID_NULL_MASK                 0x00000000
+
+#define ICNS_ID_FAMILY_TYPE               0x69636E73
+
+#define ICNS_ID_MACBINARY_TYPE            0x6D42494E
+
+#define ICNS_ID_NULL_TYPE                 0x00000000
+
+#define ICNS_APPLE_SINGLE_MAGIC           0x00051600
+#define	ICNS_APPLE_DOUBLE_MAGIC           0x00051607
+
+#define	ICNS_APPLE_ENC_DATA               1
+#define	ICNS_APPLE_ENC_RSRC               2
 
 /* icns macros */
 
@@ -176,6 +222,8 @@ void icns_opj_info_callback(const char *msg, void *client_data);
 #endif
 
 // icns_utils.c
+icns_uint32_t icns_type_to_uint32(icns_type_t iconType);
+icns_uint32_t icns_get_element_order(icns_type_t iconType);
 void icns_print_err(const char *template, ...);
 
 // Stop hiding symbols

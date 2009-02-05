@@ -6,9 +6,9 @@
 <FONT SIZE="+2"><B>libicns Documentation</B></FONT>
 <BR>
 <BR>
-Copyright (C) 2008 Mathew Eis<BR>
-Released under the terms of the GPL v2<BR>
-libicns release 0.5.6, version 2.0.1
+Copyright (C) 2009 Mathew Eis<BR>
+Released under the terms of the LGPL v2 or later<BR>
+libicns release 0.6.2, version 2.0.1
 <BR>
 <BR>
 <a name="contents"></a>
@@ -27,6 +27,7 @@ libicns release 0.5.6, version 2.0.1
    <li>Icon Family and Element Header Types</li>
    <li>Icon Family and Element Types</li>
    <li>Icon Image Type</li>
+   <li>Icon Info Type</li>
    <li>Icon Type Constants</li>
    <li>File/Resource Type Constants</li>
    <li>Error return codes</li>
@@ -70,9 +71,11 @@ libicns release 0.5.6, version 2.0.1
 <br>
 <li><a href="#misc">Part VII: Misc utility functions</a>
  <ol type="i">
+   <li>Getting information about a specific icon type</li>
    <li>Finding the correct mask type with an icon type</li>
-   <li>Enable or disable the printing of error messages during runtime</li>
+   <li>Determining the correct icon type to use for a given image</li>
    <li>Comparing icns_type_t data</li>
+   <li>Enable or disable the printing of error messages during runtime</li>
  </ol>
 </li>
 </ul>
@@ -224,11 +227,33 @@ typedef struct icns_image_t
 </P>
 
 <BR>
+<FONT SIZE="+1"><B>Icon Info Type</B></FONT>
+
+<P>
+Information about a given icon type
+<PRE>
+typedef struct icns_icon_info_t
+{
+  icns_type_t           iconType;         // type of icon (or mask)
+  icns_bool_t           isImage;          // is this type an image
+  icns_bool_t           isMask;           // is this type a mask
+  icns_uint32_t         iconWidth;        // width of icon in pixels
+  icns_uint32_t         iconHeight;       // height of icon in pixels
+  icns_uint8_t          iconChannels;     // number of channels in data
+  icns_uint16_t         iconPixelDepth;   // number of bits-per-pixel
+  icns_uint16_t         iconBitDepth;     // overall bit depth = iconPixelDepth * iconChannels
+  icns_uint64_t         iconRawDataSize;  // uncompressed bytes = width * height * depth / bits-per-pixel
+} icns_icon_info_t;
+</PRE>
+</P>
+
+<BR>
 <FONT SIZE="+1"><B>Icon Type Constants</B></FONT>
 
 <P>
 The various icon types found within an icon family:
 <PRE>
+static const icns_type_t  ICNS_ICON_VERSION              = {{'i','c','n','V'}};
 static const icns_type_t  ICNS_512x512_32BIT_ARGB_DATA   = {{'i','c','0','9'}};
 static const icns_type_t  ICNS_256x256_32BIT_ARGB_DATA   = {{'i','c','0','8'}};
 static const icns_type_t  ICNS_128X128_32BIT_DATA        = {{'i','t','3','2'}};
@@ -308,7 +333,7 @@ Constants returned by most libicns functions:
 <tr><td>ICNS_STATUS_IO_READ_ERR</td><td>1</td><td>an error occured while reading a file</td></tr>
 <tr><td>ICNS_STATUS_IO_WRITE_ERR</td><td>2</td><td>an error occured while writing to a file</td></tr>
 <tr><td>ICNS_STATUS_DATA_NOT_FOUND</td><td>3</td><td>the necessary or requested data was not found</td></tr>
-<tr><td>ICNS_STATUS_UNSUPPORTED</td><td>4</td><td>64-bit unsigned int</td></tr>
+<tr><td>ICNS_STATUS_UNSUPPORTED</td><td>4</td><td>the requested data was not supported by libicns</td></tr>
 </table>
 </P>
 
@@ -362,8 +387,8 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 <BR>
 <FONT SIZE="+1"><B>Adding and removing new elements of the icon family</B></FONT>
 <P>
-int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t iconType);<BR>
 int icns_add_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *newIconElement);<BR>
+int icns_remove_element_in_family(icns_family_t **iconFamilyRef,icns_type_t iconType);<BR>
 </P>
 
 <BR>
@@ -431,6 +456,13 @@ int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t
 <a name="misc"></a>
 <FONT SIZE="+2"><B>Part VII: Misc utility functions</B></FONT>
 <BR>
+
+<BR>
+<FONT SIZE="+1"><B>Getting information about a specific icon type</B></FONT>
+<P>
+icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType);<BR>
+</P>
+
 <BR>
 <FONT SIZE="+1"><B>Finding the correct mask type with an icon type</B></FONT>
 <P>
@@ -438,9 +470,11 @@ icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);<BR>
 </P>
 
 <BR>
-<FONT SIZE="+1"><B>Enable or disable the printing of error messages during runtime</B></FONT>
+<FONT SIZE="+1"><B>Determining the correct icon type to use for a given image</B></FONT>
 <P>
-void icns_set_print_errors(icns_bool_t shouldPrint);<BR>
+icns_type_t icns_get_type_from_image_info(icns_icon_info_t iconInfo);<BR>
+icns_type_t icns_get_type_from_image(icns_image_t iconImage);<BR>
+icns_type_t icns_get_type_from_mask(icns_image_t iconImage);<BR>
 </P>
 
 <BR>
@@ -448,6 +482,12 @@ void icns_set_print_errors(icns_bool_t shouldPrint);<BR>
 <P>
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);<BR>
 icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB);<BR>
+</P>
+
+<BR>
+<FONT SIZE="+1"><B>Enable or disable the printing of error messages during runtime</B></FONT>
+<P>
+void icns_set_print_errors(icns_bool_t shouldPrint);<BR>
 </P>
 
 </body>

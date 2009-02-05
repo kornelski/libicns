@@ -1,16 +1,18 @@
+libicns (0.6.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mathew Eis <mathew@eisbox.net>  Thu, 05 Feb 2009 16:38:23 -0700
+
 libicns (0.6.1-1) unstable; urgency=low
 
   * New upstream release
-    - Fixed bug with exposed global variable - SF Bug 2139996
-    - Fixed bug in png2icns; info was not properly updated after transforms
 
  -- Mathew Eis <mathew@eisbox.net>  Thu, 31 Dec 2008 17:49:02 -0700
 
 libicns (0.6.0-1) unstable; urgency=low
 
   * New upstream release
-    - Changed icns2png to save pngs to working directory by default
-    - Fixed libcins RLE encoder (Sometimes caused corrupted icns files)
 
  -- Mathew Eis <mathew@eisbox.net>  Thu, 09 Oct 2008 19:36:10 -0700
 
