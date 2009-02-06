@@ -9,9 +9,9 @@ Upstream Author:
 
 Copyright: 
 
-    Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
-    Copyright (C) 2008 Julien BLACHE <jb@jblache.org>
-    Copyright (C) 2005 Thomas Lübking <baghira-style@gmx.net>
+    Copyright 2001-2008 Mathew Eis <mathew@eisbox.net>
+    Copyright 2008 Julien BLACHE <jb@jblache.org>
+    Copyright 2005 Thomas Lübking <baghira-style@gmx.net>
 
 License:
 
@@ -51,6 +51,6 @@ Public License can be found in `/usr/share/common-licenses/LGPL-2.1'.
 On Debian systems, the complete text of the GNU General
 Public License can be found in `/usr/share/common-licenses/GPL-2'.
 
-The Debian packaging is (C) 2008, Mathew Eis <mathew@eisbox.net> and
-is licensed under the GPLv2+, see above.
+The Debian packaging is Copyright 2008, Mathew Eis <mathew@eisbox.net>
+and is licensed under the GPLv2+, see above.
 

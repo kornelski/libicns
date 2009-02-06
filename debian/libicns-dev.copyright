@@ -9,11 +9,11 @@ Upstream Author:
 
 Copyright: 
 
-    Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
-    Copyright (C) 2007 Lyonel Vincent <lyonel@ezix.org> 
-    Copyright (C) 2005 Thomas Lübking <baghira-style@gmx.net>
-    Copyright (C) 2004 Brion Vibber <brion@pobox.com> 
-    Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com> 
+    Copyright 2001-2008 Mathew Eis <mathew@eisbox.net>
+    Copyright 2007 Lyonel Vincent <lyonel@ezix.org> 
+    Copyright 2005 Thomas Lübking <baghira-style@gmx.net>
+    Copyright 2004 Brion Vibber <brion@pobox.com> 
+    Copyright 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com> 
 
 License:
 
@@ -35,6 +35,6 @@ License:
 On Debian systems, the complete text of the GNU Lesser General
 Public License can be found in `/usr/share/common-licenses/LGPL-2.1'.
 
-The Debian packaging is (C) 2008, Mathew Eis <mathew@eisbox.net> and
-is licensed under the GPLv2+, see above.
+The Debian packaging is Copyright 2008, Mathew Eis <mathew@eisbox.net>
+and is licensed under the GPLv2+, see above.
 
