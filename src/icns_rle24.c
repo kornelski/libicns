@@ -268,7 +268,7 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 				// Decide here if the run should be same values or different values
 				
 				// If the last three values were the same, we can change to a same-type run
-				if((dataByte == dataRun[runLength-1])&&(dataByte == dataRun[runLength-2]))
+				if( (dataByte == dataRun[runLength-1]) && (dataByte == dataRun[runLength-2]) )
 					runType = 1;
 				else
 					runType = 0;
@@ -281,7 +281,7 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 				{
 					// If the new value matches both of the last two values, we have a new
 					// same-type run starting with the previous two bytes
-					if((dataByte == dataRun[runLength-1])&&(dataByte == dataRun[runLength-2]))
+					if( (dataByte == dataRun[runLength-1]) && (dataByte == dataRun[runLength-2]) )
 					{
 						// Set the RL byte
 						*(dataTemp+dataTempCount) = runLength - 3;
@@ -308,7 +308,7 @@ int icns_encode_rle24_data(icns_size_t dataSizeIn, icns_byte_t *dataPtrIn,icns_s
 				{
 					// If the new value matches both of the last two values, we
 					// can safely continue
-					if((dataByte == dataRun[runLength-1])&&(dataByte == dataRun[runLength-2]))
+					if( (dataByte == dataRun[runLength-1]) && (dataByte == dataRun[runLength-2]) )
 					{
 						dataRun[runLength++] = dataByte;
 					}

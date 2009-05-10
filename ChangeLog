@@ -1,9 +1,16 @@
-Release 0.6.2  (Current)
+Release 0.7.0  (Current)
 # Sourceforge SVN rev 154 - current
 - libicns version 2.6.1 (per libtool)
 - 
 
-Release 0.6.1  (02/05/2008)
+Release 0.6.2  (05/10/2009)
+# Sourceforge SVN rev 154
+- libicns version 2.6.1 (per libtool)
+- Changed icns_type_t from struct to uint32_t
+- Updated all code relevant to the icns_type_t change
+- Added a function for creating NULL terminated type strings
+
+Release 0.6.1  (02/05/2009)
 # Sourceforge SVN rev 152 - 153
 - libicns version 2.6.1 (per libtool)
 - Removed debug code from png2icns
@@ -13,7 +20,7 @@ Release 0.6.1  (02/05/2008)
 - Added icns_get_element_order to libicns internals (for sorting elements)
 - Minor performance improvements
 
-Release 0.6.0  (01/05/2008)
+Release 0.6.0  (01/05/2009)
 # Sourceforge SVN rev 149 - 151
 - libicns version 2.5.1 (per libtool)
 - Fixed bug in with global variable - SF Bug 2139996

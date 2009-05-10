@@ -64,15 +64,18 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	}
 	
 	#ifdef ICNS_DEBUG
-	printf("Making 32-bit image...\n");
-	printf("  using icon type '%c%c%c%c'\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
+	{
+		char typeStr[5];
+		printf("Making 32-bit image...\n");
+		printf("  using icon type '%s'\n",icns_type_str(iconType,typeStr));
+	}
 	#endif
 	
 	
-	if(icns_types_equal(iconType,ICNS_128X128_8BIT_MASK) || \
-	icns_types_equal(iconType,ICNS_48x48_8BIT_MASK) || \
-	icns_types_equal(iconType,ICNS_32x32_8BIT_MASK) || \
-	icns_types_equal(iconType,ICNS_16x16_8BIT_MASK) )
+	if((iconType == ICNS_128X128_8BIT_MASK) || \
+	(iconType == ICNS_48x48_8BIT_MASK) || \
+	(iconType == ICNS_32x32_8BIT_MASK) || \
+	(iconType == ICNS_16x16_8BIT_MASK) )
 	{
 		icns_print_err("icns_get_image32_with_mask_from_family: Can't make an image with mask from a mask\n");
 		return ICNS_STATUS_INVALID_DATA;
@@ -96,7 +99,7 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	}
 	
 	// We used the jp2 processor for these two, so we're done!
-	if( (icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) ) {
+	if( (iconType == ICNS_256x256_32BIT_ARGB_DATA) || (iconType == ICNS_512x512_32BIT_ARGB_DATA) ) {
 		memcpy(imageOut,&iconImage,sizeof(icns_image_t));
 		if(iconElement != NULL) {
 		free(iconElement);
@@ -108,12 +111,16 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	maskType = icns_get_mask_type_for_icon_type(iconType);
 	
 	#ifdef ICNS_DEBUG
-	printf("  using mask type '%c%c%c%c'\n",maskType.c[0],maskType.c[1],maskType.c[2],maskType.c[3]);
+	{
+		char typeStr[5];
+		printf("  using mask type '%s'\n",icns_type_str(maskType,typeStr));
+	}
 	#endif
 	
-	if( icns_types_equal(maskType,ICNS_NULL_DATA) )
+	if( (maskType == ICNS_NULL_DATA) )
 	{
-		icns_print_err("icns_get_image32_with_mask_from_family: Can't find mask for type '%c%c%c%c'\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
+		char typeStr[5];
+		icns_print_err("icns_get_image32_with_mask_from_family: Can't find mask for type '%s'\n",icns_type_str(iconType,typeStr));
 		return ICNS_STATUS_DATA_NOT_FOUND;
 	}
 	
@@ -179,10 +186,10 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		dataCount = 0;
 		
 		// 8-Bit Icon Image Data Types
-		if(icns_types_equal(iconType,ICNS_48x48_8BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_32x32_8BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_16x16_8BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_16x12_8BIT_DATA) )
+		if((iconType == ICNS_48x48_8BIT_DATA) || \
+		(iconType == ICNS_32x32_8BIT_DATA) || \
+		(iconType == ICNS_16x16_8BIT_DATA) || \
+		(iconType == ICNS_16x12_8BIT_DATA) )
 		{
 			if(oldBitDepth != 8)
 			{
@@ -202,10 +209,10 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 			}
 		}
 		// 4-Bit Icon Image Data Types
-		else if(icns_types_equal(iconType,ICNS_48x48_4BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_32x32_4BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_16x16_4BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_16x12_4BIT_DATA) )
+		else if((iconType == ICNS_48x48_4BIT_DATA) || \
+		(iconType == ICNS_32x32_4BIT_DATA) || \
+		(iconType == ICNS_16x16_4BIT_DATA) || \
+		(iconType == ICNS_16x12_4BIT_DATA) )
 		{
 			if(oldBitDepth != 4)
 			{
@@ -228,10 +235,10 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 			}
 		}
 		// 1-Bit Icon Image Data Types
-		else if(icns_types_equal(iconType,ICNS_48x48_1BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_32x32_1BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_16x16_1BIT_DATA) || \
-		icns_types_equal(iconType,ICNS_16x12_1BIT_DATA) )
+		else if((iconType == ICNS_48x48_1BIT_DATA) || \
+		(iconType == ICNS_32x32_1BIT_DATA) || \
+		(iconType == ICNS_16x16_1BIT_DATA) || \
+		(iconType == ICNS_16x12_1BIT_DATA) )
 		{
 			if(oldBitDepth != 1)
 			{
@@ -254,7 +261,8 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		}
 		else
 		{
-			icns_print_err("icns_get_image32_with_mask_from_family: Unpack error - unknown icon type! ('%c%c%c%c')\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
+			char typeStr[5];
+			icns_print_err("icns_get_image32_with_mask_from_family: Unpack error - unknown icon type! ('%s')\n",icns_type_str(iconType,typeStr));
 			free(newData);
 			error = ICNS_STATUS_INVALID_DATA;
 			goto cleanup;
@@ -269,10 +277,10 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	}
 	
 	// 8-Bit Icon Mask Data Types
-	if(icns_types_equal(maskType,ICNS_128X128_8BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_48x48_8BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_32x32_8BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_16x16_8BIT_MASK) )
+	if((maskType == ICNS_128X128_8BIT_MASK) || \
+	(maskType == ICNS_48x48_8BIT_MASK) || \
+	(maskType == ICNS_32x32_8BIT_MASK) || \
+	(maskType == ICNS_16x16_8BIT_MASK) )
 	{
 		pixelCount = maskImage.imageWidth * maskImage.imageHeight;
 		dataCount = 0;
@@ -288,10 +296,10 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		}
 	}
 	// 1-Bit Icon Mask Data Types
-	else if(icns_types_equal(maskType,ICNS_48x48_1BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_32x32_1BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_16x16_1BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_16x12_1BIT_MASK) )
+	else if((maskType == ICNS_48x48_1BIT_MASK) || \
+	(maskType == ICNS_32x32_1BIT_MASK) || \
+	(maskType == ICNS_16x16_1BIT_MASK) || \
+	(maskType == ICNS_16x12_1BIT_MASK) )
 	{
 		pixelCount = maskImage.imageWidth * maskImage.imageHeight;
 		dataCount = 0;
@@ -312,7 +320,8 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	}
 	else
 	{		
-		icns_print_err("icns_get_image32_with_mask_from_family: Unpack error - unknown mask type! ('%c%c%c%c')\n",maskType.c[0],maskType.c[1],maskType.c[2],maskType.c[3]);
+		char typeStr[5];
+		icns_print_err("icns_get_image32_with_mask_from_family: Unpack error - unknown mask type! ('%s')\n",icns_type_str(maskType,typeStr));
 		error = ICNS_STATUS_INVALID_DATA;
 		goto cleanup;
 	}
@@ -382,9 +391,12 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	elementSize = iconElement->elementSize;
 	
 	#if ICNS_DEBUG
-	printf("Retreiving image from icon element...\n");
-	printf("  type is: '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
-	printf("  size is: %d\n",(int)elementSize);	
+	{
+		char typeStr[5];
+		printf("Retreiving image from icon element...\n");
+		printf("  type is: '%s'\n",icns_type_str(elementType,typeStr));
+		printf("  size is: %d\n",(int)elementSize);
+	}	
 	#endif
 	
 	if(elementSize <= 8)
@@ -401,107 +413,107 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	printf("  data size is: %d\n",(int)rawDataSize);
 	#endif
 	
-	
-	// 32-Bit Icon Image Data Types ( > 256px )
-	if( (icns_types_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA)) || (icns_types_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA)) )
+	switch(iconType)
 	{
-		// We need to use a jp2 processor for these two types
-		error = icns_jp2_to_image((int)rawDataSize, (icns_byte_t *)rawDataPtr, imageOut);
-		return error;
-	}
-	else if(icns_types_equal(iconType,ICNS_128X128_32BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_48x48_32BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_32x32_32BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_16x16_32BIT_DATA) )
-	{
-		error = icns_init_image_for_type(iconType,imageOut);
-		
-		if(error)
-		{
-			icns_print_err("icns_get_image_from_element: Error allocating new icns image!\n");
-			icns_free_image(imageOut);
+		// 32-Bit Icon Image Data Types ( > 256px )
+		case ICNS_256x256_32BIT_ARGB_DATA:
+		case ICNS_512x512_32BIT_ARGB_DATA:
+			// We need to use a jp2 processor for these two types
+			error = icns_jp2_to_image((int)rawDataSize, (icns_byte_t *)rawDataPtr, imageOut);
 			return error;
-		}
-		
-		iconBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
-		iconDataSize = imageOut->imageDataSize;
-		iconDataRowSize = imageOut->imageWidth * iconBitDepth / ICNS_BYTE_BITS;
-		
-		if(rawDataSize < imageOut->imageDataSize)
-		{
-			icns_uint32_t	pixelCount = 0;
-			icns_size_t	decodedDataSize = imageOut->imageDataSize;
-			icns_byte_t	*decodedImageData = imageOut->imageData;
+		case ICNS_128X128_32BIT_DATA:
+		case ICNS_48x48_32BIT_DATA:
+		case ICNS_32x32_32BIT_DATA:
+		case ICNS_16x16_32BIT_DATA:
 
-			pixelCount = imageOut->imageWidth * imageOut->imageHeight;
-			error = icns_decode_rle24_data(rawDataSize,rawDataPtr,pixelCount,&decodedDataSize,&decodedImageData);
+			error = icns_init_image_for_type(iconType,imageOut);
 			if(error)
 			{
-				icns_print_err("icns_get_image_from_element: Error decoding RLE data!\n");
+				icns_print_err("icns_get_image_from_element: Error allocating new icns image!\n");
 				icns_free_image(imageOut);
 				return error;
 			}
+			
+			iconBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
+			iconDataSize = imageOut->imageDataSize;
+			iconDataRowSize = imageOut->imageWidth * iconBitDepth / ICNS_BYTE_BITS;
+			
+			if(rawDataSize < imageOut->imageDataSize)
+			{
+				icns_uint32_t	pixelCount = 0;
+				icns_size_t	decodedDataSize = imageOut->imageDataSize;
+				icns_byte_t	*decodedImageData = imageOut->imageData;
+	
+				pixelCount = imageOut->imageWidth * imageOut->imageHeight;
+				error = icns_decode_rle24_data(rawDataSize,rawDataPtr,pixelCount,&decodedDataSize,&decodedImageData);
+				if(error)
+				{
+					icns_print_err("icns_get_image_from_element: Error decoding RLE data!\n");
+					icns_free_image(imageOut);
+					return error;
+				}
+				else
+				{
+					imageOut->imageDataSize = decodedDataSize;
+					imageOut->imageData = decodedImageData;
+				}
+			}
 			else
 			{
-				imageOut->imageDataSize = decodedDataSize;
-				imageOut->imageData = decodedImageData;
+				unsigned long	pixelCount = 0;
+				icns_byte_t	*swapPtr = NULL;
+				icns_argb_t	*pixelPtr = NULL;
+	
+				for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
+					memcpy(&(((char*)(imageOut->imageData))[dataCount*iconDataRowSize]),&(((char*)(rawDataPtr))[dataCount*iconDataRowSize]),iconDataRowSize);
+				
+				pixelCount = imageOut->imageWidth * imageOut->imageHeight;
+				#ifdef ICNS_DEBUG
+					printf("Converting %d pixels from argb to rgba\n",(int)pixelCount);
+				#endif
+				swapPtr = imageOut->imageData;
+				for(dataCount = 0; dataCount < pixelCount; dataCount++)
+				{
+					pixelPtr = (icns_argb_t *)(swapPtr + (dataCount * 4));
+					*((icns_rgba_t *)pixelPtr) = ICNS_ARGB_TO_RGBA( *((icns_argb_t *)pixelPtr) );
+				}
 			}
-		}
-		else
-		{
-			unsigned long	pixelCount = 0;
-			icns_byte_t	*swapPtr = NULL;
-			icns_argb_t	*pixelPtr = NULL;
+			break;
+		case ICNS_48x48_8BIT_DATA:
+		case ICNS_32x32_8BIT_DATA:
+		case ICNS_16x16_8BIT_DATA:
+		case ICNS_16x12_8BIT_DATA:
+		case ICNS_48x48_4BIT_DATA:
+		case ICNS_32x32_4BIT_DATA:
+		case ICNS_16x16_4BIT_DATA:
+		case ICNS_16x12_4BIT_DATA:
+		case ICNS_48x48_1BIT_DATA:
+		case ICNS_32x32_1BIT_DATA:
+		case ICNS_16x16_1BIT_DATA:
+		case ICNS_16x12_1BIT_DATA:
 
+			error = icns_init_image_for_type(iconType,imageOut);
+			if(error)
+			{
+				icns_print_err("icns_get_image_from_element: Error allocating new icns image!\n");
+				icns_free_image(imageOut);
+				return error;
+			}
+			
+			iconBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
+			iconDataSize = imageOut->imageDataSize;
+			iconDataRowSize = imageOut->imageWidth * iconBitDepth / ICNS_BYTE_BITS;
+			
 			for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
 				memcpy(&(((char*)(imageOut->imageData))[dataCount*iconDataRowSize]),&(((char*)(rawDataPtr))[dataCount*iconDataRowSize]),iconDataRowSize);
-			
-			pixelCount = imageOut->imageWidth * imageOut->imageHeight;
-			#ifdef ICNS_DEBUG
-				printf("Converting %d pixels from argb to rgba\n",(int)pixelCount);
-			#endif
-			swapPtr = imageOut->imageData;
-			for(dataCount = 0; dataCount < pixelCount; dataCount++)
+			break;
+		default:
 			{
-				pixelPtr = (icns_argb_t *)(swapPtr + (dataCount * 4));
-				*((icns_rgba_t *)pixelPtr) = ICNS_ARGB_TO_RGBA( *((icns_argb_t *)pixelPtr) );
+				char typeStr[5];
+				icns_print_err("icns_get_image_from_element: Unknown icon type! ('%s')\n",icns_type_str(iconType,typeStr));
+				icns_free_image(imageOut);
 			}
-		}
-	}
-	else if(icns_types_equal(iconType,ICNS_48x48_8BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_32x32_8BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_16x16_8BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_16x12_8BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_48x48_4BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_32x32_4BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_16x16_4BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_16x12_4BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_48x48_1BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_32x32_1BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_16x16_1BIT_DATA) || \
-	icns_types_equal(iconType,ICNS_16x12_1BIT_DATA) )
-	{
-		error = icns_init_image_for_type(iconType,imageOut);
-		
-		if(error)
-		{
-			icns_print_err("icns_get_image_from_element: Error allocating new icns image!\n");
-			icns_free_image(imageOut);
-			return error;
-		}
-		
-		iconBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
-		iconDataSize = imageOut->imageDataSize;
-		iconDataRowSize = imageOut->imageWidth * iconBitDepth / ICNS_BYTE_BITS;
-		
-		for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
-			memcpy(&(((char*)(imageOut->imageData))[dataCount*iconDataRowSize]),&(((char*)(rawDataPtr))[dataCount*iconDataRowSize]),iconDataRowSize);
-	}
-	else
-	{
-		icns_print_err("icns_get_image_from_element: Unknown icon type! ('%c%c%c%c')\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
-		icns_free_image(imageOut);
-		return ICNS_STATUS_INVALID_DATA;
+			return ICNS_STATUS_INVALID_DATA;
 	}
 	
 	return error;
@@ -539,9 +551,12 @@ int icns_get_mask_from_element(icns_element_t *maskElement,icns_image_t *imageOu
 	elementSize = maskElement->elementSize;
 	
 	#if ICNS_DEBUG
-	printf("Retreiving image from mask element...\n");
-	printf("  type is: '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
-	printf("  size is: %d\n",(int)elementSize);	
+	{
+		char typeStr[5];
+		printf("Retreiving image from mask element...\n");
+		printf("  type is: '%s'\n",icns_type_str(elementType,typeStr));
+		printf("  size is: %d\n",(int)elementSize);
+	}
 	#endif
 	
 	if(elementSize <= 8)
@@ -558,91 +573,93 @@ int icns_get_mask_from_element(icns_element_t *maskElement,icns_image_t *imageOu
 	printf("  data size is: %d\n",(int)rawDataSize);	
 	#endif
 
-	if(icns_types_equal(maskType,ICNS_128X128_8BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_48x48_8BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_32x32_8BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_16x16_8BIT_MASK) )
+	switch(maskType)
 	{
-		error = icns_init_image_for_type(maskType,imageOut);
-		
-		if(error)
-		{
-			icns_print_err("icns_get_mask_from_element: Error allocating new icns image!\n");
-			icns_free_image(imageOut);
-			return error;
-		}
-		
-		maskBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
-		
-		if(maskBitDepth != 8) {
-			icns_print_err("icns_get_mask_from_element: Unknown bit depth!\n");
-			icns_free_image(imageOut);
-			return ICNS_STATUS_INVALID_DATA;
-		}
-		
-		maskDataSize = imageOut->imageDataSize;
-		maskDataRowSize = imageOut->imageWidth * maskBitDepth / ICNS_BYTE_BITS;
-		
-		for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
-			memcpy(&(((char*)(imageOut->imageData))[dataCount*maskDataRowSize]),&(((char*)(rawDataPtr))[dataCount*maskDataRowSize]),maskDataRowSize);
-	}
-	// 1-Bit Icon Mask Data Types
-	else if(icns_types_equal(maskType,ICNS_48x48_1BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_32x32_1BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_16x16_1BIT_MASK) || \
-	icns_types_equal(maskType,ICNS_16x12_1BIT_MASK) )
-	{
-		error = icns_init_image_for_type(maskType,imageOut);
+		case ICNS_128X128_8BIT_MASK:
+		case ICNS_48x48_8BIT_MASK:
+		case ICNS_32x32_8BIT_MASK:
+		case ICNS_16x16_8BIT_MASK:
 
-		if(error)
-		{
-			icns_print_err("icns_get_mask_from_element: Error allocating new icns image!\n");
-			icns_free_image(imageOut);
-			return error;
-		}
-
-		maskBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
-		
-		if(maskBitDepth != 1) {
-			icns_print_err("icns_get_mask_from_element: Unknown bit depth!\n");
-			icns_free_image(imageOut);
-			return ICNS_STATUS_INVALID_DATA;
-		}
-		
-		maskDataSize = imageOut->imageDataSize;
-		maskDataRowSize = imageOut->imageWidth * maskBitDepth / ICNS_BYTE_BITS;
-		
-		#if ICNS_DEBUG
-		printf("  raw mask data size is: %d\n",(int)rawDataSize);	
-		printf("  image mask data size is: %d\n",(int)maskDataSize);	
-		#endif
-
-		if(rawDataSize == (maskDataSize * 2) )
-		{
-			#if ICNS_DEBUG
-			printf("  mask data in second memory block\n");	
-			#endif					
-			// Mask data found - Copy the second block of memory
-			for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
-				memcpy(&(((char*)(imageOut->imageData))[dataCount*maskDataRowSize]),&(((char*)(rawDataPtr))[dataCount*maskDataRowSize+maskDataSize]),maskDataRowSize);
-		}
-		else
-		{
-			#if ICNS_DEBUG
-			printf("  using icon data from first memory block\n");	
-			#endif					
-			// Hmm, no mask - copy the first block of memory
+			error = icns_init_image_for_type(maskType,imageOut);
+			if(error)
+			{
+				icns_print_err("icns_get_mask_from_element: Error allocating new icns image!\n");
+				icns_free_image(imageOut);
+				return error;
+			}
+			
+			maskBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
+			
+			if(maskBitDepth != 8) {
+				icns_print_err("icns_get_mask_from_element: Unknown bit depth!\n");
+				icns_free_image(imageOut);
+				return ICNS_STATUS_INVALID_DATA;
+			}
+			
+			maskDataSize = imageOut->imageDataSize;
+			maskDataRowSize = imageOut->imageWidth * maskBitDepth / ICNS_BYTE_BITS;
+			
 			for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
 				memcpy(&(((char*)(imageOut->imageData))[dataCount*maskDataRowSize]),&(((char*)(rawDataPtr))[dataCount*maskDataRowSize]),maskDataRowSize);
-		}
-	}
-	else
-	{
-		icns_print_err("icns_get_mask_from_element: Unknown mask type! ('%c%c%c%c')\n",maskType.c[0],maskType.c[1],maskType.c[2],maskType.c[3]);
-		icns_free_image(imageOut);
-		return ICNS_STATUS_INVALID_DATA;
-	}
+
+			break;
+		case ICNS_48x48_1BIT_MASK:
+		case ICNS_32x32_1BIT_MASK:
+		case ICNS_16x16_1BIT_MASK:
+		case ICNS_16x12_1BIT_MASK:
+
+			error = icns_init_image_for_type(maskType,imageOut);
+			if(error)
+			{
+				icns_print_err("icns_get_mask_from_element: Error allocating new icns image!\n");
+				icns_free_image(imageOut);
+				return error;
+			}
 	
+			maskBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
+			
+			if(maskBitDepth != 1) {
+				icns_print_err("icns_get_mask_from_element: Unknown bit depth!\n");
+				icns_free_image(imageOut);
+				return ICNS_STATUS_INVALID_DATA;
+			}
+			
+			maskDataSize = imageOut->imageDataSize;
+			maskDataRowSize = imageOut->imageWidth * maskBitDepth / ICNS_BYTE_BITS;
+			
+			#if ICNS_DEBUG
+			printf("  raw mask data size is: %d\n",(int)rawDataSize);	
+			printf("  image mask data size is: %d\n",(int)maskDataSize);	
+			#endif
+	
+			if(rawDataSize == (maskDataSize * 2) )
+			{
+				#if ICNS_DEBUG
+				printf("  mask data in second memory block\n");	
+				#endif					
+				// Mask data found - Copy the second block of memory
+				for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
+					memcpy(&(((char*)(imageOut->imageData))[dataCount*maskDataRowSize]),&(((char*)(rawDataPtr))[dataCount*maskDataRowSize+maskDataSize]),maskDataRowSize);
+			}
+			else
+			{
+				#if ICNS_DEBUG
+				printf("  using icon data from first memory block\n");	
+				#endif					
+				// Hmm, no mask - copy the first block of memory
+				for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)
+					memcpy(&(((char*)(imageOut->imageData))[dataCount*maskDataRowSize]),&(((char*)(rawDataPtr))[dataCount*maskDataRowSize]),maskDataRowSize);
+			}
+			
+			break;
+		default:
+			{
+				char typeStr[5];
+				icns_print_err("icns_get_mask_from_element: Unknown mask type! ('%s')\n",icns_type_str(maskType,typeStr));
+				icns_free_image(imageOut);
+			}
+			return ICNS_STATUS_INVALID_DATA;
+	}
 	
 	return error;
 }
@@ -667,9 +684,10 @@ int icns_init_image_for_type(icns_type_t iconType,icns_image_t *imageOut)
 	
 	iconInfo = icns_get_image_info_for_type(iconType);
 	
-	if(icns_types_not_equal(iconType,iconInfo.iconType))
+	if(iconType != iconInfo.iconType)
 	{
-		icns_print_err("icns_init_image_for_type: Couldn't determine information for type! ('%c%c%c%c')\n",iconType.c[0],iconType.c[1],iconType.c[2],iconType.c[3]);
+		char typeStr[5];
+		icns_print_err("icns_init_image_for_type: Couldn't determine information for type! ('%s')\n",icns_type_str(iconType,typeStr));
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	

@@ -39,7 +39,7 @@ void bin_print_byte(int x)
 	{
    	printf("0");
    	}
-	if (n==3)
+	if(n==3)
 	{
 	printf(" "); /* insert a space between nybbles */
 	}

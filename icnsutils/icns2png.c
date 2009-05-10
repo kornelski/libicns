@@ -271,7 +271,6 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	FILE            *inFile = NULL;
 	icns_family_t	*iconFamily = NULL;
 	icns_byte_t	*dataPtr = NULL;
-	char		typeStr[5] = {0,0,0,0,0};
 	unsigned long	dataOffset = 0;
 	int		elementCount = 0;
 	int		extractedCount = 0;
@@ -428,11 +427,11 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	}
 	
 	// Start listing info:
-	memcpy(&typeStr,&(iconFamily->resourceType),4);
-	
 	if(extractMode & LIST_MODE) {
-	printf(" Icon family type is '%s'\n",typeStr);
-	printf(" Icon family size is %d bytes\n",iconFamily->resourceSize);
+		char typeStr[5];
+		icns_type_str(iconFamily->resourceType,typeStr);
+		printf(" Icon family type is '%s'\n",typeStr);
+		printf(" Icon family size is %d bytes\n",iconFamily->resourceSize);
 	}
 	
 	// Skip past the icns header
@@ -444,22 +443,22 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	
 	while(((dataOffset+8) < iconFamily->resourceSize) && (error == 0))
 	{
-		icns_element_t	       iconElement;
+		icns_element_t	 iconElement;
 		icns_icon_info_t iconInfo;
-		icns_size_t            iconDataSize;
-		icns_size_t            iconDimSize = 0;
+		icns_size_t      iconDataSize;
+		icns_size_t      iconDimSize = 0;
+		char	         typeStr[5];
 		
 		memcpy(&iconElement,(dataPtr+dataOffset),8);
-		memcpy(&typeStr,&(iconElement.elementType),4);
 		
+		icns_type_str(iconElement.elementType,typeStr);
 		iconDataSize = iconElement.elementSize - 8;
 		
 		if(extractMode & LIST_MODE) {
-			// type
 			printf("  '%s'",typeStr);
 		}
 		
-		if(icns_types_equal(iconElement.elementType,ICNS_ICON_VERSION)) {
+		if(iconElement.elementType == ICNS_ICON_VERSION) {
 			icns_byte_t	iconBytes[4];
 			icns_uint32_t	iconVersion = 0;
 			if(iconDataSize == 4) {
@@ -467,20 +466,20 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 				iconVersion = iconBytes[3]|iconBytes[2]<<8|iconBytes[1]<<16|iconBytes[0]<<24;
 			}
 			if(extractMode & LIST_MODE) {
-				printf(" value: 0x%08X\n",iconVersion);
+				printf(" value: 0x%08X %d %f\n",iconVersion,iconVersion,*((float *)&iconVersion));
 			}
 		} else {
 			iconInfo = icns_get_image_info_for_type(iconElement.elementType);
 			
 			if(iconInfo.iconWidth == iconInfo.iconHeight) {
 				iconDimSize = iconInfo.iconWidth;
-			} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_8BIT_DATA)) {
+			} else if(iconElement.elementType == ICNS_16x12_8BIT_DATA) {
 				iconDimSize = MINI_SIZE;
-			} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_4BIT_DATA)) {
+			} else if(iconElement.elementType == ICNS_16x12_4BIT_DATA) {
 				iconDimSize = MINI_SIZE;
-			} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_1BIT_DATA)) {
+			} else if(iconElement.elementType == ICNS_16x12_1BIT_DATA) {
 				iconDimSize = MINI_SIZE;
-			} else if(icns_types_equal(iconElement.elementType,ICNS_16x12_1BIT_MASK)) {
+			} else if(iconElement.elementType == ICNS_16x12_1BIT_MASK) {
 				iconDimSize = MINI_SIZE;
 			} else {
 				iconDimSize = -1;

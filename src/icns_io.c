@@ -203,13 +203,13 @@ int icns_write_family_to_file(FILE *dataFile,icns_family_t *iconFamilyIn)
 	icns_size_t	dataSize = 0;
 	icns_byte_t	*dataPtr = NULL;
 	
-	if ( dataFile == NULL )
+	if( dataFile == NULL )
 	{
 		icns_print_err("icns_write_family_to_file: NULL file pointer!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}	
 	
-	if ( iconFamilyIn == NULL )
+	if( iconFamilyIn == NULL )
 	{
 		icns_print_err("icns_write_family_to_file: NULL icns family!\n");
 		return ICNS_STATUS_NULL_PARAM;
@@ -260,13 +260,13 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 	icns_uint32_t dataSize = 0;
 	void          *dataPtr = NULL;
 	
-	if ( dataFile == NULL )
+	if( dataFile == NULL )
 	{
 		icns_print_err("icns_read_family_from_file: NULL file pointer!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	if ( iconFamilyOut == NULL )
+	if( iconFamilyOut == NULL )
 	{
 		icns_print_err("icns_read_family_from_file: NULL icns family ref!\n");
 		return ICNS_STATUS_NULL_PARAM;
@@ -279,7 +279,7 @@ int icns_read_family_from_file(FILE *dataFile,icns_family_t **iconFamilyOut)
 		
 		dataPtr = (void *)malloc(dataSize);
 
-		if ( (error == 0) && (dataPtr != NULL) )
+		if( (error == 0) && (dataPtr != NULL) )
 		{
 			if(fread( dataPtr, sizeof(char), dataSize, dataFile) != dataSize)
 			{
@@ -437,13 +437,13 @@ int icns_read_family_from_rsrc(FILE *dataFile,icns_family_t **iconFamilyOut)
 	icns_uint32_t dataSize = 0;
 	void          *dataPtr = NULL;
 	
-	if ( dataFile == NULL )
+	if( dataFile == NULL )
 	{
 		icns_print_err("icns_read_family_from_rsrc: NULL file pointer!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	if ( iconFamilyOut == NULL )
+	if( iconFamilyOut == NULL )
 	{
 		icns_print_err("icns_read_family_from_rsrc: NULL icns family ref!\n");
 		return ICNS_STATUS_NULL_PARAM;
@@ -456,7 +456,7 @@ int icns_read_family_from_rsrc(FILE *dataFile,icns_family_t **iconFamilyOut)
 		
 		dataPtr = (void *)malloc(dataSize);
 
-		if ( (error == 0) && (dataPtr != NULL) )
+		if( (error == 0) && (dataPtr != NULL) )
 		{
 			if(fread( dataPtr, sizeof(char), dataSize, dataFile) != dataSize)
 			{
@@ -556,7 +556,7 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_size_t *dataSizeOut,i
 	#endif
 	
 	// Check the data type
-	if(icns_types_not_equal(iconFamily->resourceType,ICNS_FAMILY_TYPE))
+	if(iconFamily->resourceType != ICNS_FAMILY_TYPE)
 	{
 		icns_print_err("icns_export_family_data: Invalid type in header! (%d)\n",dataSize);
 		*dataPtrOut = NULL;
@@ -580,8 +580,11 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_size_t *dataSizeOut,i
 	}
 	
 	#ifdef ICNS_DEBUG
-	printf("  data type is '%c%c%c%c'\n",dataType.c[0],dataType.c[1],dataType.c[2],dataType.c[3]);
-	printf("  data size is %d\n",dataSize);
+	{
+		char typeStr[5];
+		printf("  data type is '%s'\n",icns_type_str(dataType,typeStr));
+		printf("  data size is %d\n",dataSize);
+	}
 	#endif
 	
 	// Allocate a new block of memory for the outgoing data
@@ -603,22 +606,24 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_size_t *dataSizeOut,i
 		icns_type_t	elementType = ICNS_NULL_TYPE;
 		icns_size_t	elementSize = 0;
 		
-		// Write the icns header - do NOT swap the type
-		ICNS_WRITE_UNALIGNED(dataPtr, dataType, sizeof(icns_type_t));
+		ICNS_WRITE_UNALIGNED_BE(dataPtr, dataType, sizeof(icns_type_t));
 		ICNS_WRITE_UNALIGNED_BE(dataPtr + 4, dataSize, sizeof(icns_size_t));
 		
 		// Skip past the icns header
 		dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 		
 		// Iterate through the icns resource, converting the 'size' values to big endian
-		while(((dataOffset+8) < dataSize) && (error == 0))
+		while( ((dataOffset+8) < dataSize) && (error == 0) )
 		{
 			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
 			ICNS_READ_UNALIGNED(elementSize, dataPtr+dataOffset+4,sizeof(icns_size_t));
 			
 			#ifdef ICNS_DEBUG
-			printf("  checking element type... type is '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
-			printf("  checking element size... size is %d\n",elementSize);
+			{
+				char typeStr[5];
+				printf("  checking element type... type is %s\n",icns_type_str(elementType,typeStr));
+				printf("  checking element size... size is %d\n",elementSize);
+			}
 			#endif
 			
 			if(dataOffset+elementSize > dataSize)
@@ -629,7 +634,7 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_size_t *dataSizeOut,i
 			}
 			
 			// Reset the values to big endian
-			ICNS_WRITE_UNALIGNED( dataPtr+dataOffset, elementType, sizeof(icns_type_t));
+			ICNS_WRITE_UNALIGNED_BE( dataPtr+dataOffset, elementType, sizeof(icns_type_t));
 			ICNS_WRITE_UNALIGNED_BE( dataPtr+dataOffset+4, elementSize, sizeof(icns_size_t));
 			
 			// Move on to the next element
@@ -727,17 +732,19 @@ int icns_parse_family_data(icns_size_t dataSize,icns_byte_t *dataPtr,icns_family
 		return ICNS_STATUS_NULL_PARAM;
 	}
 	
-	// Read the type and size of the data - do NOT swap type
-	ICNS_READ_UNALIGNED(resourceType, dataPtr,sizeof(icns_type_t));
+	ICNS_READ_UNALIGNED_BE(resourceType, dataPtr,sizeof(icns_type_t));
 	ICNS_READ_UNALIGNED_BE(resourceSize, dataPtr + 4,sizeof(icns_size_t));
 	
 	#ifdef ICNS_DEBUG
-	printf("Reading icns family from data...\n");
-	printf("  resource type is '%c%c%c%c'\n",resourceType.c[0],resourceType.c[1],resourceType.c[2],resourceType.c[3]);
-	printf("  resource size is %d\n",resourceSize);
+	{
+		char typeStr[5];
+		printf("Reading icns family from data...\n");
+		printf("  resource type is '%s'\n",icns_type_str(resourceType,typeStr));
+		printf("  resource size is %d\n",resourceSize);
+	}
 	#endif
 	
-	if(icns_types_equal(resourceType,ICNS_FAMILY_TYPE))
+	if(resourceType == ICNS_FAMILY_TYPE)
 	{
 		if( dataSize == resourceSize )
 		{
@@ -754,7 +761,8 @@ int icns_parse_family_data(icns_size_t dataSize,icns_byte_t *dataPtr,icns_family
 	}
 	else
 	{
-		icns_print_err("icns_parse_family_data: Invalid icon family resource type! ('%c%c%c%c')\n",resourceType.c[0],resourceType.c[1],resourceType.c[2],resourceType.c[3]);
+		char typeStr[5];
+		icns_print_err("icns_parse_family_data: Invalid icon family resource type! ('%s')\n",icns_type_str(resourceType,typeStr));
 		error = ICNS_STATUS_INVALID_DATA;
 		goto exception;
 	}
@@ -768,15 +776,18 @@ int icns_parse_family_data(icns_size_t dataSize,icns_byte_t *dataPtr,icns_family
 		// Skip past the icns header
 		dataOffset = sizeof(icns_type_t) + sizeof(icns_size_t);
 		
-		// Iterate through the icns resource, converting the 'size' values to native endian
-		while(((dataOffset+8) < resourceSize) && (error == 0))
+		// Iterate through the icns resource, converting the 'type' and 'size' values to native endian
+		while( ((dataOffset+8) < resourceSize) && (error == 0) )
 		{
-			ICNS_READ_UNALIGNED(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
+			ICNS_READ_UNALIGNED_BE(elementType, dataPtr+dataOffset,sizeof(icns_type_t));
 			ICNS_READ_UNALIGNED_BE(elementSize, dataPtr+dataOffset+4,sizeof(icns_size_t));
 			
 			#ifdef ICNS_DEBUG
-			printf("  checking element type... type is '%c%c%c%c'\n",elementType.c[0],elementType.c[1],elementType.c[2],elementType.c[3]);
-			printf("  checking element size... size is %d\n",elementSize);
+			{
+				char typeStr[5];
+				printf("  checking element type... type is '%s'\n",icns_type_str(elementType,typeStr));
+				printf("  checking element size... size is %d\n",elementSize);
+			}
 			#endif
 			
 			if(dataOffset+elementSize > resourceSize)
@@ -907,8 +918,7 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 		icns_sint16_t	resNumItems = 0;
 		icns_sint16_t	resOffset = 0;
 		
-		// Do NOT swap type
-		ICNS_READ_UNALIGNED(resType, (resData+resHeadMapOffset+resMapTypeOffset+2+(count*8)),sizeof( icns_type_t));
+		ICNS_READ_UNALIGNED_BE(resType, (resData+resHeadMapOffset+resMapTypeOffset+2+(count*8)),sizeof( icns_type_t));
 		
 		if(fileEndian == ICNS_BE_RSRC) {
 			ICNS_READ_UNALIGNED_BE(resNumItems, (resData+resHeadMapOffset+resMapTypeOffset+6+(count*8)),sizeof( icns_sint16_t));
@@ -922,10 +932,13 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 		resNumItems = resNumItems + 1;
 		
 		#ifdef ICNS_DEBUG
-		printf("    found %d items of type '%c%c%c%c'\n",resNumItems, resType.c[0],resType.c[1],resType.c[2],resType.c[3]);
+		{
+			char typeStr[5];
+			printf("    found %d items of type '%s'\n",resNumItems, icns_type_str(resType,typeStr));
+		}
 		#endif
 		
-		if(memcmp(&resType, &getResType, sizeof(icns_type_t)) == 0)
+		if(resType == getResType)
 		{
 			icns_sint16_t	resID = 0;
 			icns_sint8_t	resAttributes = 0;
@@ -994,7 +1007,8 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 			
 			if( (resItemDataSize <= 0) || (resItemDataSize > (resDataSize-(resHeadDataOffset+resItemDataOffset+4))) )
 			{
-				icns_print_err("icns_find_family_in_mac_resource: Resource type '%c%c%c%c' id# %d has invalid size!\n",resType.c[0],resType.c[1],resType.c[2],resType.c[3],resID);
+				char typeStr[5];
+				icns_print_err("icns_find_family_in_mac_resource: Resource type '%s' id# %d has invalid size!\n",icns_type_str(resType,typeStr),resID);
 				icns_print_err("icns_find_family_in_mac_resource: (size %d not within range of %d to %d)\n",resItemDataSize,1,(resDataSize-(resHeadDataOffset+resItemDataOffset+4)));
 				error = ICNS_STATUS_INVALID_DATA;
 				goto exception;
@@ -1039,7 +1053,8 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 	}
 	else
 	{
-		icns_print_err("icns_find_family_in_mac_resource: Unable to find data of type '%c%c%c%c' in resource file!\n",getResType.c[0],getResType.c[1],getResType.c[2],getResType.c[3]);
+		char typeStr[5];		
+		icns_print_err("icns_find_family_in_mac_resource: Unable to find data of type '%s' in resource file!\n",icns_type_str(getResType,typeStr));
 		error = ICNS_STATUS_DATA_NOT_FOUND;
 	}
 	
@@ -1110,12 +1125,12 @@ int icns_read_macbinary_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,
 		return ICNS_STATUS_INVALID_DATA;
 	}
 	
-	// Read headers - do NOT swap data 'type' values
-	ICNS_READ_UNALIGNED(dataType, (dataPtr+65),sizeof( icns_type_t));
-	ICNS_READ_UNALIGNED(dataCreator, (dataPtr+69),sizeof( icns_type_t));
+	// Read headers
+	ICNS_READ_UNALIGNED_BE(dataType, (dataPtr+65),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED_BE(dataCreator, (dataPtr+69),sizeof( icns_type_t));
 
 	// Checking for valid MacBinary data...
-	if(icns_types_equal(dataType,ICNS_MACBINARY_TYPE))
+	if(dataType == ICNS_MACBINARY_TYPE)
 	{
 		// Valid MacBinary III file
 		isValid = 1;
@@ -1273,13 +1288,13 @@ int icns_read_apple_encoded_resource_fork(icns_size_t dataSize,icns_byte_t *data
 	printf("    entries count: %d\n",entries);
 	#endif
 
-	if (dataSize < (26 + (entries * 12) + 8) )
+	if(dataSize < (26 + (entries * 12) + 8) )
 	{
 		icns_print_err("icns_read_apple_encoded_resource_fork: Unable to decode apple encoded data! - Data size too small.\n");
 		return ICNS_STATUS_INVALID_DATA;
 	}
 
-	if((magic != ICNS_APPLE_SINGLE_MAGIC)&&(magic != ICNS_APPLE_DOUBLE_MAGIC))
+	if( (magic != ICNS_APPLE_SINGLE_MAGIC) && (magic != ICNS_APPLE_DOUBLE_MAGIC) )
 	{
 		icns_print_err("icns_read_apple_encoded_resource_fork: Unable to decode apple encoded data! - invalid magic bytes.\n");
 		return ICNS_STATUS_INVALID_DATA;
@@ -1358,11 +1373,10 @@ icns_bool_t icns_icns_header_check(icns_size_t dataSize,icns_byte_t *dataPtr)
 	if(dataPtr == 0)
 		return 0;
 	
-	// Read the type and size of the data - do NOT swap type
-	ICNS_READ_UNALIGNED(resourceType, dataPtr,sizeof(icns_type_t));
+	ICNS_READ_UNALIGNED_BE(resourceType, dataPtr,sizeof(icns_type_t));
 	ICNS_READ_UNALIGNED_BE(resourceSize, dataPtr + 4,sizeof(icns_size_t));
 	
-	if(icns_types_not_equal(resourceType,ICNS_FAMILY_TYPE))
+	if(resourceType != ICNS_FAMILY_TYPE)
 		return 0;
 	
 	if(dataSize != resourceSize )
@@ -1427,12 +1441,11 @@ icns_bool_t icns_macbinary_header_check(icns_size_t dataSize,icns_byte_t *dataPt
 	if(dataSize < 128)
 		return 0;
 	
-	// Read headers - do NOT swap data 'type' values
-	ICNS_READ_UNALIGNED(dataType, (dataPtr+65),sizeof( icns_type_t));
-	ICNS_READ_UNALIGNED(dataCreator, (dataPtr+69),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED_BE(dataType, (dataPtr+65),sizeof( icns_type_t));
+	ICNS_READ_UNALIGNED_BE(dataCreator, (dataPtr+69),sizeof( icns_type_t));
 
 	// Checking for valid MacBinary data...
-	if(icns_types_equal(dataType,ICNS_MACBINARY_TYPE))
+	if(dataType == ICNS_MACBINARY_TYPE)
 	{
 		// Valid MacBinary III file
 		isValid = 1;
@@ -1500,10 +1513,10 @@ icns_bool_t icns_apple_encoded_header_check(icns_size_t dataSize,icns_byte_t *da
 	ICNS_READ_UNALIGNED_BE(entries, (dataPtr+24),sizeof(icns_uint16_t));
 
 
-	if((magic != ICNS_APPLE_SINGLE_MAGIC)&&(magic != ICNS_APPLE_DOUBLE_MAGIC))
+	if( (magic != ICNS_APPLE_SINGLE_MAGIC) && (magic != ICNS_APPLE_DOUBLE_MAGIC) )
 		return 0;
 
-	if (dataSize < (26 + (entries * 12) + 8) )
+	if(dataSize < (26 + (entries * 12) + 8) )
 		return 0;
 
 	return 1;

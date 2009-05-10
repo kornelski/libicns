@@ -1,7 +1,7 @@
    libicns Documentation
    Copyright (C) 2009 Mathew Eis
    Released under the terms of the LGPL v2 or later
-   libicns release 0.6.2, version 2.0.1
+   libicns release 0.7.0, version 2.0.1
    Table of contents:
 
      * Part I: Tutorial / Example

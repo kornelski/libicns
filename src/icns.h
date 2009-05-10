@@ -44,15 +44,7 @@ typedef uint8_t         icns_byte_t;
 
 
 /* data header types */
-/*
-icns type is a 4 byte char array
-use a struct so it can be easily
-passed a function parameter.
-*/
-typedef struct icns_type_t {
-  int8_t                c[4];
-} icns_type_t;
-
+typedef uint32_t        icns_type_t;
 typedef int32_t         icns_size_t;
 
 /* icon family and element types */
@@ -96,65 +88,65 @@ typedef struct icns_icon_info_t
 
 /*  icns element type constants */
 
-static const icns_type_t  ICNS_ICON_VERSION              = {{'i','c','n','V'}};
+#define ICNS_ICON_VERSION             0x69636E56  // "icnV"
 
-static const icns_type_t  ICNS_512x512_32BIT_ARGB_DATA   = {{'i','c','0','9'}};
-static const icns_type_t  ICNS_256x256_32BIT_ARGB_DATA   = {{'i','c','0','8'}};
+#define ICNS_512x512_32BIT_ARGB_DATA  0x69633039  // "ic09"
+#define ICNS_256x256_32BIT_ARGB_DATA  0x69633038  // "ic08"
 
-static const icns_type_t  ICNS_128X128_32BIT_DATA        = {{'i','t','3','2'}};
-static const icns_type_t  ICNS_128X128_8BIT_MASK         = {{'t','8','m','k'}};
+#define ICNS_128X128_32BIT_DATA       0x69743332  // "it32"
+#define ICNS_128X128_8BIT_MASK        0x74386D6B  // "t8mk"
 
-static const icns_type_t  ICNS_48x48_1BIT_DATA           = {{'i','c','h','#'}};
-static const icns_type_t  ICNS_48x48_4BIT_DATA           = {{'i','c','h','4'}};
-static const icns_type_t  ICNS_48x48_8BIT_DATA           = {{'i','c','h','8'}};
-static const icns_type_t  ICNS_48x48_32BIT_DATA          = {{'i','h','3','2'}};
-static const icns_type_t  ICNS_48x48_1BIT_MASK           = {{'i','c','h','#'}};
-static const icns_type_t  ICNS_48x48_8BIT_MASK           = {{'h','8','m','k'}};
+#define ICNS_48x48_1BIT_DATA          0x69636823  // "ich#"
+#define ICNS_48x48_4BIT_DATA          0x69636834  // "ich4"
+#define ICNS_48x48_8BIT_DATA          0x69636838  // "ich8"
+#define ICNS_48x48_32BIT_DATA         0x69683332  // "ih32"
+#define ICNS_48x48_1BIT_MASK          0x69636823  // "ich#"
+#define ICNS_48x48_8BIT_MASK          0x68386D6B  // "h8mk"
 
-static const icns_type_t  ICNS_32x32_1BIT_DATA           = {{'I','C','N','#'}};
-static const icns_type_t  ICNS_32x32_4BIT_DATA           = {{'i','c','l','4'}};
-static const icns_type_t  ICNS_32x32_8BIT_DATA           = {{'i','c','l','8'}};
-static const icns_type_t  ICNS_32x32_32BIT_DATA          = {{'i','l','3','2'}};
-static const icns_type_t  ICNS_32x32_1BIT_MASK           = {{'I','C','N','#'}};
-static const icns_type_t  ICNS_32x32_8BIT_MASK           = {{'l','8','m','k'}};
+#define ICNS_32x32_1BIT_DATA          0x49434E23  // "ICN#"
+#define ICNS_32x32_4BIT_DATA          0x69636C34  // "icl4"
+#define ICNS_32x32_8BIT_DATA          0x69636C38  // "icl8"
+#define ICNS_32x32_32BIT_DATA         0x696C3332  // "il32"
+#define ICNS_32x32_1BIT_MASK          0x49434E23  // "ICN#"
+#define ICNS_32x32_8BIT_MASK          0x6C386D6B  // "l8mk"
 
-static const icns_type_t  ICNS_16x16_1BIT_DATA           = {{'i','c','s','#'}};
-static const icns_type_t  ICNS_16x16_4BIT_DATA           = {{'i','c','s','4'}};
-static const icns_type_t  ICNS_16x16_8BIT_DATA           = {{'i','c','s','8'}};
-static const icns_type_t  ICNS_16x16_32BIT_DATA          = {{'i','s','3','2'}};
-static const icns_type_t  ICNS_16x16_1BIT_MASK           = {{'i','c','s','#'}};
-static const icns_type_t  ICNS_16x16_8BIT_MASK           = {{'s','8','m','k'}};
+#define ICNS_16x16_1BIT_DATA          0x69637323  // "ics#"
+#define ICNS_16x16_4BIT_DATA          0x69637334  // "ics4"
+#define ICNS_16x16_8BIT_DATA          0x69637338  // "ics8"
+#define ICNS_16x16_32BIT_DATA         0x69733332  // "is32"
+#define ICNS_16x16_1BIT_MASK          0x69637323  // "ics#"
+#define ICNS_16x16_8BIT_MASK          0x73386D6B  // "s8mk"
 
-static const icns_type_t  ICNS_16x12_1BIT_DATA           = {{'i','c','m','#'}};
-static const icns_type_t  ICNS_16x12_4BIT_DATA           = {{'i','c','m','4'}};
-static const icns_type_t  ICNS_16x12_1BIT_MASK           = {{'i','c','m','#'}};
-static const icns_type_t  ICNS_16x12_8BIT_DATA           = {{'i','c','m','8'}};
+#define ICNS_16x12_1BIT_DATA          0x69636D23  // "icm#"
+#define ICNS_16x12_4BIT_DATA          0x69636D34  // "icm4"
+#define ICNS_16x12_1BIT_MASK          0x69636D23  // "icm#"
+#define ICNS_16x12_8BIT_DATA          0x69636D38  // "icm8"
 
-static const icns_type_t  ICNS_32x32_1BIT_ICON           = {{'I','C','O','N'}};
+#define ICNS_32x32_1BIT_ICON          0x49434F4E  // "ICON"
 
-static const icns_type_t  ICNS_NULL_DATA                 = {{ 0 , 0 , 0 , 0 }};
-static const icns_type_t  ICNS_NULL_MASK                 = {{ 0 , 0 , 0 , 0 }};
+#define ICNS_NULL_DATA                0x00000000 
+#define ICNS_NULL_MASK                0x00000000 
 
 /* icns file / resource type constants */
 
-static const icns_type_t  ICNS_FAMILY_TYPE               = {{'i','c','n','s'}};
+#define ICNS_FAMILY_TYPE              0x69636E73  // "icns"
 
-static const icns_type_t  ICNS_MACBINARY_TYPE            = {{'m','B','I','N'}};
+#define ICNS_MACBINARY_TYPE           0x6D42494E  // "mBIN"
 
-static const icns_type_t  ICNS_NULL_TYPE                 = {{ 0 , 0 , 0 , 0 }};
+#define ICNS_NULL_TYPE                0x00000000 
 
 /* icns error return values */
 
-#define	ICNS_STATUS_OK                     0
+#define	ICNS_STATUS_OK                0
 
-#define	ICNS_STATUS_NULL_PARAM            -1
-#define	ICNS_STATUS_NO_MEMORY             -2
-#define	ICNS_STATUS_INVALID_DATA          -3
+#define	ICNS_STATUS_NULL_PARAM        -1
+#define	ICNS_STATUS_NO_MEMORY         -2
+#define	ICNS_STATUS_INVALID_DATA      -3
 
-#define	ICNS_STATUS_IO_READ_ERR		   1
-#define	ICNS_STATUS_IO_WRITE_ERR	   2
-#define	ICNS_STATUS_DATA_NOT_FOUND         3
-#define	ICNS_STATUS_UNSUPPORTED            4
+#define	ICNS_STATUS_IO_READ_ERR	      1
+#define	ICNS_STATUS_IO_WRITE_ERR      2
+#define	ICNS_STATUS_DATA_NOT_FOUND    3
+#define	ICNS_STATUS_UNSUPPORTED       4
 
 /* icns function prototypes */
 /* NOTE: internal functions are found in icns_internals.h */
@@ -204,6 +196,7 @@ icns_type_t icns_get_type_from_image(icns_image_t iconImage);
 icns_type_t icns_get_type_from_mask(icns_image_t iconImage);
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);
 icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB);
+const char * icns_type_str(icns_type_t type, char *strbuf);
 void icns_set_print_errors(icns_bool_t shouldPrint);
 
 #endif

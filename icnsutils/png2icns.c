@@ -198,11 +198,11 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	iconType = icns_get_type_from_image_info(iconInfo);
 	maskType = icns_get_mask_type_for_icon_type(iconType);
 
-	strncpy(&(iconStr[0]),(char*)&(iconType.c[0]),4);
-	strncpy(&(maskStr[0]),(char*)&(maskType.c[0]),4);
+	icns_type_str(iconType,iconStr);
+	icns_type_str(maskType,maskStr);
 
 	/* Only convert the icons that match sizes icns supports */
-	if (icns_types_equal(iconType, ICNS_NULL_TYPE) != ICNS_STATUS_OK)
+	if (iconType == ICNS_NULL_TYPE)
 	{
 		fprintf(stderr, "Bad dimensions: PNG file '%s' is %dx%d\n", pngname, width, height);
 		free(buffer);
@@ -244,7 +244,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 		free(iconElement);
 	}
 
-	if(icns_types_not_equal(iconType,ICNS_512x512_32BIT_ARGB_DATA) && icns_types_not_equal(iconType,ICNS_256x256_32BIT_ARGB_DATA))
+	if( (iconType != ICNS_512x512_32BIT_ARGB_DATA) && (iconType != ICNS_256x256_32BIT_ARGB_DATA) )
 	{
 		icns_init_image_for_type(maskType, &icnsMask);
 
