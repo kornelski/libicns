@@ -26,7 +26,7 @@ libicns.so.1 libicns1 #MINVER#
  icns_read_family_from_rsrc@Base 0.5.7
  icns_remove_element_in_family@Base 0.5.7
  icns_set_element_in_family@Base 0.5.7
- icns_type_str@Base 0.7.0-1
+ icns_type_str@Base 0.7.0
  icns_set_print_errors@Base 0.5.7
  icns_types_equal@Base 0.5.7
  icns_types_not_equal@Base 0.5.7

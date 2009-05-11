@@ -127,7 +127,11 @@ int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t
 		error = icns_jas_image_to_jp2(image, dataSizeOut, dataPtrOut);	
 	#else
 	#ifdef ICNS_OPENJPEG
-		error = icns_opj_image_to_jp2(image, dataSizeOut, dataPtrOut);	
+		// OpenJPEG is broken for RGB+A images for now. See a possible patch here:
+		// http://groups.google.com/group/openjpeg/browse_thread/thread/1cb7807b2053592e
+		// error = icns_opj_image_to_jp2(image, dataSizeOut, dataPtrOut);
+		icns_print_err("icns_image_to_jp2: Saving JP2 data with OpenJPEG is not yet supported!\n");
+		error = ICNS_STATUS_UNSUPPORTED;
 	#else
 		*dataPtrOut = NULL;
 		error = ICNS_STATUS_UNSUPPORTED;
