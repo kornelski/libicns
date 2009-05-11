@@ -166,9 +166,9 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 #endif
 #ifdef ICNS_OPENJPEG
 int icns_opj_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *imageOut);
-int icns_opj_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);
-int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
 int icns_opj_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, opj_image_t **imageOut);
+int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon);
+int icns_opj_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut);
 void icns_opj_error_callback(const char *msg, void *client_data);
 void icns_opj_warning_callback(const char *msg, void *client_data);
 void icns_opj_info_callback(const char *msg, void *client_data);

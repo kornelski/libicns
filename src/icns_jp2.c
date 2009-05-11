@@ -381,11 +381,6 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 	//			EnumCS = sRGB
 	//		CDEF
 	//	JP2C	- JPEG 2000 Codestream
-	//	So far everything looks OK, except we may have a problem with the CDEF
-	// 	not coming in. If this becomes an issue, see libjasper jp2_enc.c lines 252-301
-
-	width = image->imageWidth;
-	height = image->imageHeight;
 	
 	// Set up the component parameters
 	for (c = 0; c < 4; c++) {
@@ -393,12 +388,12 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 		cmptparms[c].tly = 0;
 		cmptparms[c].hstep = 1;
 		cmptparms[c].vstep = 1;
-		cmptparms[c].width = width;
-		cmptparms[c].height = height;
-		cmptparms[c].prec = 8;
+		cmptparms[c].width = image->imageWidth;
+		cmptparms[c].height = image->imageHeight;
+		cmptparms[c].prec = image->imagePixelDepth;
 		cmptparms[c].sgnd = false;
 	}
-
+	
 	// Initialize Jasper
 	jas_init();
 	
@@ -408,7 +403,7 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 		icns_print_err("icns_jas_image_to_jp2: could not allocate new jasper image! (Likely out of memory)\n");
 		return ICNS_STATUS_NO_MEMORY;
 	}
-
+	
 	// Set up the image components
 	jas_image_setclrspc(jasimage, JAS_CLRSPC_SRGB);
 	jas_image_setcmpttype(jasimage, 0, JAS_IMAGE_CT_RGB_R);
@@ -416,6 +411,9 @@ int icns_jas_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 	jas_image_setcmpttype(jasimage, 2, JAS_IMAGE_CT_RGB_B);
 	jas_image_setcmpttype(jasimage, 3, JAS_IMAGE_CT_OPACITY);
 
+	width = image->imageWidth;
+	height = image->imageHeight;
+	
 	// Allocate the matrix buffers
 	for(c = 0; c < 4; c++)
 	{
@@ -545,11 +543,139 @@ int icns_opj_jp2_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image
 	return error;	
 }
 
-int icns_opj_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
+// Decode jp2 data using OpenJPEG
+int icns_opj_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, opj_image_t **imageOut)
 {
-	int error = ICNS_STATUS_OK;
+	opj_event_mgr_t    event_mgr;	
+	opj_dparameters_t  parameters;
+	opj_dinfo_t        *dinfo = NULL;
+	opj_cio_t          *cio = NULL;
+	opj_image_t        *image = NULL;
+
+	memset(&event_mgr, 0, sizeof(opj_event_mgr_t));
+	event_mgr.error_handler = icns_opj_error_callback;
+	event_mgr.warning_handler = icns_opj_warning_callback;
+	event_mgr.info_handler = icns_opj_info_callback;
+
+	opj_set_default_decoder_parameters(&parameters);
+
+	dinfo = opj_create_decompress(CODEC_JP2);
+	opj_set_event_mgr((opj_common_ptr)dinfo, &event_mgr, stderr);
+	opj_setup_decoder(dinfo, &parameters);
+
+	cio = opj_cio_open((opj_common_ptr)dinfo, dataPtr, dataSize);
+
+	image = opj_decode(dinfo, cio);
+	if(!image) {
+		icns_print_err("icns_opj_jp2_dec: failed to decode image!\n");
+		opj_destroy_decompress(dinfo);
+		opj_cio_close(cio);
+		return ICNS_STATUS_INVALID_DATA;
+	} else {
+		*imageOut = image;	
+	}
+
+	opj_cio_close(cio);
+	opj_destroy_decompress(dinfo);
+
+	return ICNS_STATUS_OK;
+}
+
+// Convert from opj_image_t to icns_image_t
+int icns_opj_to_image(opj_image_t *opjImg, icns_image_t *iconImg)
+{
+	int		error = ICNS_STATUS_OK;
+	icns_sint8_t    adjust[4] = {0,0,0,0};
+	icns_byte_t	*dataPtr = NULL;
+	int             c = 0;
+	int             i, j;
+	int             rowOffset, colOffset;
 	
-	if(image == NULL)
+	if(opjImg == NULL)
+	{
+		icns_print_err("icns_opj_to_image: OpenJPEG image is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	if(iconImg == NULL)
+	{
+		icns_print_err("icns_opj_to_image: Icon image is NULL!\n");
+		return ICNS_STATUS_NULL_PARAM;
+	}
+	
+	iconImg->imageWidth = opjImg->comps[0].w;
+	iconImg->imageHeight = opjImg->comps[0].h;
+	iconImg->imageChannels = opjImg->numcomps;
+	iconImg->imagePixelDepth = opjImg->comps[0].prec;
+	
+	iconImg->imageDataSize = iconImg->imageHeight * iconImg->imageWidth * iconImg->imagePixelDepth; // * iconChannels ?
+	iconImg->imageData = (icns_byte_t *)malloc(iconImg->imageDataSize);
+	if(!iconImg->imageData) {
+		icns_print_err("icns_create_family: Unable to allocate memory block of size: %d!\n",iconImg->imageDataSize);
+		return ICNS_STATUS_NO_MEMORY;
+	}
+	memset(iconImg->imageData,0,iconImg->imageDataSize);
+	
+	dataPtr = iconImg->imageData;
+	
+	for(c = 0; c < 4; c++)
+	{
+		int depth = opjImg->comps[c].prec;
+		if(depth > 8) {
+			adjust[c] = depth - 8;
+			#ifdef ICNS_DEBUG
+			printf("BMP CONVERSION: Will be trucating component %d (%d bits) by %d bits to 8 bits.\n",c,depth,adjust[c]);
+			#endif
+		} else {
+			adjust[c] = 0;
+		}
+	}
+	
+	for (i = 0; i < iconImg->imageHeight; i++) {
+		rowOffset = i * iconImg->imageChannels * iconImg->imageWidth;
+		for(j = 0; j < iconImg->imageWidth; j++) {
+			icns_rgba_t *dst_pixel;
+			int r, g, b, a;
+			
+			colOffset = j * iconImg->imageChannels;
+						
+			r = opjImg->comps[0].data[i*iconImg->imageWidth+j];
+			r += (opjImg->comps[0].sgnd ? 1 << (opjImg->comps[0].prec - 1) : 0);
+			g = opjImg->comps[1].data[i*iconImg->imageWidth+j];
+			g += (opjImg->comps[1].sgnd ? 1 << (opjImg->comps[1].prec - 1) : 0);
+			b = opjImg->comps[2].data[i*iconImg->imageWidth+j];
+			b += (opjImg->comps[2].sgnd ? 1 << (opjImg->comps[2].prec - 1) : 0);
+			a = opjImg->comps[3].data[i*iconImg->imageWidth+j];
+			a += (opjImg->comps[3].sgnd ? 1 << (opjImg->comps[3].prec - 1) : 0);
+			
+			dst_pixel = (icns_rgba_t *)&(dataPtr[rowOffset + colOffset]);
+			
+			dst_pixel->r = (icns_byte_t) ((r >> adjust[0])+((r >> (adjust[0]-1))%2));
+			dst_pixel->g = (icns_byte_t) ((g >> adjust[1])+((g >> (adjust[1]-1))%2));
+			dst_pixel->b = (icns_byte_t) ((b >> adjust[2])+((b >> (adjust[2]-1))%2));
+			dst_pixel->a = (icns_byte_t) ((a >> adjust[3])+((a >> (adjust[3]-1))%2));
+		}
+	}
+	
+	return error;
+}
+
+int icns_opj_image_to_jp2(icns_image_t *iconImg, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
+{
+	int		     error = ICNS_STATUS_OK;
+	opj_event_mgr_t      event_mgr;
+	opj_cparameters_t    parameters;
+	OPJ_COLOR_SPACE      color_space = CLRSPC_SRGB;
+	opj_image_cmptparm_t cmptparm[4];
+	opj_image_t	     *opjImg = NULL;
+	icns_byte_t	     *dataPtr = NULL;
+	int                  i, j;
+	int                  rowOffset, colOffset;
+	opj_cinfo_t          *cinfo = NULL;
+	opj_cio_t            *cio = NULL;
+	int                  success = 0;
+	
+	if(iconImg == NULL)
 	{
 		icns_print_err("icns_opj_image_to_jp2: Image is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
@@ -566,160 +692,129 @@ int icns_opj_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_by
 		icns_print_err("icns_opj_image_to_jp2: Data ref is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
-	
-	icns_print_err("icns_opj_image_to_jp2: libicns doesn't support writing jp2 images with libopenjpeg yet!\n");
-	error = ICNS_STATUS_UNSUPPORTED;
-	
-	return error;
-}
 
-// Convert from uncompressed opj data to icns_image_t
-int icns_opj_to_image(opj_image_t *image, icns_image_t *outIcon)
-{
-	int		error = ICNS_STATUS_OK;
-	icns_sint8_t    adjust[4] = {0,0,0,0};
-	icns_byte_t	*dataPtr = NULL;
-	int             c = 0;
-	int             i, j;
-	int             rowOffset, colOffset;
-	
-	if(image == NULL)
+	if(iconImg->imageChannels != 4)
 	{
-		icns_print_err("icns_opj_to_image: OpenJPEG image is NULL!\n");
-		return ICNS_STATUS_NULL_PARAM;
+		icns_print_err("icns_image_to_opj: number if channels in input image should be 4!\n");
+		return ICNS_STATUS_INVALID_DATA;
+	
 	}
-	
-	if(outIcon == NULL)
-	{
-		icns_print_err("icns_opj_to_image: Icon out is NULL!\n");
-		return ICNS_STATUS_NULL_PARAM;
-	}
-	
-	outIcon->imageWidth = image->comps[0].w;
-	outIcon->imageHeight = image->comps[0].h;
-	outIcon->imageChannels = image->numcomps;
-	outIcon->imagePixelDepth = image->comps[0].prec;
-	
-	iconDataSize = outIcon->imageHeight * outIcon->imageWidth * outIcon->imagePixelDepth; // * iconChannels ?
-	outIcon->imageWidth = iconWidth;
-	outIcon->imageData = (icns_byte_t *)malloc(outIcon->imageDataSize);
-	if(!outIcon->imageData) {
-		icns_print_err("icns_create_family: Unable to allocate memory block of size: %d!\n",outIcon->imageDataSize);
-		return ICNS_STATUS_NO_MEMORY;
-	}
-	memset(outIcon->imageData,0,outIcon->imageDataSize);
-	
-	dataPtr = outIcon->imageData;
-	
-	for(c = 0; c < 4; c++)
-	{
-		int depth = image->comps[c].prec;
-		if(depth > 8) {
-			adjust[c] = depth - 8;
-			#ifdef ICNS_DEBUG
-			printf("BMP CONVERSION: Will be trucating component %d (%d bits) by %d bits to 8 bits.\n",c,depth,adjust[c]);
-			#endif
-		} else {
-			adjust[c] = 0;
-		}
-	}
-	
-	for (i = 0; i < outIcon->imageHeight; i++) {
-		rowOffset = i * outIcon->imageChannels * outIcon->imageWidth;
-		for(j = 0; j < iconWidth; j++) {
-			icns_rgba_t *dst_pixel;
-			int r, g, b, a;
-			
-			colOffset = j * outIcon->imageChannels;
-						
-			r = image->comps[0].data[i*iconWidth+j];
-			r += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
-			g = image->comps[1].data[i*iconWidth+j];
-			g += (image->comps[1].sgnd ? 1 << (image->comps[1].prec - 1) : 0);
-			b = image->comps[2].data[i*iconWidth+j];
-			b += (image->comps[2].sgnd ? 1 << (image->comps[2].prec - 1) : 0);
-			a = image->comps[3].data[i*iconWidth+j];
-			a += (image->comps[3].sgnd ? 1 << (image->comps[3].prec - 1) : 0);
-			
-			dst_pixel = (icns_rgba_t *)&(dataPtr[rowOffset + colOffset]);
-			
-			dst_pixel->r = (icns_byte_t) ((r >> adjust[0])+((r >> (adjust[0]-1))%2));
-			dst_pixel->g = (icns_byte_t) ((g >> adjust[1])+((g >> (adjust[1]-1))%2));
-			dst_pixel->b = (icns_byte_t) ((b >> adjust[2])+((b >> (adjust[2]-1))%2));
-			dst_pixel->a = (icns_byte_t) ((a >> adjust[3])+((a >> (adjust[3]-1))%2));
-		}
-	}
-	
-	return error;
-}
 
-// Decompress jp2
-int icns_opj_jp2_dec(icns_size_t dataSize, icns_byte_t *dataPtr, opj_image_t **imageOut)
-{
-	opj_dparameters_t parameters;	/* decompression parameters */
-	opj_dinfo_t* dinfo = NULL;
-	opj_event_mgr_t event_mgr;		/* event manager */
-	opj_cio_t *cio = NULL;
-	opj_image_t *image = NULL;
-
-	/* configure the event callbacks (not required) */
+	if(iconImg->imagePixelDepth != 8)
+	{
+		// Maybe support 64/128-bit images (16/32-bits per channel) in the future?
+		icns_print_err("icns_image_to_opj: jp2 images currently need to be 8 bits per pixel per channel!\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+	
+	*dataSizeOut = 0;
+	*dataPtrOut = NULL;
+	
 	memset(&event_mgr, 0, sizeof(opj_event_mgr_t));
 	event_mgr.error_handler = icns_opj_error_callback;
 	event_mgr.warning_handler = icns_opj_warning_callback;
 	event_mgr.info_handler = icns_opj_info_callback;
+	
+	opj_set_default_encoder_parameters(&parameters);
 
-	/* get a decoder handle */
-	dinfo = opj_create_decompress(CODEC_JP2);
-
-	/* set decoding parameters to default values */
-	opj_set_default_decoder_parameters(&parameters);
-
-	/* catch events using our callbacks and give a local context */
-	opj_set_event_mgr((opj_common_ptr)dinfo, &event_mgr, stderr);
-
-	opj_setup_decoder(dinfo, &parameters);
-
-	/* open a byte stream */
-	cio = opj_cio_open((opj_common_ptr)dinfo, dataPtr, dataSize);
-
-	image = opj_decode(dinfo, cio);
-	if(!image) {
-		icns_print_err("icns_opj_jp2_dec: failed to decode image!\n");
-		opj_destroy_decompress(dinfo);
-		opj_cio_close(cio);
-		return ICNS_STATUS_INVALID_DATA;
-	} else {
-		*imageOut = image;	
+	parameters.tcp_numlayers = 1;
+	parameters.tcp_rates[0] = 1;
+	parameters.cp_disto_alloc = 1;
+	parameters.irreversible = 0;
+	
+	memset(&cmptparm[0], 0, 4 * sizeof(opj_image_cmptparm_t));
+	for(i = 0; i < 4; i++) {
+		
+		cmptparm[i].w = iconImg->imageWidth;
+		cmptparm[i].h = iconImg->imageHeight;
+		cmptparm[i].dx = 1;
+		cmptparm[i].dy = 1;
+		cmptparm[i].prec = iconImg->imagePixelDepth;
+		cmptparm[i].bpp = iconImg->imagePixelDepth;
+		cmptparm[i].sgnd = 0;
 	}
+	
+	opjImg = opj_image_create(4, &cmptparm[0], color_space);
+	if(!opjImg) {
+		icns_print_err("icns_image_to_opj: Unable to create new image!\n");
+		return ICNS_STATUS_INVALID_DATA;
+	}
+	
+	opjImg->x0 = 0;
+	opjImg->y0 = 0;
+	opjImg->x1 = iconImg->imageWidth;
+	opjImg->y1 = iconImg->imageHeight; 
+	
+	dataPtr = iconImg->imageData;
+	for (i = 0; i < iconImg->imageHeight; i++) {
+		rowOffset = i * iconImg->imageChannels * iconImg->imageWidth;
+		for(j = 0; j < iconImg->imageWidth; j++) {
+			icns_rgba_t *src_pixel;
+			int p = i * iconImg->imageWidth + j;
+			
+			colOffset = j * iconImg->imageChannels;
+			
+			src_pixel = (icns_rgba_t *)&(dataPtr[rowOffset + colOffset]);
+			
+			opjImg->comps[0].data[p] = src_pixel->r;
+			opjImg->comps[1].data[p] = src_pixel->g;
+			opjImg->comps[2].data[p] = src_pixel->b;
+			opjImg->comps[3].data[p] = src_pixel->a;
+		}
+	}
+	
+	cinfo = opj_create_compress(CODEC_JP2);
+	opj_set_event_mgr((opj_common_ptr)cinfo, &event_mgr, stderr);
+	opj_setup_encoder(cinfo, &parameters, opjImg);
 
-	/* close the byte stream */
-	opj_cio_close(cio);
-	opj_destroy_decompress(dinfo);
+	cio = opj_cio_open((opj_common_ptr)cinfo, NULL, 0);
 
-	return ICNS_STATUS_OK;
+	success = opj_encode(cinfo, cio, opjImg, NULL);
+	if (!success) {
+		opj_cio_close(cio);
+		icns_print_err("icns_opj_jp2_enc: Error while encoding jp2 data!\n");
+		error = ICNS_STATUS_INVALID_DATA;
+		goto exception;
+	}
+	
+	*dataSizeOut = cio_tell(cio) + 34;
+	*dataPtrOut = (icns_byte_t *)malloc(*dataSizeOut);
+
+	if(!(*dataPtrOut))
+	{
+		icns_print_err("icns_jas_image_to_jp2: Unable to allocate memory block of size: %d!\n",(int)*dataSizeOut);
+		error = ICNS_STATUS_NO_MEMORY;
+		goto exception;
+	}
+	
+	memcpy(*dataPtrOut,cio->buffer,*dataSizeOut - 34);
+	
+	icns_place_jp2_cdef(*dataPtrOut,*dataSizeOut);
+	
+exception:
+	if(opjImg) {
+		opj_image_destroy(opjImg);
+		opjImg = NULL;
+	}
+	if(cio) {
+		opj_cio_close(cio);
+		cio = NULL;
+	}
+	if(cinfo) {
+		opj_destroy_compress(cinfo);
+		cinfo = NULL;
+	}
+	
+	return error;
 }
 
-
-/**
-sample error callback expecting a FILE* client object
-*/
 void icns_opj_error_callback(const char *msg, void *client_data) {
-	//FILE *stream = (FILE*)client_data;
-	//fprintf(stream, "[ERROR] %s", msg);
 }
-/**
-sample warning callback expecting a FILE* client object
-*/
+
 void icns_opj_warning_callback(const char *msg, void *client_data) {
-	//FILE *stream = (FILE*)client_data;
-	//fprintf(stream, "[WARNING] %s", msg);
 }
-/**
-sample debug callback expecting no client object
-*/
+
 void icns_opj_info_callback(const char *msg, void *client_data) {
-	//(void)client_data;
-	//fprintf(stdout, "[INFO] %s", msg);
 }
 
 #endif /* ifdef ICNS_OPENJPEG */
@@ -842,7 +937,6 @@ void icns_place_jp2_cdef(icns_byte_t *dataPtr, icns_size_t dataSize)
 			blocktype = bytes[3]|bytes[2]<<8|bytes[1]<<16|bytes[0]<<24;
 			offset = offset + (blocksize - 4);
 			bytes = dataPtr + offset;
-			printf("0x%08X,0x%08X\n",blocksize,blocktype);
 		} while(blocktype != 0x636F6C72 && offset < headeroffs+headersize);
 		
 		// if we have colr block, place cdef after it

@@ -59,21 +59,21 @@ AC_SUBST(PNG_LIBS, "-lpng")
 ], [])
 AC_CHECK_HEADERS([png.h libpng/png.h libpng10/png.h libpng12/png.h])
 
-# Check for libopenjpeg and libjasper
-AC_CHECK_LIB(jasper, jas_init, [
-AC_SUBST(JP2000_LIBS, "-ljasper")
-AC_CHECK_HEADERS([jasper/jasper.h])
-AC_DEFINE([ICNS_JASPER],[1],[We have Jasper])
+# Check for libopenjpeg, fall back to libjasper if not available
+AC_CHECK_LIB(openjpeg2, opj_setup_decoder, [
+AC_SUBST(JP2000_LIBS, "-lopenjpeg2")
+AC_CHECK_HEADERS([openjpeg.h])
+AC_DEFINE([ICNS_OPENJPEG],[1],[We have OpenJPEG])
 ], [
-  AC_CHECK_LIB(openjpeg2, opj_setup_decoder, [
-  AC_SUBST(JP2000_LIBS, "-lopenjpeg2")
+  AC_CHECK_LIB(openjpeg, opj_setup_decoder, [
+  AC_SUBST(JP2000_LIBS, "-lopenjpeg")
   AC_CHECK_HEADERS([openjpeg.h])
   AC_DEFINE([ICNS_OPENJPEG],[1],[We have OpenJPEG])
   ], [
-    AC_CHECK_LIB(openjpeg, opj_setup_decoder, [
-    AC_SUBST(JP2000_LIBS, "-lopenjpeg")
-    AC_CHECK_HEADERS([openjpeg.h])
-    AC_DEFINE([ICNS_OPENJPEG],[1],[We have OpenJPEG])
+    AC_CHECK_LIB(jasper, jas_init, [
+    AC_SUBST(JP2000_LIBS, "-ljasper")
+    AC_CHECK_HEADERS([jasper/jasper.h])
+    AC_DEFINE([ICNS_JASPER],[1],[We have Jasper])
     ], [
       AC_MSG_WARN([libopenjpeg or libjasper jp2000 codec libraries not found])
       AC_MSG_WARN([libicns will be built without 256x256 and 512x512 support])

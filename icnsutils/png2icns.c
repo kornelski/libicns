@@ -231,8 +231,15 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	
 	icns_set_print_errors(1);
 	
-	printf("Using icns type '%s', mask '%s' for '%s'\n", iconStr, maskStr, pngname);
-
+	if( (iconType != ICNS_512x512_32BIT_ARGB_DATA) && (iconType != ICNS_256x256_32BIT_ARGB_DATA) )
+	{
+		printf("Using icns type '%s', mask '%s' for '%s'\n", iconStr, maskStr, pngname);
+	}
+	else
+	{
+		printf("Using icns type '%s' (ARGB) for '%s'\n", iconStr, pngname);
+	}
+	
 	icnsErr = icns_new_element_from_image(&icnsImage, iconType, &iconElement);
 	
 	if (iconElement != NULL)
