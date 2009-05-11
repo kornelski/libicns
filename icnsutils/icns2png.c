@@ -466,7 +466,7 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 				iconVersion = iconBytes[3]|iconBytes[2]<<8|iconBytes[1]<<16|iconBytes[0]<<24;
 			}
 			if(extractMode & LIST_MODE) {
-				printf(" value: 0x%08X %d %f\n",iconVersion,iconVersion,*((float *)&iconVersion));
+				printf(" value: 0x%08X\n",iconVersion);
 			}
 		} else {
 			iconInfo = icns_get_image_info_for_type(iconElement.elementType);

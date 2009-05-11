@@ -914,7 +914,7 @@ int icns_find_family_in_mac_resource(icns_size_t resDataSize, icns_byte_t *resDa
 	
 	for(count = 0; count < resMapNumTypes && found == 0; count++)
 	{
-		icns_type_t	resType;
+		icns_type_t	resType = ICNS_NULL_TYPE;
 		icns_sint16_t	resNumItems = 0;
 		icns_sint16_t	resOffset = 0;
 		
