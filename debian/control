@@ -2,7 +2,7 @@ Source: libicns
 Priority: optional
 Maintainer: Mathew Eis <mathew@eisbox.net>
 Build-Depends: debhelper (>= 6), autotools-dev, libpng12-dev, libjasper-dev, libjpeg62-dev
-Standards-Version: 3.8.1
+Standards-Version: 3.8.3
 Section: libs
 Homepage: http://icns.sourceforge.net/
 

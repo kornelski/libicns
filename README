@@ -1,6 +1,6 @@
 ===============================================================================
-README for libicns 0.5.5 - February 18th, 2008
-Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
+README for libicns 0.7.1 - September 3rd, 2009
+Copyright (C) 2001-2009 Mathew Eis <mathew@eisbox.net>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -44,9 +44,8 @@ libraries, you will need to build them, then modify the Makefile to build
 against the static libraries in thier respective directories.
 
 For a complete build of libicns and icns2png, you should check the Makefile
-to esure you are building against the correct libraries, then run
+to ensure you are building against the correct libraries, then run
 make
-make test
 make install
 
 Please see the Makefile for alternative possibilities
@@ -82,7 +81,9 @@ Understanding the Mac OS X Icons
 
 Mac OS X Icon files come in two formats - icns files, and icns resources
 embedded with rsrc files. They may also be stored in a macbinary encoded
-rsrc files. libicns (and icns2png) can decode all three formats
+rsrc files, or applesingle/appledouble encoded rsrc files
+
+libicns (and icns2png) can decode all five storage formats
 
 The .icns files are much easier to deal with, since they are in a format that
 can be easily accesed from Linux/UNIX/Windows.
@@ -97,7 +98,7 @@ When unstuffing, be sure to use a command similar to the following:
 unstuff --text=auto --macbinary=auto --eol=unix icons.hqx.sit
 
 This will help ensure that the resource forks are uncompressed into
-MacBinary files, so that Icon2PNG can read them.
+MacBinary files, so that icns2png can read them.
 
 If there are resource forks in the files, when stuffit decompresses them,
 it will create two files from the one mac file. For example, if the mac
@@ -119,8 +120,6 @@ following icon data (Although most icons to not have a complete set):
 32x32 pixels - 1 or 8 bit mask - 1, 4, 8, or 24 bit icon
 64x64 pixels - 1 or 8 bit mask - 1, 4, 8, or 24 bit icon
 128x128 pixels - 8 bit mask - 24 bit icon
-
-icns2png currently only extracts the 128x128 8 bit mask and 24 bit icon image
 
 ===============================================================================
 Requirements

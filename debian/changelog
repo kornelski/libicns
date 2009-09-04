@@ -1,6 +1,8 @@
 libicns (0.7.1-1) unstable; urgency=low
 
   * New upstream release
+  * debian/control
+    - Bump to 3.8.3 Standards-Version (no change needed).
 
  -- Mathew Eis <mathew@eisbox.net>  Thu, 03 Sep 2009 21:28:08 -0700
 
