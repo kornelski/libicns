@@ -1,10 +1,15 @@
-Release 0.7.0  (Current)
-# Sourceforge SVN rev 155 - current
+Release 0.7.1  (Current)
+# Sourceforge SVN rev 165 - current
 - libicns version 2.7.1 (per libtool)
 - 
 
+Release 0.7.0  (Current)
+# Sourceforge SVN rev 163 - 165
+- libicns version 2.7.1 (per libtool)
+- Fixed licensing concerns
+
 Release 0.6.2  (05/10/2009)
-# Sourceforge SVN rev 154
+# Sourceforge SVN rev 154 - 162
 - libicns version 2.6.1 (per libtool)
 - Changed icns_type_t from struct to uint32_t
 - Updated all code relevant to the icns_type_t change
