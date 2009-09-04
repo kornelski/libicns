@@ -1,20 +1,8 @@
-libicns (0.7.0-1) unstable; urgency=low
+libicns (0.7.1-1) unstable; urgency=low
 
   * New upstream release
 
- -- Mathew Eis <mathew@eisbox.net>  Sun, 10 May 2009 16:38:23 -0700
-
-libicns (0.6.1-1) unstable; urgency=low
-
-  * New upstream release
-
- -- Mathew Eis <mathew@eisbox.net>  Thu, 31 Dec 2008 17:49:02 -0700
-
-libicns (0.6.0-1) unstable; urgency=low
-
-  * New upstream release
-
- -- Mathew Eis <mathew@eisbox.net>  Thu, 09 Oct 2008 19:36:10 -0700
+ -- Mathew Eis <mathew@eisbox.net>  Thu, 03 Sep 2009 21:28:08 -0700
 
 libicns (0.5.9-1) unstable; urgency=low
 
