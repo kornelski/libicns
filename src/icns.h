@@ -124,6 +124,12 @@ typedef struct icns_icon_info_t
 
 #define ICNS_32x32_1BIT_ICON          0x49434F4E  // "ICON"
 
+#define ICNS_TILE_VARIANT             0x74696C65  // "tile"
+#define ICNS_ROLLOVER_VARIANT         0x6F766572  // "over"
+#define ICNS_DROP_VARIANT             0x64726F70  // "drop"
+#define ICNS_OPEN_VARIANT             0x6F70656E  // "open"
+#define ICNS_OPEN_DROP_VARIANT        0x6F647270  // "odrp"
+
 #define ICNS_NULL_DATA                0x00000000 
 #define ICNS_NULL_MASK                0x00000000 
 
