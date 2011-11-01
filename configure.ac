@@ -85,6 +85,62 @@ AC_MSG_RESULT(no)
 AC_MSG_RESULT(can not test)
 ] )
 
+# Check for noinline memcpy unaligned copy support
+AC_MSG_CHECKING([whether noinline memcpy works with unaligned data])
+AC_RUN_IFELSE([
+AC_LANG_PROGRAM([[#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#ifndef HAVE_UNALIGNED_MEMCPY
+ #if defined(__GNUC__) && (defined(__arm__) || defined(__thumb__) || defined(__sparc__))
+  #define HAVE_UNALIGNED_MEMCPY 0
+ #else
+  #define HAVE_UNALIGNED_MEMCPY 1
+ #endif
+#endif
+#if HAVE_UNALIGNED_MEMCPY == 0
+__attribute__ ((noinline)) void *memcpy_noinline( void *dst, const void *src, size_t num );
+__attribute__ ((noinline)) void *memcpy_noinline( void *dst, const void *src, size_t num ) {
+ return memcpy(dst,src,num);
+}
+#define READ_UNALIGNED(val, addr, size)  memcpy_noinline(&(val), (addr), size)
+#else
+#define READ_UNALIGNED(val, addr, size)  memcpy(&(val), (addr), size)
+#endif
+typedef struct struct_type_t {
+  uint32_t	numx;
+  uint32_t	numy;
+  uint8_t   data[1];
+} struct_type_t;]],[[uint8_t	*init = "WithThisDataICanFindManyBugs\0\0\0\0";
+uint8_t *data = malloc(sizeof(uint8_t)*32);
+struct_type_t *good_data = (struct_type_t *)(data+0);
+struct_type_t *poor_data = (struct_type_t *)(data+1);
+uint32_t numx = 0;
+uint32_t numy = 0;
+uint8_t  ebytes[] = {0xFF,0x11};
+uint16_t echeck = ebytes[0]|ebytes[1]<< 8;
+uint16_t endian = *((uint16_t*)(&ebytes[0]));
+uint8_t  little = (endian == echeck);
+memcpy(&data[0],&init[0],32);
+if(memcmp(&data[0],&init[0],32) != 0) return 1;
+READ_UNALIGNED(numx, &(poor_data->numx),sizeof( uint32_t));
+if( (little && numx != 0x54687469) || (!little && numx != 0x69746854) ) return 1;
+READ_UNALIGNED(numy, &(poor_data->numy),sizeof( uint32_t));
+if( (little && numy != 0x44736968) || (!little && numy != 0x68697344) ) return 1;
+READ_UNALIGNED(numx, &(good_data->numx),sizeof( uint32_t));
+if( (little && numx != 0x68746957) || (!little && numx != 0x57697468) ) return 1;
+READ_UNALIGNED(numy, &(good_data->numy),sizeof( uint32_t));
+if( (little && numy != 0x73696854) || (!little && numy != 0x54686973) ) return 1;
+]])], [
+AC_MSG_RESULT(yes)
+], [
+AC_MSG_RESULT(no)
+AC_MSG_ERROR(libicns cannot work around memcpy problems on this platform)
+], [
+AC_MSG_RESULT(can not test)
+] )
+
 # Check for libpng
 AC_CHECK_LIB(png, png_create_read_struct, [
 AC_SUBST(PNG_LIBS, "-lpng")
