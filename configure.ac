@@ -1,7 +1,7 @@
 #         -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(libicns, 0.5.9, mathew@eisbox.net)
+AC_INIT(libicns, 0.7.2, mathew@eisbox.net)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/icns.h])
 AM_MAINTAINER_MODE
@@ -42,6 +42,48 @@ AC_TYPE_MODE_T
 # Checks for library functions.
 AC_FUNC_FORK
 AC_CHECK_LIB(getopt,getopt_long)
+
+# Check for memcpy unaligned copy support
+AC_MSG_CHECKING([whether memcpy works with unaligned data])
+AC_RUN_IFELSE([
+AC_LANG_PROGRAM([[#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#define READ_UNALIGNED(val, addr, size)  memcpy(&(val), (addr), size)
+typedef struct struct_type_t {
+  uint32_t	numx;
+  uint32_t	numy;
+  uint8_t   data[1];
+} struct_type_t;]],[[uint8_t	*init = "WithThisDataICanFindManyBugs\0\0\0\0";
+uint8_t *data = malloc(sizeof(uint8_t)*32);
+struct_type_t *good_data = (struct_type_t *)(data+0);
+struct_type_t *poor_data = (struct_type_t *)(data+1);
+uint32_t numx = 0;
+uint32_t numy = 0;
+uint8_t  ebytes[] = {0xFF,0x11};
+uint16_t echeck = ebytes[0]|ebytes[1]<< 8;
+uint16_t endian = *((uint16_t*)(&ebytes[0]));
+uint8_t  little = (endian == echeck);
+memcpy(&data[0],&init[0],32);
+if(memcmp(&data[0],&init[0],32) != 0) return 1;
+READ_UNALIGNED(numx, &(poor_data->numx),sizeof( uint32_t));
+if( (little && numx != 0x54687469) || (!little && numx != 0x69746854) ) return 1;
+READ_UNALIGNED(numy, &(poor_data->numy),sizeof( uint32_t));
+if( (little && numy != 0x44736968) || (!little && numy != 0x68697344) ) return 1;
+READ_UNALIGNED(numx, &(good_data->numx),sizeof( uint32_t));
+if( (little && numx != 0x68746957) || (!little && numx != 0x57697468) ) return 1;
+READ_UNALIGNED(numy, &(good_data->numy),sizeof( uint32_t));
+if( (little && numy != 0x73696854) || (!little && numy != 0x54686973) ) return 1;
+]])], [
+AC_DEFINE([HAVE_UNALIGNED_MEMCPY],[1],[memcpy works with unaligned data])
+AC_MSG_RESULT(yes)
+], [
+AC_DEFINE([HAVE_UNALIGNED_MEMCPY],[0],[memcpy fails with unaligned data])
+AC_MSG_RESULT(no)
+], [
+AC_MSG_RESULT(can not test)
+] )
 
 # Check for libpng
 AC_CHECK_LIB(png, png_create_read_struct, [

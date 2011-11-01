@@ -29,7 +29,7 @@ Boston, MA 02110-1301, USA.
 #include "icns_internals.h"
 
 /***************************** ICNS_MEMCPY **************************/
-#ifdef ICNS_NOINLINE_MEMCPY
+#if HAVE_UNALIGNED_MEMCPY == 0
 __attribute__ ((noinline)) void *icns_memcpy( void *dst, const void *src, size_t num ) {
  return memcpy(dst,src,num);
 }
