@@ -43,9 +43,10 @@ typedef struct pixel32_t
 #define	ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define	MAX_INPUTFILES  4096
 
-#define	PRINT_ICNS_ERRORS	 0
+#define	PRINT_ICNS_ERRORS	 1
 
-int ExtractAndDescribeIconFamilyFile(char *filename);
+int ExtractAndDescribeIconFamilyFile(char *filepath);
+int ExtractAndDescribeIconFamily(icns_family_t *iconFamily,char *description,char *outfileprefix);
 int WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask);
 
 char 	*inputFileNames[MAX_INPUTFILES];
@@ -274,109 +275,110 @@ int main(int argc, char *argv[])
 	return result;
 }
 
-int ExtractAndDescribeIconFamilyFile(char *filename)
+int ExtractAndDescribeIconFamilyFile(char *filepath)
 {
-	int		error = ICNS_STATUS_OK;
-	FILE            *inFile = NULL;
-	icns_family_t	*iconFamily = NULL;
-	icns_byte_t	*dataPtr = NULL;
-	unsigned long	dataOffset = 0;
-	int		imageCount = 0;
-	int		elementCount = 0;
-	int		extractedCount = 0;
-	char		*prefilename = NULL;
-	char		*outfilename = NULL;
-	unsigned int	filenamelength = 0;
-	unsigned int	prefilenamelength = 0;
+	int           error = ICNS_STATUS_OK;
+	FILE          *inFile = NULL;
+	icns_family_t *iconFamily = NULL;
+	unsigned int  filepathlength = 0;
+	char          *filename = NULL;
+	unsigned int  filenamelength = 0;
+	unsigned int  filenamestart = 0;
+	char          *outfileprefix = NULL;
+	unsigned int  outfileprefixlength = 0;
 	
 	#ifdef __APPLE__
-	char	*rsrcfilename = NULL;
-	unsigned int	rsrcfilenamelength = 0;
+	char          *rsrcfilepath = NULL;
+	unsigned int  rsrcfilepathlength = 0;
 	#endif
 	
-	filenamelength = strlen(filename);
+	filepathlength = strlen(filepath);
 	
 	#ifdef __APPLE__
-	rsrcfilenamelength = filenamelength + 17;
-	rsrcfilename = (char *)malloc(rsrcfilenamelength);
-	if(rsrcfilename == NULL)
+	rsrcfilepathlength = filepathlength + 17;
+	rsrcfilepath = (char *)malloc(rsrcfilepathlength);
+	if(rsrcfilepath == NULL)
 		return ICNS_STATUS_NO_MEMORY;
-			
-	// Append the OS X POSIX-safe filename to access the resource fork
-	strncpy(&rsrcfilename[0],&filename[0],filenamelength);
-	strncpy(&rsrcfilename[filenamelength],"/..namedfork/rsrc",17);
+	
+	// Append the OS X POSIX-safe filepath to access the resource fork
+	strncpy(&rsrcfilepath[0],&filepath[0],filepathlength);
+	strncpy(&rsrcfilepath[filepathlength],"/..namedfork/rsrc",17);
 	#endif
+	
+	// Get the plain filename...
+	filename = (char *)malloc(filepathlength + 1);
+	filenamestart = filepathlength-1;
+	while(filenamestart > 0) {
+		if(filepath[filenamestart] == '/')
+			break;
+		filenamestart--;
+	}
+	filenamelength = filepathlength-filenamestart;
+	memcpy(&filename[0],&filepath[filenamestart],filenamelength);
+	filename[filenamelength] = 0;
+	
+	// Set up the output filepath...
+	unsigned int	outputpathlength = 0;
+	unsigned int	filepathstart = filepathlength;
+	unsigned int	filepathend = filepathlength;
 
-	// Set up the output filename...
-	if(extractMode & EXTRACT_MODE)
-	{		
-		unsigned int	outputpathlength = 0;
-		unsigned int	filenamestart = filenamelength;
-		unsigned int	filenameend = filenamelength;
+	if(outputPath != NULL)
+	{	
+		outputpathlength = strlen(outputPath);
 
-		if(outputPath != NULL)
-		{	
-			outputpathlength = strlen(outputPath);
-
-			// Create a buffer large enough to hold the worst case
-			prefilename = (char *)malloc(outputpathlength+filenamelength+1);
-			if(prefilename == NULL)
-				return ICNS_STATUS_NO_MEMORY;
-			
-			// Copy in the output path
-			strncpy(&prefilename[0],&outputPath[0],outputpathlength);
-			prefilenamelength = outputpathlength;
-			if(outputPath[prefilenamelength-1] != '/')
-			{
-				prefilename[prefilenamelength] = '/';
-				prefilenamelength++;
-				prefilename[prefilenamelength] = 0;
-			}
-			
-			// Append the output filename
-			// That is, the input filename from the last '/' or start to the last '.' past the last '/'
-			while(filename[filenamestart] != '/' && filenamestart > 0)
-				filenamestart--;
-			if(filenamestart != 0)
-				filenamestart++;
-			while(filename[filenameend] != '.' && filenameend > filenamestart)
-				filenameend--;
-			if(filenameend == filenamestart)
-				filenameend = filenamelength;
-			strncpy(&prefilename[prefilenamelength],&filename[filenamestart],filenameend - filenamestart);
-			prefilenamelength += (filenameend - filenamestart);
-			prefilename[prefilenamelength] = 0;
-		}
-		else
+		// Create a buffer large enough to hold the worst case
+		outfileprefix = (char *)malloc(outputpathlength+filepathlength+1);
+		if(outfileprefix == NULL)
+			return ICNS_STATUS_NO_MEMORY;
+		
+		// Copy in the output path
+		strncpy(&outfileprefix[0],&outputPath[0],outputpathlength);
+		outfileprefixlength = outputpathlength;
+		if(outputPath[outfileprefixlength-1] != '/')
 		{
-			// Create a buffer for the input filename (without the new extension)
-			prefilename = (char *)malloc(filenamelength+1);
-			if(prefilename == NULL)
-				return ICNS_STATUS_NO_MEMORY;
-
-			// Create the output filename
-			// That is, the input filename from the last '/' or start to the last '.' past the last '/'
-			while(filename[filenamestart] != '/' && filenamestart > 0)
-				filenamestart--;
-			if(filenamestart != 0)
-				filenamestart++;
-			while(filename[filenameend] != '.' && filenameend > filenamestart)
-				filenameend--;
-			if(filenameend == filenamestart)
-				filenameend = filenamelength;
-			strncpy(&prefilename[0],&filename[filenamestart],filenameend - filenamestart);
-			prefilenamelength += (filenameend - filenamestart);
-			prefilename[prefilenamelength] = 0;
+			outfileprefix[outfileprefixlength] = '/';
+			outfileprefixlength++;
+			outfileprefix[outfileprefixlength] = 0;
 		}
 		
-		// Create a buffer for the output filename
-		outfilename = (char *)malloc(prefilenamelength+20);
-		if(outfilename == NULL)
+		// Append the output filepath
+		// That is, the input filepath from the last '/' or start to the last '.' past the last '/'
+		while(filepath[filepathstart] != '/' && filepathstart > 0)
+			filepathstart--;
+		if(filepathstart != 0)
+			filepathstart++;
+		while(filepath[filepathend] != '.' && filepathend > filepathstart)
+			filepathend--;
+		if(filepathend == filepathstart)
+			filepathend = filepathlength;
+		strncpy(&outfileprefix[outfileprefixlength],&filepath[filepathstart],filepathend - filepathstart);
+		outfileprefixlength += (filepathend - filepathstart);
+		outfileprefix[outfileprefixlength] = 0;
+	}
+	else
+	{
+		// Create a buffer for the input filepath (without the new extension)
+		outfileprefix = (char *)malloc(filepathlength+1);
+		if(outfileprefix == NULL)
 			return ICNS_STATUS_NO_MEMORY;
+
+		// Create the output filepath
+		// That is, the input filepath from the last '/' or start to the last '.' past the last '/'
+		while(filepath[filepathstart] != '/' && filepathstart > 0)
+			filepathstart--;
+		if(filepathstart != 0)
+			filepathstart++;
+		while(filepath[filepathend] != '.' && filepathend > filepathstart)
+			filepathend--;
+		if(filepathend == filepathstart)
+			filepathend = filepathlength;
+		strncpy(&outfileprefix[0],&filepath[filepathstart],filepathend - filepathstart);
+		outfileprefixlength += (filepathend - filepathstart);
+		outfileprefix[outfileprefixlength] = 0;
 	}
 	
 	printf("----------------------------------------------------\n");
-	printf("Reading icns family from %s...\n",filename);
+	printf("Reading icns family from %s...\n",filepath);
 	
 	#ifdef __APPLE__
 	// If we're on an apple system, we want to try
@@ -385,12 +387,12 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	// hide all internal errors while we try to read the resource fork
 	icns_set_print_errors(0);
 
-	inFile = fopen( rsrcfilename, "r" );
+	inFile = fopen( rsrcfilepath, "r" );
 	
 	if ( inFile != NULL ) {
 		error = icns_read_family_from_rsrc(inFile,&iconFamily);
 		if(error == ICNS_STATUS_OK)
-			printf(" Using icon from HFS+ resource fork...\n");
+			printf("Using icon from HFS+ resource fork...\n");
 		fclose(inFile);
 		inFile = NULL;
 	} else {
@@ -403,25 +405,25 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	// If we had an error, it was from trying to read the resource fork, so try the data file
 	if(error != ICNS_STATUS_OK)
 	{
-		inFile = fopen( filename, "r" );
+		inFile = fopen( filepath, "r" );
 		
 		if ( inFile == NULL ) {
-			fprintf (stderr, "Unable to open file %s!\n",filename);
+			fprintf (stderr, "Unable to open file %s!\n",filepath);
 			goto cleanup;
 		}
 
 		error = icns_read_family_from_file(inFile,&iconFamily);
-			
+		
 		fclose(inFile);
 	}
 	
 	#else
 	// On all other systems, read just the file
 
-	inFile = fopen( filename, "r" );
+	inFile = fopen( filepath, "r" );
 	
 	if ( inFile == NULL ) {
-		fprintf (stderr, "Unable to open file %s!\n",filename);
+		fprintf (stderr, "Unable to open file %s!\n",filepath);
 		goto cleanup;
 	}
 
@@ -432,16 +434,57 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	#endif
 			
 	if(error) {
-		fprintf (stderr, "Unable to read icns family from file %s!\n",filename);
+		fprintf (stderr, "Unable to read icns family from file %s!\n",filepath);
 		goto cleanup;
+	}
+	
+	error = ExtractAndDescribeIconFamily(iconFamily,filename,outfileprefix);
+
+cleanup:
+	
+	
+	#ifdef __APPLE__
+	if(rsrcfilepath != NULL) {
+		free(rsrcfilepath);
+		rsrcfilepath = NULL;
+	}
+	#endif
+	if(iconFamily != NULL) {
+		free(iconFamily);
+		iconFamily = NULL;
+	}
+	if(outfileprefix != NULL) {
+		free(outfileprefix);
+		outfileprefix = NULL;
+	}
+
+	
+	return error;
+}
+
+int ExtractAndDescribeIconFamily(icns_family_t *iconFamily,char *description,char *outfileprefix) {
+	int		error = ICNS_STATUS_OK;
+	icns_byte_t *dataPtr = (icns_byte_t*)iconFamily;
+	unsigned long  dataOffset = 0;
+	int           imageCount = 0;
+	int           elementCount = 0;
+	int           extractedCount = 0;
+	char           *outfilepath = NULL;
+	
+	printf(" Extracting icons from %s...\n",description);
+	
+	// Create a buffer for the output filename
+	if(extractMode & EXTRACT_MODE) {
+		outfilepath = (char *)malloc(strlen(outfileprefix)+25);
+		if(outfilepath == NULL)
+			return ICNS_STATUS_NO_MEMORY;
 	}
 	
 	// Start listing info:
 	if(extractMode & LIST_MODE) {
 		char typeStr[5];
 		icns_type_str(iconFamily->resourceType,typeStr);
-		printf(" Icon family type is '%s'\n",typeStr);
-		printf(" Icon family size is %d bytes\n",iconFamily->resourceSize);
+		printf(" Icon family size is %d bytes (including %d byte header)\n",iconFamily->resourceSize,8);
 	}
 	
 	// Skip past the icns header
@@ -482,27 +525,72 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
                     printf(" value: 0x%08X\n",iconVersion);
                 }
             }
-				break;
+			break;
 			case ICNS_TILE_VARIANT:
-				if(extractMode & LIST_MODE)
-					printf(" icon variant: tile (%d bytes)\n",iconDataSize);
-				break;
 			case ICNS_ROLLOVER_VARIANT:
-				if(extractMode & LIST_MODE)
-					printf(" icon variant: rollover (%d bytes)\n",iconDataSize);
-				break;
 			case ICNS_DROP_VARIANT:
-				if(extractMode & LIST_MODE)
-					printf(" icon variant: drop (%d bytes)\n",iconDataSize);
-				break;
 			case ICNS_OPEN_VARIANT:
-				if(extractMode & LIST_MODE)
-					printf(" icon variant: open (%d bytes)\n",iconDataSize);
-				break;
 			case ICNS_OPEN_DROP_VARIANT:
-				if(extractMode & LIST_MODE)
-					printf(" icon variant: open/drop (%d bytes)\n",iconDataSize);
-				break;
+			{
+				// Load up the variant, over-write the type and size to make it into an icns
+				icns_byte_t	*variantData = (icns_byte_t*)malloc(iconElement.elementSize);
+				icns_family_t *variant = NULL;
+				icns_byte_t	b[4] = {0,0,0,0};
+				memcpy(variantData,(dataPtr+dataOffset),iconElement.elementSize);
+				memcpy(variantData,"icns",4);
+				b[0] = iconElement.elementSize >> 24;
+				b[1] = iconElement.elementSize >> 16;
+				b[2] = iconElement.elementSize >> 8;
+				b[3] = iconElement.elementSize;
+				memcpy(&variantData[4], &b[0], sizeof(icns_size_t));
+				
+				// Display some info about the variant
+				switch(iconElement.elementType) {
+					case ICNS_TILE_VARIANT:
+						if(extractMode & LIST_MODE)
+							printf(" icon variant: tile (%d bytes)\n",iconDataSize);
+						break;
+					case ICNS_ROLLOVER_VARIANT:
+						if(extractMode & LIST_MODE)
+							printf(" icon variant: rollover (%d bytes)\n",iconDataSize);
+						break;
+					case ICNS_DROP_VARIANT:
+						if(extractMode & LIST_MODE)
+							printf(" icon variant: drop (%d bytes)\n",iconDataSize);
+						break;
+					case ICNS_OPEN_VARIANT:
+						if(extractMode & LIST_MODE)
+							printf(" icon variant: open (%d bytes)\n",iconDataSize);
+						break;
+					case ICNS_OPEN_DROP_VARIANT:
+						if(extractMode & LIST_MODE)
+							printf(" icon variant: open/drop (%d bytes)\n",iconDataSize);
+						break;
+				}
+
+				// Try to parse out the variant
+				error = icns_import_family_data(iconElement.elementSize,variantData,&variant);
+				
+				if(error) {
+					fprintf (stderr, "Unable to read icon variant type '%s' (error while parsing)\n",typeStr);
+				} else {
+					icns_size_t	variantLength = strlen(outfileprefix) + strlen(typeStr) + 2;
+					char *variantPrefix = (char *)malloc(variantLength);
+					if(variantPrefix != NULL) {
+						sprintf(&variantPrefix[0],"%s_%s",outfileprefix,typeStr);
+						variantPrefix[variantLength] = 0;
+						error = ExtractAndDescribeIconFamily((icns_family_t*)variant,typeStr,variantPrefix);
+					}
+				}
+				
+				free(variant);
+				
+				if(variantData) {
+					free(variantData);
+					variantData = NULL;
+				}
+			}
+			break;
 			default:
             {
 				iconInfo = icns_get_image_info_for_type(iconElement.elementType);
@@ -552,7 +640,7 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 				{
 				if(iconInfo.isImage)
 				{
-					unsigned int	outfilenamelength = 0;
+					unsigned int	outfilepathlength = 0;
 					FILE 		*outfile = NULL;
 					icns_image_t	iconImage;
 					
@@ -570,14 +658,14 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 					}
 					else
 					{
-						// Set up the output file name: filename_WWxHHxDD.png
-						outfilenamelength = sprintf(&outfilename[0],"%s_%dx%dx%d.png",prefilename,iconInfo.iconWidth,iconInfo.iconHeight,iconInfo.iconBitDepth);
-						outfilename[outfilenamelength] = 0;
+						// Set up the output file name: description_WWxHHxDD.png
+						outfilepathlength = sprintf(&outfilepath[0],"%s_%dx%dx%d.png",outfileprefix,iconInfo.iconWidth,iconInfo.iconHeight,iconInfo.iconBitDepth);
+						outfilepath[outfilepathlength] = 0;
 						
-						outfile = fopen(outfilename,"w");
+						outfile = fopen(outfilepath,"w");
 						if(!outfile)
 						{
-							fprintf (stderr, "Unable to open %s for writing!\n",outfilename);
+							fprintf (stderr, "Unable to open %s for writing!\n",outfilepath);
 						}
 						else
 						{
@@ -586,7 +674,7 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 							if(error) {
 								fprintf (stderr, "Error writing PNG image!\n");
 							} else {
-								printf("  Saved '%s' element to %s.\n",typeStr,outfilename);
+								printf("  Saved '%s' element to %s.\n",typeStr,outfilepath);
 							}
 							
 							if(outfile != NULL) {
@@ -615,9 +703,9 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	if(extractMode & LIST_MODE)
 	{
 		if(elementCount > 0) {
-			printf("%d elements total found in %s.\n",elementCount,filename);
+			printf("%d elements total found in %s.\n",elementCount,description);
 		} else {
-			printf("No elements found in %s.\n",filename);
+			printf("No elements found in %s.\n",description);
 		}
 	}
 	
@@ -625,40 +713,22 @@ int ExtractAndDescribeIconFamilyFile(char *filename)
 	{
 		if(extractedCount > 0) {
             if(extractedCount == imageCount) {
-                printf("Extracted %d images from %s.\n",extractedCount,filename);
+                printf("Extracted %d images from %s.\n",extractedCount,description);
             } else {
-                printf("Extracted %d of %d images from %s.\n",extractedCount,imageCount,filename);
+                printf("Extracted %d of %d images from %s.\n",extractedCount,imageCount,description);
             }
 		} else {
-			printf("No elements were extracted from %s.\n",filename);
+			printf("No elements were extracted from %s.\n",description);
 		}		
 	}
 	
-cleanup:
-	
-	
-	#ifdef __APPLE__
-	if(rsrcfilename != NULL) {
-		free(rsrcfilename);
-		rsrcfilename = NULL;
-	}
-	#endif
-	if(iconFamily != NULL) {
-		free(iconFamily);
-		iconFamily = NULL;
-	}
-	if(prefilename != NULL) {
-		free(prefilename);
-		prefilename = NULL;
-	}
-	if(outfilename != NULL) {
-		free(outfilename);
-		outfilename = NULL;
+	if(outfilepath != NULL) {
+		free(outfilepath);
+		outfilepath = NULL;
 	}
 	
 	return error;
 }
-
 
 //***************************** WritePNGImage **************************//
 // Relatively generic PNG file writing routine
