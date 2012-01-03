@@ -329,7 +329,10 @@ int ExtractAndDescribeIconFamilyFile(char *filepath)
 		// Create a buffer large enough to hold the worst case
 		outfileprefix = (char *)malloc(outputpathlength+filepathlength+1);
 		if(outfileprefix == NULL)
-			return ICNS_STATUS_NO_MEMORY;
+		{
+			error = ICNS_STATUS_NO_MEMORY;
+			goto cleanup;
+		}
 		
 		// Copy in the output path
 		strncpy(&outfileprefix[0],&outputPath[0],outputpathlength);
@@ -457,6 +460,10 @@ cleanup:
 		free(outfileprefix);
 		outfileprefix = NULL;
 	}
+	if(filename != NULL) {
+		free(filename);
+		filename = NULL;
+	}
 
 	
 	return error;
@@ -580,6 +587,7 @@ int ExtractAndDescribeIconFamily(icns_family_t *iconFamily,char *description,cha
 						sprintf(&variantPrefix[0],"%s_%s",outfileprefix,typeStr);
 						variantPrefix[variantLength] = 0;
 						error = ExtractAndDescribeIconFamily((icns_family_t*)variant,typeStr,variantPrefix);
+						free(variantPrefix);
 					}
 				}
 				
