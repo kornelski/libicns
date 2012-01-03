@@ -186,7 +186,7 @@ int icns_set_element_in_family(icns_family_t **iconFamilyRef,icns_element_t *new
 	#ifdef ICNS_DEBUG
 	{
 		char typeStr[5];
-		printf("  family type '%s'\n",icns_type_str(iconFamilyType,typeStr);
+		printf("  family type '%s'\n",icns_type_str(iconFamilyType,typeStr));
 		printf("  family size: %d (0x%08X)\n",(int)iconFamilySize,iconFamilySize);
 	}
 	#endif
