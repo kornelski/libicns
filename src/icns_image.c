@@ -161,13 +161,11 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		icns_byte_t	*oldData = NULL;
 		icns_byte_t	*newData = NULL;
 		icns_uint32_t	oldBitDepth = 0;
-		icns_uint32_t	oldDataSize = 0;
 		unsigned long	newBlockSize = 0;
 		unsigned long	newDataSize = 0;
 		icns_colormap_rgb_t	colorRGB;
 		
 		oldBitDepth = (iconImage.imagePixelDepth * iconImage.imageChannels);
-		oldDataSize = iconImage.imageDataSize;
 		
 		pixelCount = iconImage.imageWidth * iconImage.imageHeight;
 		
@@ -372,7 +370,6 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 	unsigned long	rawDataSize = 0;
 	icns_byte_t	*rawDataPtr = NULL;
 	icns_uint32_t	iconBitDepth = 0;
-	unsigned long	iconDataSize = 0;
 	unsigned long	iconDataRowSize = 0;
 	
 	if(iconElement == NULL)
@@ -435,7 +432,6 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 			}
 			
 			iconBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
-			iconDataSize = imageOut->imageDataSize;
 			iconDataRowSize = imageOut->imageWidth * iconBitDepth / ICNS_BYTE_BITS;
 			
 			if(rawDataSize < imageOut->imageDataSize)
@@ -501,7 +497,6 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 			}
 			
 			iconBitDepth = imageOut->imagePixelDepth * imageOut->imageChannels;
-			iconDataSize = imageOut->imageDataSize;
 			iconDataRowSize = imageOut->imageWidth * iconBitDepth / ICNS_BYTE_BITS;
 			
 			for(dataCount = 0; dataCount < imageOut->imageHeight; dataCount++)

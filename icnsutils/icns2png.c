@@ -748,7 +748,6 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	int 			image_channels = 0;
 	int			image_pixel_depth = 0;
 	int 			mask_channels = 0;
-	int			mask_bit_depth = 0;
 	png_structp 		png_ptr;
 	png_infop 		info_ptr;
 	png_bytep 		*row_pointers;
@@ -774,7 +773,6 @@ int	WritePNGImage(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	
 	if(mask != NULL) {
 		mask_channels = mask->imageChannels;
-		mask_bit_depth = mask->imagePixelDepth;
 	}
 	
 	png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);

@@ -1086,10 +1086,8 @@ int icns_read_macbinary_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,
 	icns_bool_t	isValid = 0;
 	icns_sint16_t	secondHeaderLength = 0;
 	icns_sint32_t   fileDataPadding = 0;
-	icns_sint32_t   resourceDataPadding = 0;
 	icns_sint32_t   fileDataSize = 0;
 	icns_sint32_t   resourceDataSize = 0;
-	icns_sint32_t   fileDataStart = 0;
 	icns_sint32_t   resourceDataStart = 0;
 	icns_byte_t	*resourceDataPtr = NULL;
 	
@@ -1182,10 +1180,8 @@ int icns_read_macbinary_resource_fork(icns_size_t dataSize,icns_byte_t *dataPtr,
 	
 	// Calculate extra padding length for forks
 	fileDataPadding = (((fileDataSize + 127) >> 7) << 7) - fileDataSize;
-	resourceDataPadding = (((resourceDataSize + 127) >> 7) << 7) - resourceDataSize;
 	
 	// Calculate starting offsets for data
-	fileDataStart = 128;
 	resourceDataStart = fileDataSize + fileDataPadding + 128;
 	
 	// Check that we are not reading invalid memory
@@ -1436,10 +1432,8 @@ icns_bool_t icns_macbinary_header_check(icns_size_t dataSize,icns_byte_t *dataPt
 	icns_type_t	dataCreator = ICNS_NULL_TYPE;
 	icns_sint16_t	secondHeaderLength = 0;
 	icns_sint32_t   fileDataPadding = 0;
-	icns_sint32_t   resourceDataPadding = 0;
 	icns_sint32_t   fileDataSize = 0;
 	icns_sint32_t   resourceDataSize = 0;
-	icns_sint32_t   fileDataStart = 0;
 	icns_sint32_t   resourceDataStart = 0;
 	
 	if(dataPtr == NULL)
@@ -1482,9 +1476,7 @@ icns_bool_t icns_macbinary_header_check(icns_size_t dataSize,icns_byte_t *dataPt
 	ICNS_READ_UNALIGNED_BE(resourceDataSize, (dataPtr+87),sizeof( icns_sint32_t));
 	
 	fileDataPadding = (((fileDataSize + 127) >> 7) << 7) - fileDataSize;
-	resourceDataPadding = (((resourceDataSize + 127) >> 7) << 7) - resourceDataSize;
 	
-	fileDataStart = 128;
 	resourceDataStart = fileDataSize + fileDataPadding + 128;
 	
 	if( (resourceDataStart < 128) || (resourceDataStart > dataSize) )
