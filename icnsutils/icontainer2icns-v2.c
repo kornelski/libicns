@@ -420,6 +420,7 @@ int main(int argc, char **argv)
 	else
 	{
 		fprintf(stderr,"Error reading archive size!\n");
+		fclose(icontainer);
 		return -1;
 	}
 	
@@ -427,6 +428,7 @@ int main(int argc, char **argv)
 	if(containerSize < 16)
 	{
 		fprintf(stderr,"Archive is too small!\n");
+		fclose(icontainer);
 		return -1;
 	}
 
