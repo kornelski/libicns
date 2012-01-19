@@ -3,7 +3,7 @@ lib_LTLIBRARIES = libicns.la
 
 libicns_la_LDFLAGS = -version-info 2:7:1
 
-libicns_la_LIBADD = @JP2000_LIBS@
+libicns_la_LIBADD = @PNG_LIBS@ @JP2000_LIBS@
 
 libicns_la_SOURCES = \
   icns_debug.c \
@@ -11,6 +11,7 @@ libicns_la_SOURCES = \
   icns_family.c \
   icns_image.c \
   icns_io.c \
+  icns_png.c \
   icns_jp2.c \
   icns_rle24.c \
   icns_utils.c \

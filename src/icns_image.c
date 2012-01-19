@@ -415,9 +415,22 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
 		// 32-Bit Icon Image Data Types ( > 256px )
 		case ICNS_256x256_32BIT_ARGB_DATA:
 		case ICNS_512x512_32BIT_ARGB_DATA:
-			// We need to use a jp2 processor for these two types
-			error = icns_jp2_to_image((int)rawDataSize, (icns_byte_t *)rawDataPtr, imageOut);
-			return error;
+			{
+				uint8_t magicPNG[] = {0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A};
+				uint8_t magicByt[] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}; 
+			
+				ICNS_READ_UNALIGNED(magicByt[0], rawDataPtr, 8);
+				
+				// 256x256+ sizes may or may not be PNG dta as of 10.7 Lion, so check
+				if(memcmp(&magicByt[0], &magicPNG[0], 8) == 0) {
+					// We know to use the PNG processor
+					error = icns_png_to_image((int)rawDataSize, (icns_byte_t *)rawDataPtr, imageOut);
+				} else {
+					// We assume use of the jp2 processor
+					error = icns_jp2_to_image((int)rawDataSize, (icns_byte_t *)rawDataPtr, imageOut);
+				}
+				return error;
+			}
 		case ICNS_128X128_32BIT_DATA:
 		case ICNS_48x48_32BIT_DATA:
 		case ICNS_32x32_32BIT_DATA:
