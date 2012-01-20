@@ -43,6 +43,17 @@ static void icns_png_read_memory(png_structp png_ptr, png_bytep data, png_size_t
 int icns_png_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *imageOut)
 {
 	int error = ICNS_STATUS_OK;
+	png_structp png_ptr = NULL;
+	png_infop info_ptr = NULL;
+        png_uint_32 w;
+        png_uint_32 h;
+	png_bytep *buffer;
+        png_bytep *rows;
+        int bit_depth;
+        int32_t color_type;
+        int row;
+        int rowsize;
+	
 	
 	if(dataPtr == NULL)
 	{
@@ -66,18 +77,6 @@ int icns_png_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *
 	printf("Decoding PNG image...\n");
 	#endif
 
-	png_structp png_ptr = NULL;
-	png_infop info_ptr = NULL;
-        png_uint_32 w;
-        png_uint_32 h;
-	png_bytep *buffer;
-        png_bytep *rows;
-        int bit_depth;
-        int bpp;
-        int32_t color_type;
-        int row;
-        int rowsize;
-	
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 
 	if(png_ptr == NULL) {
@@ -97,6 +96,7 @@ int icns_png_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *
                 return ICNS_STATUS_INVALID_DATA;
         }
 
+	// set libpng to read from memory
 	icns_png_io_ref io_data = { dataPtr, dataSize, 0 };
 	png_set_read_fn(png_ptr, (void *)&io_data, &icns_png_read_memory); 
 	
