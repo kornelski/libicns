@@ -88,7 +88,11 @@ typedef struct icns_icon_info_t
 
 /*  icns element type constants */
 
+#define ICNS_TABLE_OF_CONTENTS        0x544F4320  // "TOC "
+
 #define ICNS_ICON_VERSION             0x69636E56  // "icnV"
+
+#define ICNS_1024x1024_32BIT_ARGB_DATA 0x69633130 // "ic10"
 
 #define ICNS_512x512_32BIT_ARGB_DATA  0x69633039  // "ic09"
 #define ICNS_256x256_32BIT_ARGB_DATA  0x69633038  // "ic08"

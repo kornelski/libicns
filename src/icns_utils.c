@@ -90,6 +90,8 @@ icns_uint32_t icns_get_element_order(icns_type_t iconType)
 		return 2;
 	case ICNS_16x12_1BIT_DATA:
 		return 1;
+	case ICNS_TABLE_OF_CONTENTS:
+		return 0;
 	default:
 		return 1000;
 	}
@@ -101,6 +103,10 @@ icns_type_t icns_get_mask_type_for_icon_type(icns_type_t iconType)
 {
 	switch(iconType)
 	{
+	// Obviously the TOC type has no mask
+	case ICNS_TABLE_OF_CONTENTS:
+		return ICNS_NULL_MASK;
+
 	// Obviously the version type has no mask
 	case ICNS_ICON_VERSION:
 		return ICNS_NULL_MASK;
@@ -182,6 +188,16 @@ icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	
 	switch(iconType)
 	{
+	// TOC type
+	case ICNS_TABLE_OF_CONTENTS:
+		iconInfo.isImage = 0;
+		iconInfo.isMask = 0;
+		iconInfo.iconWidth = 0;
+		iconInfo.iconHeight = 0;
+		iconInfo.iconChannels = 0;
+		iconInfo.iconPixelDepth = 0;
+		iconInfo.iconBitDepth = 0;
+		break;
 	// Version type
 	case ICNS_ICON_VERSION:
 		iconInfo.isImage = 0;
@@ -191,6 +207,7 @@ icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType)
 		iconInfo.iconChannels = 0;
 		iconInfo.iconPixelDepth = 0;
 		iconInfo.iconBitDepth = 0;
+		break;
 	// 32-bit image types
 	case ICNS_512x512_32BIT_ARGB_DATA:
 		iconInfo.isImage = 1;
