@@ -633,7 +633,7 @@ int icns_export_family_data(icns_family_t *iconFamily,icns_size_t *dataSizeOut,i
 			}
 			#endif
 			
-			if(dataOffset+elementSize > dataSize)
+			if( (elementSize < 8) || (dataOffset+elementSize > dataSize) )
 			{
 				icns_print_err("icns_export_family_data: Invalid element size! (%d)\n",elementSize);
 				error = ICNS_STATUS_INVALID_DATA;
@@ -797,7 +797,7 @@ int icns_parse_family_data(icns_size_t dataSize,icns_byte_t *dataPtr,icns_family
 			}
 			#endif
 			
-			if(dataOffset+elementSize > resourceSize)
+			if( (elementSize < 8) || (dataOffset+elementSize > resourceSize) )
 			{
 				icns_print_err("icns_parse_family_data: Invalid element size! (%d)\n",elementSize);
 				error = ICNS_STATUS_INVALID_DATA;
