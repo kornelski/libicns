@@ -2,7 +2,7 @@
  * png2icns
  *
  * Copyright (C) 2008 Julien BLACHE <jb@jblache.org>
- * Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+ * Copyright (C) 2012 Mathew Eis <mathew@eisbox.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 /*
 File:       icns_element.c
-Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2001-2012 Mathew Eis <mathew@eisbox.net>
               2007 Thomas Lübking <thomas.luebking@web.de>
               2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 

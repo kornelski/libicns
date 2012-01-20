@@ -1,6 +1,6 @@
 /*
 File:       icns.h
-Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2001-2012 Mathew Eis <mathew@eisbox.net>
 Copyright (C) 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
 
 With the exception of the limited portions mentiond, this library

@@ -1,7 +1,7 @@
    libicns Documentation
-   Copyright (C) 2009 Mathew Eis
+   Copyright (C) 2012 Mathew Eis
    Released under the terms of the LGPL v2 or later
-   libicns release 0.7.0, version 2.0.1
+   libicns release 0.8.0, version 2:8:2
    Table of contents:
 
      * Part I: Tutorial / Example
@@ -160,6 +160,9 @@ typedef struct icns_image_t
    Icon Type Constants
 
    The various icon types found within an icon family:
+static const icns_type_t  ICNS_TABLE_OF_CONTENTS         = {{'T','O','C',' '}};
+static const icns_type_t  ICNS_ICON_VERSION              = {{'i','c','n','V'}};
+static const icns_type_t  ICNS_1024x1024_32BIT_ARGB_DATA = {{'i','c','1','0'}};
 static const icns_type_t  ICNS_512x512_32BIT_ARGB_DATA   = {{'i','c','0','9'}};
 static const icns_type_t  ICNS_256x256_32BIT_ARGB_DATA   = {{'i','c','0','8'}};
 static const icns_type_t  ICNS_128X128_32BIT_DATA        = {{'i','t','3','2'}};

@@ -1,6 +1,6 @@
 /*
 File:       icnsinfo.c
-Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2001-2012 Mathew Eis <mathew@eisbox.net>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -113,7 +113,7 @@ static void PrintVersionInfo(void)
 {
 	printf("icns2png 1.5                                                                  \n");
 	printf("                                                                              \n");
-	printf("Copyright (c) 2001-2008 Mathew Eis                                            \n");
+	printf("Copyright (c) 2001-2012 Mathew Eis                                            \n");
 	printf("This is free software; see the source for copying conditions.  There is NO    \n");
 	printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.   \n");
 	printf("                                                                              \n");

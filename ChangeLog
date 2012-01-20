@@ -1,9 +1,19 @@
-Release 0.7.1  (Current)
-# Sourceforge SVN rev 165 - current
+Release 0.8.0  (Current)
+# Sourceforge SVN rev 170 - current
+- libicns version 2.8.2 (per libtool)
+- fixed potentially dangerous parsing error
+- improved icns2png's understanding of 'icnV' type
+- added awareness of 'TOC ' type to libicns/icns2png
+- added support for PNG icns elements
+- added support for icon variant type
+- fix for alignment/bus errors on ARM/Sparc 
+
+Release 0.7.1  (09/03/2009)
+# Sourceforge SVN rev 165 - 170
 - libicns version 2.7.1 (per libtool)
 - 
 
-Release 0.7.0  (Current)
+Release 0.7.0  (07/28/2009)
 # Sourceforge SVN rev 163 - 165
 - libicns version 2.7.1 (per libtool)
 - Fixed licensing concerns

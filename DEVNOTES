@@ -1,5 +1,5 @@
 ===============================================================================
-Developers notes for libicns 0.5.1 - March 6th, 2008
+Developers notes for libicns 0.8.0 - January 19, 2012
 Copyright (C) 2001-2008 Mathew Eis <mathew@eisbox.net>
 
 ===============================================================================
@@ -149,11 +149,11 @@ icns data format is basically an 8-byte header, followed by icns elements
 |---- 8 byte header ----
 |+4 byte type id 'ICN#', 'icl8', etc...
 |+4 byte int - total size of element data: equal to size of element
-|==== raw, rle, or jp2 image data
+|==== raw, rle, jp2, or png image data
 |---- 8 byte header ----
 |+4 byte type id 'ICN#', 'icl8', etc...
 |+4 byte int - total size of image data: equal to size of element
-|==== raw, rle, or jp2 image data
+|==== raw, rle, jp2, or png image data
 |EOF
 
 ===============================================================================
@@ -188,7 +188,13 @@ icns element is basically an 8-byte header, followed by icon data
 - compressed using RLE.
 
 32-bit icon notes (size >= 256x256) 
-- data is jp2 encoded
+- data may be either jp2 or PNG encoded
+- valid sizes are: 256x256, 512x512, 1024x1024
+
+Other valid elements found in .icns files
+- 'TOC ' table of contents; all icon elements and their sizes
+- 'icnV' If created with Icon Composer, version number of app bundle
+
 
 
 ==============================================================================

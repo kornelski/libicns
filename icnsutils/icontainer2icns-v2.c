@@ -1,7 +1,7 @@
 /*
 File:       icontainer2icns.cpp
 Copyright (C) 2005 Thomas Lübking <baghira-style@gmx.net>
-Copyright (C) 2008 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2012 Mathew Eis <mathew@eisbox.net>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
