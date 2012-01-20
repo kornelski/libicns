@@ -520,18 +520,27 @@ int ExtractAndDescribeIconFamily(icns_family_t *iconFamily,char *description,cha
 		}
 		
 		switch(iconElement.elementType) {
+			case ICNS_TABLE_OF_CONTENTS:
+			{
+				if(extractMode & LIST_MODE) {
+					printf(" table of contents\n");
+				}
+			}
+			break;
 			case ICNS_ICON_VERSION:
-            {
-                icns_byte_t	iconBytes[4];
-                icns_uint32_t	iconVersion = 0;
-                if(iconDataSize == 4) {
-                    memcpy(&iconBytes[0],(dataPtr+dataOffset+8),4);
-                    iconVersion = iconBytes[3]|iconBytes[2]<<8|iconBytes[1]<<16|iconBytes[0]<<24;
-                }
-                if(extractMode & LIST_MODE) {
-                    printf(" value: 0x%08X\n",iconVersion);
-                }
-            }
+			{
+				icns_byte_t	iconBytes[4];
+				icns_uint32_t	iconVersion = 0;
+				float		iconVersionNumber = 0;
+				if(iconDataSize == 4) {
+					memcpy(&iconBytes[0],(dataPtr+dataOffset+8),4);
+					iconVersion = iconBytes[3]|iconBytes[2]<<8|iconBytes[1]<<16|iconBytes[0]<<24;
+					iconVersionNumber = *((float *)(&iconVersion));
+				}
+				if(extractMode & LIST_MODE) {
+					printf(" value: %f\n",iconVersionNumber);
+				}
+			}
 			break;
 			case ICNS_TILE_VARIANT:
 			case ICNS_ROLLOVER_VARIANT:
