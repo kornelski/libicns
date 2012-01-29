@@ -1,7 +1,7 @@
 
 lib_LTLIBRARIES = libicns.la
 
-libicns_la_LDFLAGS = -version-info 2:8:2
+libicns_la_LDFLAGS = -version-info 3:0:2
 
 libicns_la_LIBADD = @PNG_LIBS@ @JP2000_LIBS@
 
