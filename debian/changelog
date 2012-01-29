@@ -1,3 +1,14 @@
+libicns (0.8.0-1) unstable; urgency=low
+
+  * New upstream release
+    - No longer crashes on ARM/SPARC (Closes: #612698)
+    - Understands 'odrp' type (Closes: #614031)
+    - Fails with non-zero return code (Closes: #614028)
+  * debian/control
+    - Bump to 3.9.1 Standards-Version (no change needed).
+
+ -- Mathew Eis <mathew@eisbox.net>  Sun, 29 Jan 2012 01:20:00 -0700
+
 libicns (0.7.1-1) unstable; urgency=low
 
   * New upstream release
