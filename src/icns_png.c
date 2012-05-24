@@ -137,6 +137,7 @@ int icns_png_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *
 
 	if(imageOut->imageData == NULL) {
 		png_destroy_read_struct(&png_ptr, NULL, NULL);
+	        free(rows);
 		return ICNS_STATUS_NO_MEMORY;
 	}
 	
