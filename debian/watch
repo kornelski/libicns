@@ -1,2 +1,2 @@
 version=3
-http://sf.net/icns/libicns-(.+)\.tar\.gz
+http://sf.net/icns/libicns-(\d\.[\d\.]+)\.tar\.gz
