@@ -10,6 +10,7 @@ libicns (0.8.0-1) unstable; urgency=low
 
   [ Paul Wise ]
   * Include changes from Debian NMU
+  * Wrap and sort various files using wrap-and-sort -s
 
  -- Mathew Eis <mathew@eisbox.net>  Sun, 29 Jan 2012 01:20:00 -0700
 
