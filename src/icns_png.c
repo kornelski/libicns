@@ -47,7 +47,6 @@ int icns_png_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *
 	png_infop info_ptr = NULL;
         png_uint_32 w;
         png_uint_32 h;
-	png_bytep *buffer;
         png_bytep *rows;
         int bit_depth;
         int32_t color_type;
