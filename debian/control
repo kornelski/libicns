@@ -5,7 +5,7 @@ Build-Depends:
  autotools-dev,
  debhelper (>= 6),
  libjasper-dev,
- libjpeg62-dev,
+ libjpeg-dev,
  libpng12-dev
 Standards-Version: 3.9.1
 Section: libs
