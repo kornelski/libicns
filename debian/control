@@ -7,7 +7,7 @@ Build-Depends:
  libjasper-dev,
  libjpeg-dev,
  libpng-dev
-Standards-Version: 3.9.1
+Standards-Version: 3.9.3
 Section: libs
 Homepage: http://icns.sourceforge.net/
 

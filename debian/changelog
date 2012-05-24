@@ -7,7 +7,7 @@ libicns (0.8.0-1) unstable; urgency=low
     - Fails with non-zero return code (Closes: #614028)
     - Fixes FTBFS with newer libpng (Closes: #635952)
   * debian/control
-    - Bump to 3.9.1 Standards-Version (no change needed).
+    - Bump to 3.9.3 Standards-Version (no change needed).
 
   [ Paul Wise ]
   * Include changes from Debian NMU
