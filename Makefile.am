@@ -9,6 +9,8 @@ EXTRA_DIST = \
   samples/test2.rsrc \
   samples/test3.bin \
   @PACKAGE@.spec.in \
+  COPYING.LGPL-2 \
+  COPYING.LGPL-2.1 \
   MANIFEST.sources
 
 rpm: @PACKAGE@.spec
