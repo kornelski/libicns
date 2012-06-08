@@ -1,0 +1,36 @@
+# Please only change this file from SVN:
+# svn co https://icns.svn.sourceforge.net/svnroot/icns icns-svn
+# $EDITOR icns-svn/.gitignore
+# svn propset -R svn:ignore -F icns-svn/.gitignore icns-svn
+# svn commit icns-svn
+INSTALL
+.svnignore
+.gitignore
+Makefile
+Makefile.in
+autom4te.cache
+config.h*
+config.h.in~
+config.log
+config.status
+config.guess
+config.sub
+configure
+depcomp
+install-sh
+missing
+.deps
+.libs
+ltmain.sh
+libtool
+aclocal.m4
+m4
+*.la
+*.lo
+*.o
+libicns.pc
+libicns.spec
+stamp-h1
+icns2png
+icontainer2icns
+png2icns
