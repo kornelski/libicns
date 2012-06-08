@@ -26,3 +26,6 @@ libicns_include_HEADERS = icns.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libicns.pc
+
+MAINTAINERCLEANFILES = \
+  Makefile.in

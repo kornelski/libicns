@@ -17,6 +17,25 @@ rpm: @PACKAGE@.spec
 distclean-local:
 	-rm -f @PACKAGE@.spec
 
+MAINTAINERCLEANFILES = \
+  m4/lt~obsolete.m4 \
+  m4/ltoptions.m4 \
+  m4/ltversion.m4 \
+  m4/ltsugar.m4 \
+  m4/libtool.m4 \
+  INSTALL \
+  config.h.in \
+  config.h.in~ \
+  aclocal.m4 \
+  config.guess \
+  config.sub \
+  configure \
+  depcomp \
+  install-sh \
+  ltmain.sh \
+  missing \
+  Makefile.in
+
 dist-hook:
 	if test ! -e $(distdir)/ChangeLog -o \( $$(wc -l < $(distdir)/ChangeLog) -eq 1 -a -w $(distdir)/ChangeLog \) ; then \
 		if test -d .git ; then \

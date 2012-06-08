@@ -29,3 +29,6 @@ AM_CPPFLAGS = \
   -I$(top_srcdir)/src/
 
 AM_CFLAGS = -Wall
+
+MAINTAINERCLEANFILES = \
+  Makefile.in
