@@ -16,3 +16,12 @@ rpm: @PACKAGE@.spec
 
 distclean-local:
 	-rm -f @PACKAGE@.spec
+
+dist-hook:
+	if test ! -e $(distdir)/ChangeLog -o \( $$(wc -l < $(distdir)/ChangeLog) -eq 1 -a -w $(distdir)/ChangeLog \) ; then \
+		if test -d .git ; then \
+			LC_ALL=C git log --pretty --numstat --summary $(VERSION) | git2cl > $(distdir)/ChangeLog ; \
+		elif test -d .svn ; then \
+			svn2cl -o $(distdir)/ChangeLog ; \
+		fi \
+	fi
