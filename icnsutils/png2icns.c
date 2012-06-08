@@ -31,16 +31,16 @@
 #define	FALSE	0
 #define	TRUE	1
 
-#if defined(PNG_LIBPNG_VER_MAJOR)   && PNG_LIBPNG_VER_MAJOR   >= 1
+#if defined(PNG_LIBPNG_VER_MAJOR)
+#if defined(PNG_LIBPNG_VER_MINOR)
+#if defined(PNG_LIBPNG_VER_RELEASE)
 
-#if defined(PNG_LIBPNG_VER_MINOR)   && PNG_LIBPNG_VER_MINOR   == 2
-#if defined(PNG_LIBPNG_VER_RELEASE) && PNG_LIBPNG_VER_RELEASE >= 9
-#define PNG2ICNS_EXPAND_GRAY	1
-#endif
-#elif defined(PNG_LIBPNG_VER_MINOR)   && PNG_LIBPNG_VER_MINOR  > 2
-#define PNG2ICNS_EXPAND_GRAY	1
+#if (PNG_LIBPNG_VER_MAJOR * 10000 + PNG_LIBPNG_VER_MINOR * 100 + PNG_LIBPNG_VER_RELEASE) >= 10209
+ #define PNG2ICNS_EXPAND_GRAY 1
 #endif
 
+#endif
+#endif
 #endif
 
 static int read_png(FILE *fp, png_bytepp buffer, int32_t *bpp, int32_t *width, int32_t *height)
