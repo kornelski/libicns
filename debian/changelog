@@ -15,6 +15,7 @@ libicns (0.8.0-1) unstable; urgency=low
   * Compile against libjpeg-dev instead of the old version (Closes: #643316)
   * Compile against libpng-dev instead of the old version (Closes: #662403)
   * Adjust the watch file to only look for release versions
+  * Add myself to uploaders
 
  -- Mathew Eis <mathew@eisbox.net>  Sun, 29 Jan 2012 01:20:00 -0700
 

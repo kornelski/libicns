@@ -1,6 +1,7 @@
 Source: libicns
 Priority: optional
 Maintainer: Mathew Eis <mathew@eisbox.net>
+Uploaders: Paul Wise <pabs@debian.org>
 Build-Depends:
  autotools-dev,
  debhelper (>= 6),
