@@ -15,6 +15,7 @@ libicns (0.8.0-1) unstable; urgency=low
   * Compile against libjpeg-dev instead of the old version (Closes: #643316)
   * Compile against libpng-dev instead of the old version (Closes: #662403)
   * Adjust the watch file to only look for release versions
+  * Switch to debhelper compat 9 and dh tiny rules
   * Add myself to uploaders
   * Add Vcs-* headers
 
