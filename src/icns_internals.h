@@ -38,7 +38,7 @@ Boston, MA 02110-1301, USA.
 // Enable debugging messages?
 // #define	ICNS_DEBUG	1
 
-// Enable supprt for 256x256 and 512x512 icons
+// Enable supprt for 256x256, 512x512 and 1024x1024 icons
 // Use either Jasper or OpenJPEG, but not both
 // #define	ICNS_JASPER
 // #define	ICNS_OPENJPEG

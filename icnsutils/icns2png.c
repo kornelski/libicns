@@ -67,8 +67,8 @@ int	extractIconDepth = ALL_DEPTHS;
 /* Optional output directory */
 char    *outputPath = NULL;
 
-const char *sizeStrs[] =  { "512", "512x512", "256", "256x256", "128", "128x128", "48", "48x48", "32", "32x32", "16", "16x16", "16x12"    };
-const int   sizeVals[] =  {  512,   512,       256,   256,       128,   128,       48,   48,      32,   32,      16,   16,      MINI_SIZE };
+const char *sizeStrs[] =  { "1024", "1024x1024" "512", "512x512", "256", "256x256", "128", "128x128", "48", "48x48", "32", "32x32", "16", "16x16", "16x12"    };
+const int   sizeVals[] =  {  1024,   1024,       512,   512,       256,   256,       128,   128,       48,   48,      32,   32,      16,   16,      MINI_SIZE };
 
 const char *depthStrs[] = { "32", "8", "4", "1" };
 const int   depthVals[] = {  32 ,  8 ,  4 ,  1  };

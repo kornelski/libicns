@@ -46,6 +46,8 @@ icns_uint32_t icns_get_element_order(icns_type_t iconType)
 	{
 	case ICNS_ICON_VERSION:
 		return 100;
+	case ICNS_1024x1024_32BIT_ARGB_DATA:
+		return 23;
 	case ICNS_512x512_32BIT_ARGB_DATA:
 		return 22;
 	case ICNS_256x256_32BIT_ARGB_DATA:
@@ -112,6 +114,8 @@ icns_type_t icns_get_mask_type_for_icon_type(icns_type_t iconType)
 		return ICNS_NULL_MASK;
 		
 	// 32-bit image types > 256x256 - no mask (mask is already in image)
+	case ICNS_1024x1024_32BIT_ARGB_DATA:
+		return ICNS_NULL_MASK;
 	case ICNS_512x512_32BIT_ARGB_DATA:
 		return ICNS_NULL_MASK;			
 	case ICNS_256x256_32BIT_ARGB_DATA:
@@ -209,6 +213,15 @@ icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType)
 		iconInfo.iconBitDepth = 0;
 		break;
 	// 32-bit image types
+	case ICNS_1024x1024_32BIT_ARGB_DATA:
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
+		iconInfo.iconWidth = 1024;
+		iconInfo.iconHeight = 1024;
+		iconInfo.iconChannels = 4;
+		iconInfo.iconPixelDepth = 8;
+		iconInfo.iconBitDepth = 32;
+		break;
 	case ICNS_512x512_32BIT_ARGB_DATA:
 		iconInfo.isImage = 1;
 		iconInfo.isMask = 0;
@@ -607,6 +620,9 @@ icns_type_t	icns_get_type_from_image_info(icns_icon_info_t iconInfo)
 		break;
 	case 512:
 		return ICNS_512x512_32BIT_ARGB_DATA;
+		break;
+	case 1024:
+		return ICNS_1024x1024_32BIT_ARGB_DATA;
 		break;
 		
 	}
