@@ -21,6 +21,7 @@ libicns (0.8.0-1) unstable; urgency=low
   * Use multi-arch paths
   * Add myself to uploaders
   * Add Vcs-* headers
+  * Also install the API docs
 
  -- Mathew Eis <mathew@eisbox.net>  Sun, 29 Jan 2012 01:20:00 -0700
 
