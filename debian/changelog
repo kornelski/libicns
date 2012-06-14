@@ -1,4 +1,4 @@
-libicns (0.8.0-1) unstable; urgency=low
+libicns (0.8.1-1) unstable; urgency=low
 
   [ Mathew Eis ]
   * New upstream release
@@ -24,7 +24,7 @@ libicns (0.8.0-1) unstable; urgency=low
   * Also install the API docs, drop from lib package
   * Switch to Debian copyright format 1.0 for the source Debian copyright file
 
- -- Mathew Eis <mathew@eisbox.net>  Sun, 29 Jan 2012 01:20:00 -0700
+ -- Paul Wise <pabs@debian.org>  Thu, 14 Jun 2012 10:16:49 +0800
 
 libicns (0.7.1-1.1) unstable; urgency=low
 
