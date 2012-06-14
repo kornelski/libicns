@@ -17,6 +17,7 @@ libicns (0.8.0-1) unstable; urgency=low
   * Adjust the watch file to only look for release versions
   * Switch to debhelper compat 9 and dh tiny rules
   * Drop autotools_dev and use dh-autoreconf
+  * Switch to dpkg-source v3
   * Use multi-arch paths
   * Add myself to uploaders
   * Add Vcs-* headers
