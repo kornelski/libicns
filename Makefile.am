@@ -11,6 +11,8 @@ EXTRA_DIST = \
   @PACKAGE@.spec.in \
   COPYING.LGPL-2 \
   COPYING.LGPL-2.1 \
+  README.install \
+  DEVNOTES \
   MANIFEST.sources
 
 rpm: @PACKAGE@.spec

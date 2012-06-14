@@ -27,5 +27,9 @@ libicns_include_HEADERS = icns.h
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libicns.pc
 
+EXTRA_DIST = \
+  apidocs.html \
+  apidocs.txt
+
 MAINTAINERCLEANFILES = \
   Makefile.in
