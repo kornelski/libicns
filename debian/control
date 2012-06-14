@@ -14,6 +14,15 @@ Homepage: http://icns.sourceforge.net/
 Vcs-Svn: http://icns.svn.sourceforge.net/svnroot/icns
 Vcs-Browser: http://icns.svn.sourceforge.net/
 
+Package: libicns1
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: library for manipulation of the Mac OS icns format
+ libicns is a library for manipulation of the Mac OS icns resource
+ format, also known as the IconFamily resource type. It can read
+ and write files for the Mac OS X icns format, as well as read from
+ Mac OS resource files and macbinary encoded Mac OS resource forks.
+
 Package: libicns-dev
 Section: libdevel
 Architecture: any
