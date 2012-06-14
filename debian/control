@@ -16,6 +16,7 @@ Vcs-Browser: http://icns.svn.sourceforge.net/
 
 Package: libicns1
 Architecture: any
+Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: library for manipulation of the Mac OS icns format
  libicns is a library for manipulation of the Mac OS icns resource
