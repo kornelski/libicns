@@ -1,58 +1,102 @@
-This package was debianized by Mathew Eis <mathew@eisbox.net> on
-Wed, 28 May 2008 02:34:52 -0700.
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: libicns
+Upstream-Contact: Mathew Eis <mathew@eisbox.net>
+Source: http://sourceforge.net/projects/icns/files/
 
-It was downloaded from http://sourceforge.net/projects/icns
+Files: src/icns_debug.c
+ src/icns_element.c
+ src/icns_family.c
+ src/icns_image.c
+ src/icns_io.c
+ src/icns_jp2.c
+ src/icns_png.c
+ src/icns_rle24.c
+ src/icns_utils.c
+Copyright: 2001-2012, Mathew Eis
+License: LGPL-2.1+
 
-Upstream Author:
+Files: src/icns.h
+ src/icns_internals.h
+Copyright: 2001-2012, Mathew Eis
+           2002, Chenxiao Zhao
+License: LGPL-2.1+
 
-    Mathew Eis <mathew@eisbox.net>
+Files: icnsutils/png2icns.c
+Copyright: 2008, Julien BLACHE
+  2012, Mathew Eis
+License: GPL-2+
 
-Copyright:
+Files: icnsutils/icontainer2icns.c
+Copyright: 2005-2007, Thomas Lübking
+License: LGPL-2+
 
-    Copyright 2001-2012 Mathew Eis <mathew@eisbox.net>
-    Copyright 2008 Julien BLACHE <jb@jblache.org>
-    Copyright 2007 Lyonel Vincent <lyonel@ezix.org>
-    Copyright 2005 Thomas Lübking <baghira-style@gmx.net>
-    Copyright 2004 Brion Vibber <brion@pobox.com>
-    Copyright 2002 Chenxiao Zhao <chenxiao.zhao@gmail.com>
+Files: icnsutils/icns2png.c
+Copyright: 2001-2012, Mathew Eis
+License: LGPL-2+
 
-License:
+Files: src/icns_colormaps.h
+Copyright: 2001-2012, Mathew Eis
+  2004, Brion Vibber
+  2007, Lyonel Vincent
+License: LGPL-2.1+
 
-    libicns and its utility programs (with the exception of png2icns) are
-    free software; you can redistribute them and/or modify them under
-    the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation; either version 2 of the License,
-    or (at your option) any later version.
+Files: debian/*
+Copyright: 2008-2012, Mathew Eis
+License: GPL-2+
 
-    This package is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Library General Public License for more details.
+License: LGPL-2.1+
+ libicns and its utility programs (with the exception of png2icns) are
+ free software; you can redistribute them and/or modify them under
+ the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation; either version 2 of the License,
+ or (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ You should have received a copy of the GNU Library General Public
+ License along with this library; if not, write to the
+ Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+ .
+ On Debian systems, the complete text of the GNU Lesser General
+ Public License can be found in `/usr/share/common-licenses/LGPL-2.1'.
 
-    You should have received a copy of the GNU Library General Public
-    License along with this library; if not, write to the
-    Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-    Boston, MA 02110-1301, USA.
+License: LGPL-2+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ You should have received a copy of the GNU Library General Public
+ License along with this library; if not, write to the
+ Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+ .
+ On Debian systems, the complete text of the GNU Library General
+ Public License can be found in `/usr/share/common-licenses/LGPL-2'.
 
-On Debian systems, the complete text of the GNU Lesser General
-Public License can be found in `/usr/share/common-licenses/LGPL-2.1'.
-
-   png2icns is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License along
-   with this program; if not, write to the Free Software Foundation, Inc.,
-   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-On Debian systems, the complete text of the GNU General
-Public License can be found in `/usr/share/common-licenses/GPL-2'.
-
-The Debian packaging is Copyright 2008, Mathew Eis <mathew@eisbox.net>
-and is licensed under the GPLv2+, see above.
+License: GPL-2+
+ png2icns is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, write to the Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License can be found in `/usr/share/common-licenses/GPL-2'.

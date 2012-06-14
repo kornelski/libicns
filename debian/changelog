@@ -22,6 +22,7 @@ libicns (0.8.0-1) unstable; urgency=low
   * Add myself to uploaders
   * Add Vcs-* headers
   * Also install the API docs, drop from lib package
+  * Switch to Debian copyright format 1.0 for the source Debian copyright file
 
  -- Mathew Eis <mathew@eisbox.net>  Sun, 29 Jan 2012 01:20:00 -0700
 
