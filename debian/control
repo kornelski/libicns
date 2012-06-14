@@ -16,6 +16,7 @@ Vcs-Browser: http://icns.svn.sourceforge.net/
 
 Package: libicns1
 Architecture: any
+Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: library for manipulation of the Mac OS icns format
@@ -27,6 +28,7 @@ Description: library for manipulation of the Mac OS icns format
 Package: libicns-dev
 Section: libdevel
 Architecture: any
+Multi-Arch: same
 Depends: libicns1 (= ${binary:Version}), ${misc:Depends}
 Description: libicns development files
  libicns is a library for manipulation of
@@ -40,6 +42,7 @@ Description: libicns development files
 
 Package: icnsutils
 Architecture: any
+Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: utilities for manipulating Mac OS icns files
  icnsutils includes icns2png and png2icns, two utilies used to
