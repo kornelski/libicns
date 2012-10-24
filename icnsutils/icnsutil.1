@@ -1,0 +1,25 @@
+.TH ICNSUTIL "1" "Oct 2012" "icnsutil 0.1" "User Commands"
+.SH NAME
+icnsutil \- Utility to convert between '.iconset' and '.icns' files.
+.SH SYNOPSIS
+.B iconutil -c {icns | iconset} [-o \fIfile\fR] \fIfile\fR
+.SH DESCRIPTION
+icnsutil is intended to be a functional clone of the Darwin iconutil,
+ which converts between '.iconset' and '.icns' files. The tool takes a
+ single source '.icns' file or '.iconset' and converts it to either a
+ '.icns' or '.iconset' depending on the value of the -c flag's
+ argument.
+.P
+ It is possible to specify the name of the output file by passing the
+ file path as the argument to the -o flag. If -o is not set iconutil
+ will write converted '.icns' file or '.iconset' to the same directory
+ as the source file using the same file name with the correct extension
+ for the output type.
+.SH AUTHOR
+Written by Mathew Eis
+.SH COPYRIGHT
+Copyright \(co 2012 Mathew Eis
+.br
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.br
