@@ -515,10 +515,6 @@ int ExtractAndDescribeIconFamily(icns_family_t *iconFamily,char *description,cha
 		icns_type_str(iconElement.elementType,typeStr);
 		iconDataSize = iconElement.elementSize - 8;
 		
-		FILE *tmp = fopen(typeStr,"w+");
-		fwrite ((dataPtr+dataOffset+8),1,iconDataSize,tmp );
-		fclose(tmp);
-		
 		if(extractMode & LIST_MODE) {
 			printf("  '%s'",typeStr);
 		}
