@@ -92,6 +92,12 @@ typedef struct icns_icon_info_t
 
 #define ICNS_ICON_VERSION             0x69636E56  // "icnV"
 
+#define ICNS_256x256_2X_32BIT_ARGB_DATA 0x69633134 // "ic14"
+#define ICNS_128x128_2X_32BIT_ARGB_DATA 0x69633133 // "ic13"
+#define ICNS_32x32_2X_32BIT_ARGB_DATA 0x69633132 // "ic12"
+#define ICNS_16x16_2X_32BIT_ARGB_DATA 0x69633131 // "ic11"
+#define ICNS_512x512_2X_32BIT_ARGB_DATA 0x69633130 // "ic10"
+
 #define ICNS_1024x1024_32BIT_ARGB_DATA 0x69633130 // "ic10"
 
 #define ICNS_512x512_32BIT_ARGB_DATA  0x69633039  // "ic09"
@@ -201,9 +207,11 @@ int icns_image_to_jp2(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t
 // icns_utils.c
 icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType);
 icns_type_t icns_get_mask_type_for_icon_type(icns_type_t);
+icns_type_t	icns_get_type_from_image_info_advanced(icns_icon_info_t iconInfo, icns_bool_t isHiDPI);
 icns_type_t icns_get_type_from_image_info(icns_icon_info_t iconInfo);
 icns_type_t icns_get_type_from_image(icns_image_t iconImage);
 icns_type_t icns_get_type_from_mask(icns_image_t iconImage);
+icns_bool_t icns_get_is_hidpi(icns_type_t iconType);
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB);
 icns_bool_t icns_types_not_equal(icns_type_t typeA,icns_type_t typeB);
 const char * icns_type_str(icns_type_t type, char *strbuf);

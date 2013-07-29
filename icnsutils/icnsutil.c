@@ -186,10 +186,24 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	char maskStr[5] = {0,0,0,0,0};
 	int iconDataOffset = 0;
 	int maskDataOffset = 0;
+    
+    char isHiDPI = 0;
+    
+    int pngnamelen = strlen(pngname);
+    int namea2xpng = pngnamelen - 7;
 
 	png_bytep buffer;
 	int width, height, bpp;
-
+    
+	if(namea2xpng > 0) {
+			if(memcmp(&pngname[namea2xpng],"@2x.png",7) == 0) {
+					isHiDPI = 1;
+			}
+			if(memcmp(&pngname[namea2xpng],"@2X.PNG",7) == 0) {
+					isHiDPI = 1;
+			}
+	}
+    
 	pngfile = fopen(pngname, "rb");
 	if (pngfile == NULL)
 	{
@@ -221,7 +235,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	iconInfo.iconChannels = (bpp == 32 ? 4 : 1);
 	iconInfo.iconPixelDepth = bpp / iconInfo.iconChannels;
 
-	iconType = icns_get_type_from_image_info(iconInfo);
+	iconType = icns_get_type_from_image_info_advanced(iconInfo,isHiDPI);
 	maskType = icns_get_mask_type_for_icon_type(iconType);
 
 	icns_type_str(iconType,iconStr);
@@ -230,7 +244,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	/* Only convert the icons that match sizes icns supports */
 	if (iconType == ICNS_NULL_TYPE)
 	{
-		fprintf(stderr, "Bad dimensions: PNG file '%s' is %dx%d\n", pngname, width, height);
+		fprintf(stderr, "Unable to determine icon type: PNG file '%s' is %dx%d\n", pngname, width, height);
 		free(buffer);
 
 		return FALSE;
@@ -257,7 +271,8 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	
 	icns_set_print_errors(1);
 	
-	if( (iconType != ICNS_1024x1024_32BIT_ARGB_DATA) && (iconType != ICNS_512x512_32BIT_ARGB_DATA) && (iconType != ICNS_256x256_32BIT_ARGB_DATA) )
+	/*
+	if(maskType != ICNS_NULL_TYPE)
 	{
 		printf("Using icns type '%s', mask '%s' for '%s'\n", iconStr, maskStr, pngname);
 	}
@@ -265,6 +280,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	{
 		printf("Using icns type '%s' (ARGB) for '%s'\n", iconStr, pngname);
 	}
+	*/
 	
 	icnsErr = icns_new_element_from_image(&icnsImage, iconType, &iconElement);
 	
@@ -277,7 +293,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 		free(iconElement);
 	}
 
-	if( (iconType != ICNS_1024x1024_32BIT_ARGB_DATA) && (iconType != ICNS_512x512_32BIT_ARGB_DATA) && (iconType != ICNS_256x256_32BIT_ARGB_DATA) )
+	if(maskType != ICNS_NULL_TYPE)
 	{
 		icns_init_image_for_type(maskType, &icnsMask);
 
@@ -356,11 +372,11 @@ int iconset_to_icns(char *srcfile, char *dstfile)
 	
 	while(icon_names[i] != NULL) {
 		strcpy(&pngfile[srclen + 1],icon_names[i]);
-		printf("adding png: %s\n",pngfile);
+		printf("adding %s\n",pngfile);
 		add_png_to_family(&iconFamily,pngfile);
 		i++;
 	}
-
+    
 	if (icns_write_family_to_file(icnsfile, iconFamily) != ICNS_STATUS_OK)
 	{
 		fprintf(stderr, "Failed to write icns file\n");

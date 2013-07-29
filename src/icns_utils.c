@@ -1,6 +1,6 @@
 /*
 File:       icns_utils.c
-Copyright (C) 2001-2012 Mathew Eis <mathew@eisbox.net>
+Copyright (C) 2001-2013 Mathew Eis <mathew@eisbox.net>
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -46,7 +46,16 @@ icns_uint32_t icns_get_element_order(icns_type_t iconType)
 	{
 	case ICNS_ICON_VERSION:
 		return 100;
-	case ICNS_1024x1024_32BIT_ARGB_DATA:
+	case ICNS_512x512_2X_32BIT_ARGB_DATA:
+	//case ICNS_1024x1024_32BIT_ARGB_DATA:
+		return 27;
+	case ICNS_256x256_2X_32BIT_ARGB_DATA:
+		return 26;
+	case ICNS_128x128_2X_32BIT_ARGB_DATA:
+		return 25;
+	case ICNS_32x32_2X_32BIT_ARGB_DATA:
+		return 24;
+	case ICNS_16x16_2X_32BIT_ARGB_DATA:
 		return 23;
 	case ICNS_512x512_32BIT_ARGB_DATA:
 		return 22;
@@ -114,7 +123,16 @@ icns_type_t icns_get_mask_type_for_icon_type(icns_type_t iconType)
 		return ICNS_NULL_MASK;
 		
 	// 32-bit image types > 256x256 - no mask (mask is already in image)
-	case ICNS_1024x1024_32BIT_ARGB_DATA:
+	case ICNS_512x512_2X_32BIT_ARGB_DATA:
+	//case ICNS_1024x1024_32BIT_ARGB_DATA:
+		return ICNS_NULL_MASK;
+	case ICNS_256x256_2X_32BIT_ARGB_DATA:
+		return ICNS_NULL_MASK;
+	case ICNS_128x128_2X_32BIT_ARGB_DATA:
+		return ICNS_NULL_MASK;
+	case ICNS_32x32_2X_32BIT_ARGB_DATA:
+		return ICNS_NULL_MASK;
+	case ICNS_16x16_2X_32BIT_ARGB_DATA:
 		return ICNS_NULL_MASK;
 	case ICNS_512x512_32BIT_ARGB_DATA:
 		return ICNS_NULL_MASK;			
@@ -213,11 +231,48 @@ icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType)
 		iconInfo.iconBitDepth = 0;
 		break;
 	// 32-bit image types
-	case ICNS_1024x1024_32BIT_ARGB_DATA:
+	case ICNS_512x512_2X_32BIT_ARGB_DATA:
+	//case ICNS_1024x1024_32BIT_ARGB_DATA:
 		iconInfo.isImage = 1;
 		iconInfo.isMask = 0;
 		iconInfo.iconWidth = 1024;
 		iconInfo.iconHeight = 1024;
+		iconInfo.iconChannels = 4;
+		iconInfo.iconPixelDepth = 8;
+		iconInfo.iconBitDepth = 32;
+		break;
+	case ICNS_256x256_2X_32BIT_ARGB_DATA:
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
+		iconInfo.iconWidth = 512;
+		iconInfo.iconHeight = 512;
+		iconInfo.iconChannels = 4;
+		iconInfo.iconPixelDepth = 8;
+		iconInfo.iconBitDepth = 32;
+		break;
+	case ICNS_128x128_2X_32BIT_ARGB_DATA:
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
+		iconInfo.iconWidth = 256;
+		iconInfo.iconHeight = 256;
+		iconInfo.iconChannels = 4;
+		iconInfo.iconPixelDepth = 8;
+		iconInfo.iconBitDepth = 32;
+		break;
+	case ICNS_32x32_2X_32BIT_ARGB_DATA:
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
+		iconInfo.iconWidth = 64;
+		iconInfo.iconHeight = 64;
+		iconInfo.iconChannels = 4;
+		iconInfo.iconPixelDepth = 8;
+		iconInfo.iconBitDepth = 32;
+		break;
+	case ICNS_16x16_2X_32BIT_ARGB_DATA:
+		iconInfo.isImage = 1;
+		iconInfo.isMask = 0;
+		iconInfo.iconWidth = 32;
+		iconInfo.iconHeight = 32;
 		iconInfo.iconChannels = 4;
 		iconInfo.iconPixelDepth = 8;
 		iconInfo.iconBitDepth = 32;
@@ -457,7 +512,7 @@ icns_icon_info_t icns_get_image_info_for_type(icns_type_t iconType)
 	return iconInfo;
 }
 
-icns_type_t	icns_get_type_from_image_info(icns_icon_info_t iconInfo)
+icns_type_t	icns_get_type_from_image_info_advanced(icns_icon_info_t iconInfo, icns_bool_t isHiDPI)
 {
 	// Give our best effort to returning a type from the given information
 	// But there is only so much we can't work with...
@@ -528,7 +583,6 @@ icns_type_t	icns_get_type_from_image_info(icns_icon_info_t iconInfo)
 	if(iconInfo.iconWidth != iconInfo.iconHeight)
 		return ICNS_NULL_TYPE;
 	
-	
 	switch(iconInfo.iconWidth)
 	{
 	case 16:
@@ -576,7 +630,10 @@ icns_type_t	icns_get_type_from_image_info(icns_icon_info_t iconInfo)
 				return ICNS_32x32_8BIT_MASK;
 			break;
 		case 32:
-			return ICNS_32x32_32BIT_DATA;
+		  if(isHiDPI)
+		    return ICNS_16x16_2X_32BIT_ARGB_DATA;
+			else
+			  return ICNS_32x32_32BIT_DATA;
 			break;
 		default:
 			return ICNS_NULL_TYPE;
@@ -609,6 +666,12 @@ icns_type_t	icns_get_type_from_image_info(icns_icon_info_t iconInfo)
 			break;
 		}
 		break;
+	case 64:
+	  if(iconInfo.iconBitDepth == 32)
+	    return ICNS_32x32_2X_32BIT_ARGB_DATA;
+	  else
+	    return ICNS_NULL_TYPE;
+	  break;
 	case 128:
 		if(iconInfo.isImage == 1 || iconInfo.iconBitDepth == 32)
 			return ICNS_128X128_32BIT_DATA;
@@ -616,18 +679,32 @@ icns_type_t	icns_get_type_from_image_info(icns_icon_info_t iconInfo)
 			return ICNS_128X128_8BIT_MASK;
 		break;
 	case 256:
-		return ICNS_256x256_32BIT_ARGB_DATA;
+    if(isHiDPI)
+      return ICNS_128x128_2X_32BIT_ARGB_DATA;
+    else
+      return ICNS_256x256_32BIT_ARGB_DATA;
 		break;
 	case 512:
-		return ICNS_512x512_32BIT_ARGB_DATA;
+    if(isHiDPI)
+      return ICNS_256x256_2X_32BIT_ARGB_DATA;
+    else
+      return ICNS_512x512_32BIT_ARGB_DATA;
 		break;
 	case 1024:
-		return ICNS_1024x1024_32BIT_ARGB_DATA;
+    if(isHiDPI)
+      return ICNS_512x512_2X_32BIT_ARGB_DATA;
+    else
+      return ICNS_1024x1024_32BIT_ARGB_DATA;
 		break;
 		
 	}
 	
 	return ICNS_NULL_TYPE;
+}
+
+icns_type_t	icns_get_type_from_image_info(icns_icon_info_t iconInfo)
+{
+  return icns_get_type_from_image_info_advanced(iconInfo,0);
 }
 
 icns_type_t	icns_get_type_from_image(icns_image_t iconImage)
@@ -696,6 +773,25 @@ icns_type_t	icns_get_type_from_mask(icns_image_t iconImage)
 	}
 	
 	return icns_get_type_from_image_info(iconInfo);
+}
+
+icns_bool_t icns_get_is_hidpi(icns_type_t iconType)
+{
+	switch(iconType)
+	{
+	case ICNS_256x256_2X_32BIT_ARGB_DATA:
+		return 1;
+	case ICNS_128x128_2X_32BIT_ARGB_DATA:
+		return 1;
+	case ICNS_32x32_2X_32BIT_ARGB_DATA:
+		return 1;
+	case ICNS_16x16_2X_32BIT_ARGB_DATA:
+		return 1;
+	case ICNS_512x512_2X_32BIT_ARGB_DATA:
+		return 1;
+	default:
+	  return 0;
+	}
 }
 
 icns_bool_t icns_types_equal(icns_type_t typeA,icns_type_t typeB)

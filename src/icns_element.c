@@ -564,10 +564,16 @@ int icns_update_element_with_image_or_mask(icns_image_t *imageIn,icns_bool_t isM
 	
 	switch(iconType)
 	{
-	case ICNS_1024x1024_32BIT_ARGB_DATA:
+	case ICNS_512x512_2X_32BIT_ARGB_DATA:
+	case ICNS_256x256_2X_32BIT_ARGB_DATA:
+	case ICNS_128x128_2X_32BIT_ARGB_DATA:
+	case ICNS_32x32_2X_32BIT_ARGB_DATA:
+	case ICNS_16x16_2X_32BIT_ARGB_DATA:
+	//case ICNS_1024x1024_32BIT_ARGB_DATA:
 	case ICNS_256x256_32BIT_ARGB_DATA:
 	case ICNS_512x512_32BIT_ARGB_DATA:
-		error = icns_image_to_jp2(imageIn,&newDataSize,&newDataPtr);
+	  error = icns_image_to_png(imageIn,&newDataSize,&newDataPtr);
+		//error = icns_image_to_jp2(imageIn,&newDataSize,&newDataPtr);
 		imageDataSize = newDataSize;
 		imageDataPtr = newDataPtr;
 		break;
