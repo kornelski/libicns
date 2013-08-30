@@ -30,6 +30,8 @@
 #include <png.h>
 #include <icns.h>
 
+#define DEBUG_ICNSUTIL 0
+
 #define	FALSE	0
 #define	TRUE	1
 
@@ -96,12 +98,12 @@ static int	write_png(FILE *outputfile,icns_image_t *image,icns_image_t *mask)
 	image_channels = image->imageChannels;
 	image_pixel_depth = image->imagePixelDepth;
 	
-	/*
+	#if DEBUG_ICNSUTIL
 	printf("width: %d\n",width);
 	printf("height: %d\n",height);
 	printf("image_channels: %d\n",image_channels);
 	printf("image_pixel_depth: %d\n",image_pixel_depth);
-	*/
+	#endif
 	
 	if(mask != NULL) {
 		mask_channels = mask->imageChannels;
@@ -413,7 +415,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	
 	icns_set_print_errors(1);
 	
-	/*
+	#if DEBUG_ICNSUTIL
 	if(maskType != ICNS_NULL_TYPE)
 	{
 		printf("Using icns type '%s', mask '%s' for '%s'\n", iconStr, maskStr, pngname);
@@ -422,7 +424,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	{
 		printf("Using icns type '%s' (ARGB) for '%s'\n", iconStr, pngname);
 	}
-	*/
+	#endif
 	
 	icnsErr = icns_new_element_from_image(&icnsImage, iconType, &iconElement);
 	
@@ -514,7 +516,9 @@ int iconset_to_icns(char *srcfile, char *dstfile)
 	
 	while(iconset_names[i] != NULL) {
 		strcpy(&pngfile[srclen],iconset_names[i]);
-		printf("adding %s\n",pngfile);
+		#if DEBUG_ICNSUTIL
+		printf("Adding %s\n",pngfile);
+		#endif
 		add_png_to_family(&iconFamily,pngfile);
 		i++;
 	}
@@ -528,7 +532,9 @@ int iconset_to_icns(char *srcfile, char *dstfile)
 
 	fclose(icnsfile);
 
+  #if DEBUG_ICNSUTIL
 	printf("Saved icns file to %s\n",dstfile);
+	#endif
 	
 cleanup:
 
@@ -582,6 +588,10 @@ int icns_to_iconset(char *srcfile, char *dstpath)
 	dstfile = malloc(dstfilelen);
 	strncpy(&dstfile[0],&dstpath[0],dstpathlen);
 
+  #if DEBUG_ICNSUTIL
+	printf("Extracting images from %s\n",&srcfile[0]);
+  #endif
+
 	// Load the icns file
 	inFile = fopen(srcfile, "r" );
 	if ( inFile == NULL ) {
@@ -590,8 +600,6 @@ int icns_to_iconset(char *srcfile, char *dstpath)
 	}
 	error = icns_read_family_from_file(inFile,&iconFamily);
 	fclose(inFile);
-	
-	printf("Saving iconset to %s...\n",&dstpath[0]);
 	
 	// Create the .iconset directory
 	if (mkdir(dstpath,0777) == -1) {
@@ -622,9 +630,12 @@ int icns_to_iconset(char *srcfile, char *dstpath)
 				error = write_png(outfile,&iconImage,NULL);
 				if(error) {
 					fprintf (stderr, "Error writing PNG image!\n");
-				} else {
-					printf("  Saved '%s' element to %s.\n",typeStr,&dstfile[0]);
 				}
+				#if DEBUG_ICNSUTIL
+				else {
+					printf("Extracted %s\n",&dstfile[0]);
+				}
+				#endif
 				if(outfile != NULL) {
 					fclose(outfile);
 					outfile = NULL;
