@@ -513,7 +513,7 @@ int iconset_to_icns(char *srcfile, char *dstfile)
 	icns_create_family(&iconFamily);
 	
 	while(iconset_names[i] != NULL) {
-		strcpy(&pngfile[srclen + 1],iconset_names[i]);
+		strcpy(&pngfile[srclen],iconset_names[i]);
 		printf("adding %s\n",pngfile);
 		add_png_to_family(&iconFamily,pngfile);
 		i++;
