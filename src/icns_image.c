@@ -99,14 +99,15 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 	}
 	
 	// We used the jp2/png processor for these two, so we're done!
-	if( 
-    (iconType == ICNS_256x256_32BIT_ARGB_DATA) || 
-    (iconType == ICNS_512x512_32BIT_ARGB_DATA) || 
-    (iconType == ICNS_1024x1024_32BIT_ARGB_DATA) || 
-    (iconType == ICNS_16x16_2X_32BIT_ARGB_DATA) || 
-    (iconType == ICNS_32x32_2X_32BIT_ARGB_DATA) || 
-    (iconType == ICNS_128x128_2X_32BIT_ARGB_DATA) || 
-    (iconType == ICNS_256x256_2X_32BIT_ARGB_DATA) || 
+	if(
+    (iconType == ICNS_128x128_32BIT_ARGB_DATA) ||
+    (iconType == ICNS_256x256_32BIT_ARGB_DATA) ||
+    (iconType == ICNS_512x512_32BIT_ARGB_DATA) ||
+    (iconType == ICNS_1024x1024_32BIT_ARGB_DATA) ||
+    (iconType == ICNS_16x16_2X_32BIT_ARGB_DATA) ||
+    (iconType == ICNS_32x32_2X_32BIT_ARGB_DATA) ||
+    (iconType == ICNS_128x128_2X_32BIT_ARGB_DATA) ||
+    (iconType == ICNS_256x256_2X_32BIT_ARGB_DATA) ||
     (iconType == ICNS_512x512_2X_32BIT_ARGB_DATA)
 	) {
 		memcpy(imageOut,&iconImage,sizeof(icns_image_t));
@@ -430,6 +431,7 @@ int icns_get_image_from_element(icns_element_t *iconElement,icns_image_t *imageO
     case ICNS_16x16_2X_32BIT_ARGB_DATA:
     case ICNS_512x512_32BIT_ARGB_DATA:
     case ICNS_256x256_32BIT_ARGB_DATA:
+    case ICNS_128x128_32BIT_ARGB_DATA:
 			{
 				uint8_t magicPNG[] = {0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A};
 				uint8_t magicByt[] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}; 

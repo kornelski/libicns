@@ -102,6 +102,7 @@ typedef struct icns_icon_info_t
 
 #define ICNS_512x512_32BIT_ARGB_DATA  0x69633039  // "ic09"
 #define ICNS_256x256_32BIT_ARGB_DATA  0x69633038  // "ic08"
+#define ICNS_128x128_32BIT_ARGB_DATA  0x69633037  // "ic07"
 
 #define ICNS_128X128_32BIT_DATA       0x69743332  // "it32"
 #define ICNS_128X128_8BIT_MASK        0x74386D6B  // "t8mk"

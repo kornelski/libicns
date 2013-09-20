@@ -242,8 +242,9 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	}
 	
 	icns_set_print_errors(1);
-	
-	if( (iconType != ICNS_1024x1024_32BIT_ARGB_DATA) && (iconType != ICNS_512x512_32BIT_ARGB_DATA) && (iconType != ICNS_256x256_32BIT_ARGB_DATA) )
+
+	if( (iconType != ICNS_1024x1024_32BIT_ARGB_DATA) && (iconType != ICNS_512x512_32BIT_ARGB_DATA) &&
+		(iconType != ICNS_256x256_32BIT_ARGB_DATA) && (iconType != ICNS_128x128_32BIT_ARGB_DATA) )
 	{
 		printf("Using icns type '%s', mask '%s' for '%s'\n", iconStr, maskStr, pngname);
 	}
@@ -263,7 +264,8 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 		free(iconElement);
 	}
 
-	if( (iconType != ICNS_1024x1024_32BIT_ARGB_DATA) && (iconType != ICNS_512x512_32BIT_ARGB_DATA) && (iconType != ICNS_256x256_32BIT_ARGB_DATA) )
+	if( (iconType != ICNS_1024x1024_32BIT_ARGB_DATA) && (iconType != ICNS_512x512_32BIT_ARGB_DATA) &&
+		(iconType != ICNS_256x256_32BIT_ARGB_DATA) && (iconType != ICNS_128x128_32BIT_ARGB_DATA) )
 	{
 		icns_init_image_for_type(maskType, &icnsMask);
 
