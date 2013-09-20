@@ -199,6 +199,7 @@ static int add_png_to_family(icns_family_t **iconFamily, char *pngname)
 	icnsImage.imagePixelDepth = 8;
 	icnsImage.imageDataSize = width * height * 4;
 	icnsImage.imageData = buffer;
+	icnsImage.pngFilename = pngname;
 
 	iconInfo.isImage = 1;
 	iconInfo.iconWidth = icnsImage.imageWidth;

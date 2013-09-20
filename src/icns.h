@@ -69,6 +69,7 @@ typedef struct icns_image_t
   icns_uint16_t         imagePixelDepth;// number of bits-per-pixel
   icns_uint64_t         imageDataSize;  // bytes = width * height * depth / bits-per-pixel
   icns_byte_t           *imageData;     // pointer to base address of uncompressed raw image data
+  const char * pngFilename;
 } icns_image_t;
 
 /* used for getting information about various types */

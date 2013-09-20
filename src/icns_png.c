@@ -215,7 +215,20 @@ int icns_image_to_png(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t
 		icns_print_err("icns_image_to_png: Data ref is NULL!\n");
 		return ICNS_STATUS_NULL_PARAM;
 	}
-	
+
+	if (image->pngFilename) {
+		FILE *fp = fopen(image->pngFilename, "rb");
+		if (fp) {
+			fseek(fp, 0, SEEK_END);
+			*dataSizeOut = ftell(fp);
+			fseek(fp, 0, SEEK_SET);
+			*dataPtrOut = malloc(*dataSizeOut);
+			if (fread(*dataPtrOut, 1, *dataSizeOut, fp)) {
+				return ICNS_STATUS_OK;
+			}
+		}
+	}
+
 	#ifdef ICNS_DEBUG
 	printf("Encoding PNG image...\n");
 	#endif
