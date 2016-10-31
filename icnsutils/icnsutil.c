@@ -481,7 +481,7 @@ int usage(void)
 int iconset_to_icns(char *srcfile, char *dstfile)
 {
 	FILE *icnsfile;
-	icns_family_t	*iconFamily;
+	icns_family_t *iconFamily = NULL;
 	char *pngfile = NULL;
 	char *outfile = NULL;
 	int	srclen = strlen(srcfile);
