@@ -126,8 +126,8 @@ int icns_get_image32_with_mask_from_family(icns_family_t *iconFamily,icns_type_t
 		printf("  using mask type '%s'\n",icns_type_str(maskType,typeStr));
 	}
 	#endif
-	
-	if( (maskType == ICNS_NULL_DATA) )
+
+	if (maskType == ICNS_NULL_DATA)
 	{
 		char typeStr[5];
 		icns_print_err("icns_get_image32_with_mask_from_family: Can't find mask for type '%s'\n",icns_type_str(iconType,typeStr));

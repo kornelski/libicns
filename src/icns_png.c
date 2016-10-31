@@ -184,15 +184,12 @@ int icns_png_to_image(icns_size_t dataSize, icns_byte_t *dataPtr, icns_image_t *
 	return error;
 }
 
-static gnum = 0;
-
 int icns_image_to_png(icns_image_t *image, icns_size_t *dataSizeOut, icns_byte_t **dataPtrOut)
 {
 	int 			width = 0;
 	int 			height = 0;
 	int 			image_channels = 0;
 	int			  image_pixel_depth = 0;
-	int 			mask_channels = 0;
 	png_structp 		png_ptr;
 	png_infop 		info_ptr;
 	png_bytep 		*row_pointers;
